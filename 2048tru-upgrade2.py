@@ -122,3 +122,38 @@ def start_game():
             return False
         
 start_game()
+
+# find the best way
+def random_action():
+    forward = random.random('w', 'a', 's', 'd')
+    return forward
+def random_move(board):
+    while True:
+        new_board = copy.deepcopy(board)
+        board = move(board, random_action())
+        if not np.array_equal(new_board, board):
+            return board
+def auto_start():
+    board = create_board()
+    for _ in range(2):
+        board = feed_number(board, get_available_space(board))
+    while True:
+
+        total_score
+        possibility = {}
+        for _ in range(50):
+            while True:
+                forward = random_action()
+                new_board = copy.deepcopy(board)
+                board = move(board, forward)
+                if not np.array_equal(new_board, board):
+                    
+                    for i in range(100):
+                        board = feed_number(board, get_available_space(board))
+                        if not check_end(board):
+                            possibility.append[board, [-1, forward]]
+                            break
+                        elif i == 99:
+                            possibility.append[board, [total_score[0], forward]]
+                        board = random_move(board)
+
