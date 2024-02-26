@@ -14,6 +14,8 @@ def get_available_space(board):
     return available_space
 
 def feed_number(board, available_space):
+    if available_space == []:
+        return board
     i, j= random.choice(available_space)
     random_number = np.random.choice([2,4], p = [5/6, 1/6])
     board[i, j] = random_number
@@ -74,22 +76,21 @@ def move(board, forward):
                     total_score[0] += board[row, column]
             board = w_indent_zero(board, row, column)
         return board
-    if forward == 'a':
+    if forward == 'd':
         return np.rot90(move(np.rot90(board), 'w'), k = 3)
     if forward == 's': 
         return np.rot90(move(np.rot90(board, k = 2), 'w'), k = 2)
-    if forward == 'd':
+    if forward == 'a':
         return np.rot90(move(np.rot90(board, k = 3), 'w'))
 
 def correct_move(board):
     while True:
-        new_board = move(board, get_action())
-        print(new_board)
+        new_board = copy.deepcopy(board)
+        board = move(board, get_action())
         for i in range(4):
             for j in range(4):
                 if board[i, j] != new_board[i, j]:
-                    print(1)
-                    return new_board
+                    return board
 
 def horizonal_check(board):
     for i in range(4):
@@ -101,7 +102,7 @@ def horizonal_check(board):
 def check_end(board):
     if 0 in board or horizonal_check(board) or horizonal_check(np.rot90(board)):
         return True
-    print('Game Over!')
+
     return False
 
 def start_game():
@@ -122,4 +123,60 @@ def start_game():
             return False
         
 start_game()
-#something goes wrong
+# something goes wrong again.
+# def auto_start(board, depth = 10):
+#     n_board = copy.deepcopy(board)
+#     examples = {}
+#     copy_score = copy.deepcopy(total_score[0])
+#     for indexx in range(5):
+#         n_board, forward = auto_move(n_board, 0)
+#         for i in range(depth):           
+#             n_board = auto_move(n_board, i + 1)
+#             n_board = feed_number(n_board, get_available_space(n_board)) 
+#             if not check_end(n_board):            
+#                 total_score[0] = -1
+#                 break
+#         examples[indexx] = (copy.copy(total_score[0]), forward) 
+#         total_score[0] = copy.deepcopy(copy_score)   
+#     contemperory = -1
+#     for x, y in examples.values():
+#         if x >= contemperory:
+#             contemperory = x
+#     for x, y in examples.values():
+#         if x == contemperory:
+#             print('good way:', y)
+#             break
+#     return None
+
+# def auto_move(n_board, p):
+#     while True:
+#         new_board = copy.deepcopy(n_board)
+#         forward = random.choice(['w', 'a', 's', 'd'])
+#         n_board = move(n_board, forward)
+#         for i in range(4):
+#             for j in range(4):
+#                 if n_board[i, j] != new_board[i, j]:
+#                     if p:
+#                         return n_board
+#                     return n_board, forward
+
+# def start_game_with_help():
+#     board = create_board()
+#     print('Welcome to 2048!')
+#     for _ in range(2):
+#         board = feed_number(board, get_available_space(board))
+#     print_board(board)
+
+#     while True:
+#         board = correct_move(board)
+
+#         board = feed_number(board, get_available_space(board))
+#         print_board(board)
+#         print('Scores:', total_score[0]) 
+
+#         if not check_end(board):  
+#             print('Game Over!')          
+#             return False
+#         auto_start(board)
+
+# start_game_with_help()

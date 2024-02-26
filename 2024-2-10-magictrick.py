@@ -52,15 +52,15 @@
 
 # leave_behind(a)
 
-# nothing to do with things above
-from math import pi
-import numpy as np
-count = 0
-times = 10 ** 6
-for _ in range(times):
-    x, y=np.random.random((2))
-    square_distance = x ** 2  + y ** 2
-    if square_distance <= 1:
-        count += 1
-similar_pi = 4 * count/times
-print(similar_pi)
+# # nothing to do with things above
+# from math import pi
+# import numpy as np
+# count = 0
+# times = 10 ** 6
+# for _ in range(times):
+#     x, y=np.random.random((2))
+#     square_distance = x ** 2  + y ** 2
+#     if square_distance <= 1:
+#         count += 1
+# similar_pi = 4 * count/times
+# print(similar_pi)

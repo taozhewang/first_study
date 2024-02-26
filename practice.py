@@ -1,5 +1,5 @@
-# # Q1: Given a list of interger and a target,
-# #       find the two interger that add to the target and return their index
+# Q1: Given a list of interger and a target,
+#       find the two interger that add to the target and return their index
 # def find_index(nums, target):
 #     nums = list(nums)
 #     for i in range(len(nums)):
@@ -10,7 +10,8 @@
 # a = find_index([3, 3], 6)
 # print(a)
 
-# # Q2: Given three numbers, find that whether they can form a triangle
+
+# Q2: Given three numbers, find that whether they can form a triangle
 # def in_order(nums):
 #     for i in range(len(nums) - 1):
 #         for j in range(len(nums) - 1 - i):
@@ -34,6 +35,7 @@
 # print(triangle([3, 4, 5]))
 # print(triangle([13, 8, 3]))
 # print(triangle([9, 5, 5]))
+
 
 # Q?1:best marriage
 # from <<college Admissions and the Stability of the Marriage>>
@@ -78,10 +80,10 @@
 #                     break
 #     return final_marriage
 
-# # male = {'A': [1, 2, 3], 'B': [3, 1, 2], 'C': [2, 3, 1]}
-# # female = {1: ['C', 'A', 'B'], 2: ['B', 'C', 'A'], 3: ['A', 'B', 'C']}
-# # a = male_find_marriage(male, female)
-# # print(a)
+# male = {'A': [1, 2, 3], 'B': [3, 1, 2], 'C': [2, 3, 1]}
+# female = {1: ['C', 'A', 'B'], 2: ['B', 'C', 'A'], 3: ['A', 'B', 'C']}
+# a = male_find_marriage(male, female)
+# print(a)
 
 # male = {'A': [4, 3, 1, 2], 'B': [2, 4, 1, 3], 'C': [4, 1, 2, 3], 'D': [3, 2, 1, 4]}
 # female = {1: ['A', 'B', 'C', 'D'], 2: ['A', 'D', 'C', 'B'], 3: ['B', 'A', 'C', 'D'], 4: ['D', 'B', 'C', 'A']}
@@ -91,3 +93,53 @@
 # female = {1: ['A', 'B', 'C', 'D'], 2: ['A', 'D', 'C', 'B'], 3: ['B', 'A', 'C', 'D'], 4: ['D', 'B', 'C', 'A']}
 # b = male_find_marriage(female, male)
 # print(b)
+
+
+# Q2?: create a sudoku game
+# import numpy as np
+# import random
+# def sudoku_building(sudoku, x, y):
+#     available_numbers = []
+#     for i in range(9):
+#         n = available(sudoku, i + 1, x, y)
+#         if n:
+#             available_numbers.append(n)
+#     if available_numbers == []:
+#         return False, sudoku
+#     number = random.choice(available_numbers)
+#     sudoku[y][x] = number
+#     return True, sudoku
+
+# def sudoku_create():
+#     sudoku = np.zeros((9, 9), dtype=np.uint32)
+#     for y in range(9):
+#         for x in range(9):
+#             success, sudoku = sudoku_building(sudoku, x, y)
+#             if not success:
+#                 return success, sudoku
+#     return success, sudoku
+
+# def available(sudoku, i, x, y):
+#     smaller = np.array([[sudoku[yy][xx] for yy in range(3 * (y // 3), 3 * (1 + y // 3))] for xx in range(3 * (x // 3), 3 * (1 + x // 3))])
+#     if i in sudoku[y] or i in sudoku.T[x] or i in smaller:
+#         return False
+#     else:
+#         return i
+
+# success, sudoku = sudoku_create()
+# while not success:
+#     success, sudoku = sudoku_create()
+# print(sudoku)
+
+# def game_forming(sudoku):
+#     n = 15
+#     i = 0
+#     a = [(i, j) for j in range(9) for i in range(9)]
+#     while i < n:
+#         x , y = random.choice(a)
+#         if sudoku[y, x] != 0:
+#             sudoku[y, x] = 0
+#             i += 1
+#     return sudoku
+# sudoku = game_forming(sudoku)
+# print(sudoku)
