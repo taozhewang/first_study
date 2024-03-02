@@ -95,84 +95,81 @@
 # print(b)
 
 
-# Q2?: create a sudoku game
-import numpy as np
-import random
-import copy
-def sudoku_building(sudoku, x, y):
-    available_numbers = []
-    for i in range(9):
-        n = available(sudoku, i + 1, x, y)
-        if n:
-            available_numbers.append(n)
-    if available_numbers == []:
-        return False, sudoku
-    number = random.choice(available_numbers)
-    sudoku[y][x] = number
-    return True, sudoku
+# # Q2?: create a sudoku game
+# import numpy as np
+# import random
+# import copy
+# def sudoku_building(sudoku, x, y):
+#     available_numbers = []
+#     for i in range(9):
+#         n = available(sudoku, i + 1, x, y)
+#         if n:
+#             available_numbers.append(n)
+#     if available_numbers == []:
+#         return False, sudoku
+#     number = random.choice(available_numbers)
+#     sudoku[y][x] = number
+#     return True, sudoku
 
-def sudoku_create():
-    sudoku = np.zeros((9, 9), dtype=np.uint32)
-    for y in range(9):
-        for x in range(9):
-            success, sudoku = sudoku_building(sudoku, x, y)
-            if not success:
-                return success, sudoku
-    return success, sudoku
+# def sudoku_create():
+#     sudoku = np.zeros((9, 9), dtype=np.uint32)
+#     for y in range(9):
+#         for x in range(9):
+#             success, sudoku = sudoku_building(sudoku, x, y)
+#             if not success:
+#                 return success, sudoku
+#     return success, sudoku
 
-def available(sudoku, i, x, y):
-    smaller = np.array([[sudoku[yy][xx] for yy in range(3 * (y // 3), 3 * (1 + y // 3))] for xx in range(3 * (x // 3), 3 * (1 + x // 3))])
-    if i in sudoku[y] or i in sudoku.T[x] or i in smaller:
-        return False
-    else:
-        return i
+# def available(sudoku, i, x, y):
+#     smaller = np.array([[sudoku[yy][xx] for yy in range(3 * (y // 3), 3 * (1 + y // 3))] for xx in range(3 * (x // 3), 3 * (1 + x // 3))])
+#     if i in sudoku[y] or i in sudoku.T[x] or i in smaller:
+#         return False
+#     else:
+#         return i
 
+# def game_forming(sudoku):
+#     n = 40
+#     i = 0
+#     a = [(i, j) for j in range(9) for i in range(9)]
+#     while i < n:
+#         x , y = random.choice(a)
+#         if sudoku[y, x] != 0:
+#             sudoku[y, x] = 0
+#             i += 1
+#     return sudoku
+# # sudoku = game_forming(sudoku)
+# # print(sudoku)
 
+# # def apparatus_game_checking(build_sudoku, ker_space):
+# #     new_sudoku = copy.deepcopy(build_sudoku)
+# #     while True:
+# #         for y, x in zip(ker_space[0], ker_space[1]):
+# #             success, new_sudoku = sudoku_building(new_sudoku, x, y)
+# #             if not success:
+# #                 break
 
-def game_forming(sudoku):
-    n = 40
-    i = 0
-    a = [(i, j) for j in range(9) for i in range(9)]
-    while i < n:
-        x , y = random.choice(a)
-        if sudoku[y, x] != 0:
-            sudoku[y, x] = 0
-            i += 1
-    return sudoku
-# sudoku = game_forming(sudoku)
-# print(sudoku)
-
-def apparatus_game_checking(build_sudoku, ker_space):
-    new_sudoku = copy.deepcopy(build_sudoku)
-    while True:
-        for y, x in zip(ker_space[0], ker_space[1]):
-            success, new_sudoku = sudoku_building(new_sudoku, x, y)
-            if not success:
-                break
-    return new_sudoku
-
-def game_checking(build_sudoku):
-    ker_space = list(np.where(build_sudoku == 0))
+# # def game_checking(build_sudoku):
+# #     ker_space = list(np.where(build_sudoku == 0))
     
-    new_sudoku = apparatus_game_checking(build_sudoku, ker_space)
-    sudoku_copy = copy.deepcopy(new_sudoku)
-    for _ in range(1):
-        new_sudoku = apparatus_game_checking(build_sudoku, ker_space)
-        if not np.equal(sudoku_copy, new_sudoku):
-            return False
-    return True
+# #     new_sudoku = apparatus_game_checking(build_sudoku, ker_space)
+# #     sudoku_copy = copy.deepcopy(new_sudoku)
+# #     for _ in range(1):
+# #         new_sudoku = apparatus_game_checking(build_sudoku, ker_space)
+# #         if not np.equal(sudoku_copy, new_sudoku):
+# #             return False
+# #     return True
 
-def more_complete_game(sudoku):
-    # while True:
-        build_sudoku = game_forming(sudoku)
-        print(build_sudoku)
-        # if game_checking(sudoku):
-        #     break
-    # return build_sudoku
+# def more_complete_game(sudoku):
+#     # while True:
+#         build_sudoku = game_forming(sudoku)
+#         print(build_sudoku)
+#         # if game_checking(sudoku):
+#         #     break
+#     # return build_sudoku
 
-success, sudoku = sudoku_create()
-while not success:
-    success, sudoku = sudoku_create()
-print(sudoku)
-game = more_complete_game(sudoku)
-# print(game)
+# success, sudoku = sudoku_create()
+# while not success:
+#     success, sudoku = sudoku_create()
+# print(sudoku)
+# game = more_complete_game(sudoku)
+# # print(game)
