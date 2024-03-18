@@ -98,7 +98,6 @@
 # # Q2?: create a sudoku game
 # import numpy as np
 # import random
-# import copy
 # def sudoku_building(sudoku, x, y):
 #     available_numbers = []
 #     for i in range(9):
@@ -121,7 +120,8 @@
 #     return success, sudoku
 
 # def available(sudoku, i, x, y):
-#     smaller = np.array([[sudoku[yy][xx] for yy in range(3 * (y // 3), 3 * (1 + y // 3))] for xx in range(3 * (x // 3), 3 * (1 + x // 3))])
+#     smaller = np.array([[sudoku[yy][xx] for yy in range(3*(y//3), 3*(1+y//3))]
+#                          for xx in range(3*(x//3), 3*(1+x//3))])
 #     if i in sudoku[y] or i in sudoku.T[x] or i in smaller:
 #         return False
 #     else:
@@ -130,46 +130,34 @@
 # def game_forming(sudoku):
 #     n = 40
 #     i = 0
-#     a = [(i, j) for j in range(9) for i in range(9)]
 #     while i < n:
-#         x , y = random.choice(a)
+#         x = random.randint(0,8)
+#         y = random.randint(0,8)
 #         if sudoku[y, x] != 0:
 #             sudoku[y, x] = 0
 #             i += 1
 #     return sudoku
-# # sudoku = game_forming(sudoku)
-# # print(sudoku)
 
-# # def apparatus_game_checking(build_sudoku, ker_space):
-# #     new_sudoku = copy.deepcopy(build_sudoku)
-# #     while True:
-# #         for y, x in zip(ker_space[0], ker_space[1]):
-# #             success, new_sudoku = sudoku_building(new_sudoku, x, y)
-# #             if not success:
-# #                 break
-
-# # def game_checking(build_sudoku):
-# #     ker_space = list(np.where(build_sudoku == 0))
-    
-# #     new_sudoku = apparatus_game_checking(build_sudoku, ker_space)
-# #     sudoku_copy = copy.deepcopy(new_sudoku)
-# #     for _ in range(1):
-# #         new_sudoku = apparatus_game_checking(build_sudoku, ker_space)
-# #         if not np.equal(sudoku_copy, new_sudoku):
-# #             return False
-# #     return True
-
-# def more_complete_game(sudoku):
-#     # while True:
-#         build_sudoku = game_forming(sudoku)
-#         print(build_sudoku)
-#         # if game_checking(sudoku):
-#         #     break
-#     # return build_sudoku
-
-# success, sudoku = sudoku_create()
+# success = False
 # while not success:
 #     success, sudoku = sudoku_create()
 # print(sudoku)
-# game = more_complete_game(sudoku)
-# # print(game)
+# print(game_forming(sudoku))
+from math import sqrt
+def bi_decomposition(num, size = 50):
+    if num >= 1 or num < 0:
+        return False
+    elif num == 0:
+        return 0
+    else:
+        start = 0
+        yes = []
+        for i in range(size):
+            n = start + 2 ** (- 1 - i)
+            if n == num:
+                return n
+            elif n < num:
+                start = n
+                # yes.append(i)
+        return (num - start) / num
+print(bi_decomposition(sqrt(2) - 1))
