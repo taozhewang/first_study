@@ -2,7 +2,12 @@ import numpy as np
 import random
 import copy
 
+<<<<<<< HEAD
 new_board = np.zeros((4, 4), dtype = np.uint32)
+=======
+# new_board = np.zeros((4, 4), dtype = np.uint32)
+total_score = [0]
+>>>>>>> 10d9c587482ea157c4e74a6b7b81f36cb5e8b4b1
 def create_board():
     board = np.zeros((4, 4), dtype = np.uint32 )
     return board
@@ -74,6 +79,7 @@ def move(board, forward, total_score):
                     board[row + 1, column] = 0
                     total_score += board[row, column]
             board = w_indent_zero(board, row, column)
+<<<<<<< HEAD
         return board, total_score
     if forward == 'd':
         board, total_score = move(np.rot90(board), 'w', total_score)
@@ -84,13 +90,28 @@ def move(board, forward, total_score):
     if forward == 'a':
         board, total_score = move(np.rot90(board, k = 3), 'w', total_score)
         return np.rot90(board), total_score
+=======
+        return board
+    if forward == 'd':
+        return np.rot90(move(np.rot90(board), 'w'), k = 3)
+    if forward == 's': 
+        return np.rot90(move(np.rot90(board, k = 2), 'w'), k = 2)
+    if forward == 'a':
+        return np.rot90(move(np.rot90(board, k = 3), 'w'))
+>>>>>>> 10d9c587482ea157c4e74a6b7b81f36cb5e8b4b1
 
 def correct_move(board, total_score):
     while True:
         new_board = copy.deepcopy(board)
+<<<<<<< HEAD
         board, total_score = move(board, get_action(), total_score)
         if not np.array_equal(board, new_board):
             return board, total_score
+=======
+        board = move(board, get_action())
+        if not np.array_equal(new_board, board):
+            return board
+>>>>>>> 10d9c587482ea157c4e74a6b7b81f36cb5e8b4b1
 
 def horizonal_check(board):
     for i in range(4):
@@ -100,6 +121,9 @@ def horizonal_check(board):
     return False
 
 def check_end(board):
+    if 2048 in board:
+        print('you win!', 'score = ', total_score[0])
+        return False
     if 0 in board or horizonal_check(board) or horizonal_check(np.rot90(board)):
         return True
     return False
@@ -116,6 +140,7 @@ def start_game():
         board, total_score = correct_move(board, total_score)
         board = feed_number(board, get_available_space(board))
         print_board(board)
+<<<<<<< HEAD
         print('Scores:', total_score) 
         if not check_end(board):            
             return False
@@ -174,3 +199,11 @@ start_game()
 #         auto_start(board, total_score, 10)
 
 # start_game_with_help()
+=======
+        print('Scores:', total_score[0]) 
+    
+        if not check_end(board):            
+            return False
+        
+start_game()
+>>>>>>> 10d9c587482ea157c4e74a6b7b81f36cb5e8b4b1
