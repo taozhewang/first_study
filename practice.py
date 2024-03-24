@@ -143,21 +143,23 @@
 #     success, sudoku = sudoku_create()
 # print(sudoku)
 # print(game_forming(sudoku))
-from math import sqrt
-def bi_decomposition(num, size = 50):
-    if num >= 1 or num < 0:
-        return False
-    elif num == 0:
-        return 0
-    else:
-        start = 0
-        yes = []
-        for i in range(size):
-            n = start + 2 ** (- 1 - i)
-            if n == num:
-                return n
-            elif n < num:
-                start = n
-                # yes.append(i)
-        return (num - start) / num
-print(bi_decomposition(sqrt(2) - 1))
+
+# from math import sqrt
+# def bi_decomposition(num, size = 50):
+#     if num >= 1 or num < 0:
+#         return False
+#     elif num == 0:
+#         return 0
+#     else:
+#         start = 0
+#         yes = []
+#         for i in range(size):
+#             n = start + 2 ** (- 1 - i)
+#             if n == num:
+#                 return n
+#             elif n < num:
+#                 start = n
+#                 # yes.append(i)
+#         return (num - start) / num
+# print(bi_decomposition(sqrt(2) - 1))
+import numpy as np
