@@ -136,3 +136,52 @@ def plot_bar(N):
     fig.show()
 
 # Scipy
+from scipy.optimize import minimize
+import numpy as np
+import matplotlib.pyplot as plt
+def plot1():
+    x = np.linspace(-10, 10, 100) 
+    y = x ** 2 + 10 * np.sin(x)
+    plt.plot(x, y)
+    plt.title('Plot of f(x) = x^2+10sin(x)')
+    plt.xlabel('x')
+    plt.ylabel('f(x)')
+    plt.grid(True)
+    plt.show()
+def find_min():
+    y = lambda x : x ** 2 + 10 * np.sin(x)
+    a = minimize(y, x0 = -1)
+    return a
+
+import scipy.stats as stats
+from scipy.stats import norm
+def normal(k = 1):
+    x = np.linspace(-5 * k, 5 * k, 100 * k)
+    y_p = norm.pdf(x, 0, k)
+    y_c = norm.cdf(x, 0, k)
+    plt.plot(x, y_p, label = 'pdf')
+    plt.plot(x, y_c, label = 'cdf')
+    plt.legend()
+    plt.title('Plot of pdf and cdf')
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.show()
+def three_normal():
+    for i in [1, 2, 5]:
+        normal(i)
+
+def freedom(f = 2):
+    x = np.linspace(-5, 5, 100)
+    distribution = stats.t(f)
+    y_p = distribution.pdf(x)
+    y_c = distribution.cdf(x)
+    plt.plot(x, y_p, label = 'pdf')
+    plt.plot(x, y_c, label = 'cdf')
+    plt.legend()
+    plt.title(f'Plot of pdf and cdf in {f} freedom')
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.show()
+def four_freedom():
+    for i in [2, 3, 4, 6]:
+        freedom(i)
