@@ -163,3 +163,18 @@
 #         return (num - start) / num
 # print(bi_decomposition(sqrt(2) - 1))
 import numpy as np
+
+# cutoff
+L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
+l = 12000
+def count_decomposition(l, L, count, pointer):
+    L_keys = list(L.keys())
+    L_values = list(L.values())
+    if len(L_keys) == pointer:
+        return count
+    elif l < L_values[pointer]:
+        return count_decomposition(l, L, count, pointer + 1)
+    else:
+        return count_decomposition(l - L_values[pointer], L, count + ' + ' + L_keys[pointer], pointer) + ',' + count_decomposition(l, L, count, pointer + 1)
+result = count_decomposition(l, L, '', 0)
+print(result)
