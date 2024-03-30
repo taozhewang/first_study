@@ -43,6 +43,7 @@ def order_list(num):
     return(num)
 
 # Numpy
+# %%
 import numpy as np
 
 def division():
@@ -185,3 +186,7 @@ def freedom(f = 2):
 def four_freedom():
     for i in [2, 3, 4, 6]:
         freedom(i)
+
+# %%
+four_freedom()
+# %%
