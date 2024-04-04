@@ -54,10 +54,7 @@ X_t = np.array([[1, 0, 0, 0, 0, 0, 0, 0],
 def generate(left, x, n):
     l = np.where(np.diag(left) == 0)
     cl = np.where(x[l] == 1)
-    # clc = cl[1]
-    # bl = clc // 3
     blb = (cl[1] // 3) * 3
-    # blb = bl * 3
     r = np.identity(24, dtype = np.uint32)
     if n == 'z':
         for i in blb:
@@ -206,10 +203,10 @@ def step2_medium(x):
         return act(x, 'rt')
     elif r == [7]:
         return act(act(x, 'b'), 'rt')
-def step2(x):
+def step(x, i):
     count = 0
     while True:
-        r, c = np.where(x[:, 15 : 18] == 1)
+        r, c = np.where(x[:, i * 3 : (i + 1) * 3] == 1)
         if r == [5] and c == [2]:
             return x
         elif count > 5:
@@ -217,6 +214,7 @@ def step2(x):
         else:
             count += 1
             x = lurd(x)
+
 def step3_medium(x):
     x = act(x, 'dt')
     r, c = np.where(x[:, 18 : 21] == 1)
@@ -232,17 +230,7 @@ def step3_medium(x):
         return x
     elif r == [6]:
         return act(x, 'rt')
-def step3(x):
-    count = 0
-    while True:
-        r, c = np.where(x[:, 18 : 21] == 1)
-        if r == [5] and c == [2]:
-            return x
-        elif count > 5:
-            return False
-        else:
-            count += 1
-            x = lurd(x)
+
 def step4_medium(x):
     x = act(x, 'dt')
     r, c = np.where(x[:, 21 : 24] == 1)
@@ -256,17 +244,7 @@ def step4_medium(x):
         return act(act(x, 'u'), 'u')
     elif r == [5]:
         return x
-def step4(x):
-    count = 0
-    while True:
-        r, c = np.where(x[:, 21 : 24] == 1)
-        if r == [5] and c == [2]:
-            return x
-        elif count > 5:
-            return False
-        else:
-            count += 1
-            x = lurd(x)
+
 def step5_medium(x):
     x = act(act(act(act(x, 'l'), 'l'), 'r'), 'r')
     r, c = np.where(x[:, 0 : 3] == 1)
@@ -278,20 +256,9 @@ def step5_medium(x):
         return act(x, 'dt')
     elif r == [7]:
         return act(act(x, 'd'), 'd')
-def step5(x):
-    count = 0
-    while True:
-        r, c = np.where(x[:, 0 : 3] == 1)
-        if r == [5] and c == [2]:
-            return x
-        elif count > 5:
-            return False
-        else:
-            count += 1
-            x = lurd(x)
-def step6_medium(x):
-    return act(x, 'dt')
-def step6(x):
+
+def step2(x):
+    x = act(x, 'dt')
     cl = np.where(x[5, :] == 1)
     cl = (cl[0] // 3) * 3
     count = 0
@@ -304,14 +271,7 @@ def step6(x):
         else:
             count += 1
             x = lurd(x)
-def step7_medium(x):
-    return step6_medium(x)
-def step7(x):
-    return step6(x)
-def step8_medium(x):
-    return step6_medium(x)
-def step8(x):
-    return step6(x)
+
 def adjust(x):
     for i in range(3):
         for j in range(3):
@@ -354,7 +314,6 @@ def step9(x):
             return adjust(x)
         else:
             x = adjust(x)
-            print(x)
             x = act(act(x, 'u'), 'd')
             return adjust(x)
 def step10_medium(x):
@@ -376,10 +335,24 @@ def step10_medium(x):
         return x
 def step10(x):
     return act(act(act(act(x, 'f'), 'f'), 'b'), 'b')
-ex11 = step8(step8_medium(step7(step7_medium(step6(step6_medium(step5(step5_medium(
-    step4(step4_medium(step3(step3_medium(step2(step2_medium(step1(ex)))))))))))))))
-# print(ex11)
 
-ex12 = step9(step9_medium(ex11))
-ex13 = step10(step10_medium(ex12))
-print(ex13)
+def solve(x):
+    x = step1(x)
+    x = step2_medium(x)
+    x = step(x, 5)
+    x = step3_medium(x)
+    x = step(x, 6)
+    x = step4_medium(x)
+    x = step(x, 7)
+    x = step5_medium(x)
+    x = step(x, 0)
+    for _ in range(3):
+        x = step2(x)
+    x = step9_medium(x)
+    x = step9(x)
+    x = step10_medium(x)
+    x = step10(x)
+    return x
+
+result = solve(ex)
+print(result)
