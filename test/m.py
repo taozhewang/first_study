@@ -54,9 +54,10 @@ X_t = np.array([[1, 0, 0, 0, 0, 0, 0, 0],
 def generate(left, x, n):
     l = np.where(np.diag(left) == 0)
     cl = np.where(x[l] == 1)
-    clc = cl[1]
-    bl = clc // 3
-    blb = bl * 3
+    # clc = cl[1]
+    # bl = clc // 3
+    blb = (cl[1] // 3) * 3
+    # blb = bl * 3
     r = np.identity(24, dtype = np.uint32)
     if n == 'z':
         for i in blb:
