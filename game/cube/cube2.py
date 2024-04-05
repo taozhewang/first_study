@@ -1,5 +1,7 @@
 import numpy as np
 import random
+import hashlib
+import json,os,gzip
 
 faces = {"fornt":0, "back":1, "left":2, "right":3, "top":4, "bottom":5}
 
@@ -112,10 +114,61 @@ def printcube(cube):
     print("   ",cube[faces["bottom"]][1,0],cube[faces["bottom"]][1,1])
     print()
 
+# 检查匹配的程度
+def checksame(cube):
+    result= 0
+    for facename in faces:
+        id = faces[facename]
+        if cube[id][0,0]==id: result+=1
+        if cube[id][0,1]==id: result+=1
+        if cube[id][1,0]==id: result+=1
+        if cube[id][1,1]==id: result+=1
+    return result
+
+# 魔方的hash值
+def hash(cube):
+    flattened_matrix = cube.flatten()
+    hash_object = hashlib.sha256()
+    hash_object.update(flattened_matrix)
+    hash_value = hash_object.hexdigest()    
+    return hash_value
+
+
 # 创建一个新魔方 
 cube = np.zeros((6,2,2),dtype=int)
-for i in range(6):
-    cube[i]+=i
+for facename in faces:
+    cube[faces[facename]]+=faces[facename]
+# printcube(cube)
+
+# 创建步骤cache，里面直接存放还原步骤:
+# 格式 {"hash": [act9 .... act0] act 为（facename, clockwise）
+cache_file="game/cube/cube2.json.gz"
+if os.path.exists(cache_file):
+    print("loading cache")
+    with gzip.open(cache_file, "rt") as f:
+        cache=json.load(f)
+else:
+    print("building cache")
+    cache={}
+    for i in range(2000000):
+        if i%20000==0: 
+            print("%d%%"%(i*100/2000000))
+        _cube = np.copy(cube)
+        act = []
+        for _ in range(10):
+            facename = random.choice(list(faces.keys()))
+            clockwise = random.random()>0.5
+            rotateface(_cube, facename, clockwise)
+            act.insert(0,(facename, not clockwise))
+        h = hash(_cube)
+        if h not in cache: 
+            cache[h]=act
+        else:
+            if len(cache[h])>len(act):
+                cache[h]=act
+    with gzip.open(cache_file, "wt") as f:
+        json.dump(cache, f)        
+print("load cache end, size:",len(cache))
 
 # 随机100步打乱
 for i in range(100):
@@ -126,65 +179,45 @@ for i in range(100):
 printcube(cube)
 print("Start ....")
 
-def checkbottom_same(cube):
-    for fn in ["fornt","left","right","back"]:
-        if not cube[faces[fn]][1,0]==cube[faces[fn]][1,1]:
-            return False
-    return True
-
-def checkoneface_same(cube):
-    if not checkbottom_same(cube): 
-        return False
-
-    for fn in ["fornt","left","right","back"]:
-        if (cube[faces[fn]] == cube[faces[fn]][1,0]).all():
-            return True
-        
-    return False
-
-def check_same(cube):
-    if not checkoneface_same(cube):
-        return False
-    
-    for fn in ["fornt","left","right","back"]:
-        if not (cube[faces[fn]]==cube[faces[fn]][1,0]).all():
-            return False
-    return True
-
-for i in range(10000):
-    facename = random.choice(list(faces.keys()))
-    clockwise = random.random()>0.5
-    rotateface(cube, facename, clockwise)
-    if checkbottom_same(cube):
-        print("OKey, Find One !!!")
-        break
-printcube(cube)
-
-for i in range(10000):
+find=False
+max_count = 0
+act = []
+for _ in range(100000):
     _cube = np.copy(cube)
-    find = False
-    for i in range(20):
+    _act = [a for a in act]
+    for _ in range(20):
         facename = random.choice(list(faces.keys()))
         clockwise = random.random()>0.5
         rotateface(_cube, facename, clockwise)
-        if checkoneface_same(_cube):
-            print("OKey, Find Two !!!")
-            find = True
+        _act.append((facename, clockwise))
+        h = hash(_cube)
+        if h in cache:
+            print("cache find !!!")
+            find=True
+            printcube(_cube)
+            for facename, clockwise in cache[h]:
+                rotateface(_cube, facename, clockwise)
+                _act.append((facename, clockwise))
+            cube = np.copy(_cube)
+            act = _act
+            break
+        _max_count = checksame(_cube)
+        if _max_count>max_count:
+            cube = np.copy(_cube)
+            max_count = _max_count
+            print(max_count)
+            printcube(cube)
+            act = _act
+            if max_count==24: 
+                print("find !!!")
+                find=True
             break
     if find: break
-printcube(_cube)
 
-for i in range(10000):
-    __cube = np.copy(_cube)
-    find = False
-    for i in range(20):
-        facename = random.choice(list(faces.keys()))
-        clockwise = random.random()>0.5
-        rotateface(__cube, facename, clockwise)
-        if check_same(__cube):
-            print("OKey, Find !!!")
-            find = True
-            break
-    if find: break
+if not find:
+    print("fail .")
+else:
+    print(len(act),act)
+    printcube(cube)
 
-printcube(__cube)    
+
