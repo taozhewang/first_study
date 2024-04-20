@@ -189,6 +189,8 @@ def print_board(board, player, pointer):
                     print(chr(1093), sep = '', end = ' ' * 4)
                 elif column == 2:
                     print(chr(916), sep = '', end = ' ' * 4)
+                else:
+                    print(chr(1044), sep = '', end = ' ' * 4)
             print('\n')
         elif player == 2 and row == pointer[0]:
             for column in board[row]:
@@ -198,6 +200,8 @@ def print_board(board, player, pointer):
                     print(chr(1093), sep = '', end = ' ' * 4)
                 elif column == 2:
                     print(chr(916), sep = '', end = ' ' * 4)
+                else:
+                    print(chr(1044), sep = '', end = ' ' * 4)
             print('\n', ' ' * (pointer[1] * 5), chr(9651), sep = '')
         else:
             for column in board[row]:
@@ -207,16 +211,29 @@ def print_board(board, player, pointer):
                     print(chr(1093), sep = '', end = ' ' * 4)
                 elif column == 2:
                     print(chr(916), sep = '', end = ' ' * 4)
+                else:
+                    print(chr(1044), sep = '', end = ' ' * 4)
             print('\n')
 
     return None
-
+def obstacles(board, number):
+    width = np.size(board, 0)
+    length = np.size(board, 1)
+    for i in range(number):
+        row = np.random.choice(range(1, width // 2))
+        column = np.random.choice(range(length))
+        board[row, column] = 3
+    for i in range(number):
+        row = np.random.choice(range(width // 2, width - 1))
+        column = np.random.choice(range(length))
+        board[row, column] = 3   
+    return board
 # print_board(a, np.array([2, 3]), 2)
 # for i in range(1000):
 #     print(chr(i + 2000), end = ' ')
-# print(ord('▽'))
+# print(ord('Д'))
 # ╳ ~ 9587
-# Δ ~ 916 х ~ 1093 ◻ ~ 9723 ▽ ~ 9961 △ ~ 9651
+# Δ ~ 916 х ~ 1093 ◻ ~ 9723 ▽ ~ 9961 △ ~ 9651 Д ~ 1044
 
 
 def available(board, player):
@@ -295,6 +312,7 @@ def game_over(board):
         return False
 def start():
     board = board_generate(11, 13)
+    board = obstacles(board, 15)
     player = 1
     while True:
         if game_over(board):
