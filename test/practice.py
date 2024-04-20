@@ -162,3 +162,148 @@
 #                 # yes.append(i)
 #         return (num - start) / num
 # print(bi_decomposition(sqrt(2) - 1))
+
+# game
+import numpy as np
+a = np.array([[0, 0, 1, 1, 1, 0, 1], 
+              [1, 2, 1, 1, 2, 2, 2],
+              [2, 2, 2, 1, 0, 0, 0],
+              [0, 0, 0, 1, 0, 0, 1],
+              [2, 0, 2, 1, 1, 2, 2],
+              [0, 0, 0, 0, 0, 0, 0],
+              [0, 1, 0, 0, 0, 0, 0]])
+
+def board_generate(width, length):
+    board = np.zeros((width, length), dtype = np.uint32)
+    board[0, length // 2] = 1
+    board[width - 1, length // 2] = 2
+    return board
+def print_board(board, player, pointer):
+    for row in range(np.size(board, 0)):
+        if player == 1 and row == pointer[0]:
+            print(' ' * (pointer[1] * 5), chr(9661), sep = '')
+            for column in board[row]:
+                if column == 0:
+                    print(chr(9723), sep = '', end = ' ' * 4)
+                elif column == 1:
+                    print(chr(1093), sep = '', end = ' ' * 4)
+                elif column == 2:
+                    print(chr(916), sep = '', end = ' ' * 4)
+            print('\n')
+        elif player == 2 and row == pointer[0]:
+            for column in board[row]:
+                if column == 0:
+                    print(chr(9723), sep = '', end = ' ' * 4)
+                elif column == 1:
+                    print(chr(1093), sep = '', end = ' ' * 4)
+                elif column == 2:
+                    print(chr(916), sep = '', end = ' ' * 4)
+            print('\n', ' ' * (pointer[1] * 5), chr(9651), sep = '')
+        else:
+            for column in board[row]:
+                if column == 0:
+                    print(chr(9723), sep = '', end = ' ' * 4)
+                elif column == 1:
+                    print(chr(1093), sep = '', end = ' ' * 4)
+                elif column == 2:
+                    print(chr(916), sep = '', end = ' ' * 4)
+            print('\n')
+
+    return None
+
+# print_board(a, np.array([2, 3]), 2)
+# for i in range(1000):
+#     print(chr(i + 2000), end = ' ')
+# print(ord('▽'))
+# ╳ ~ 9587
+# Δ ~ 916 х ~ 1093 ◻ ~ 9723 ▽ ~ 9961 △ ~ 9651
+
+
+def available(board, player):
+    # player is 1 or 2
+    place = np.where(board == player)
+    place = list(zip(place[0], place[1]))
+    return place
+def nullplace(board):
+    place = np.where(board == 0)
+    place = list(zip(place[0], place[1]))
+    return place
+# print(available(a, 1))
+def choose_block(board, player):
+    width, length = np.size(board, 0), np.size(board, 1)
+    if player == 1:
+        pointer = np.array([0, length // 2])
+    elif player == 2:
+        pointer = np.array([width - 1, length // 2])
+    available_place = available(board, player)
+    while True:
+        print_board(board, player, pointer)
+        av_move = ['y']
+        # print(pointer)
+        if (pointer[0] - 1, pointer[1]) in available_place:
+            av_move.append('w')
+        if (pointer[0] + 1, pointer[1]) in available_place:
+            av_move.append('s')
+        if (pointer[0], pointer[1] - 1) in available_place:
+            av_move.append('a')
+        if (pointer[0], pointer[1] + 1) in available_place:
+            av_move.append('d')
+        # print(av_move)
+        action = input(f'choose actions! {av_move}, \n')
+        if action == 'y':
+            return pointer
+        elif action in av_move:
+            if action == 'w':
+                pointer = pointer + np.array([-1, 0])
+            elif action == 'a':
+                pointer = pointer + np.array([0, -1])
+            elif action == 's':
+                pointer = pointer + np.array([1, 0])
+            elif action == 'd':
+                pointer = pointer + np.array([0, 1]) 
+        elif action not in av_move:
+            print('not available place')
+        else:
+            print('please put in "w" / "a" / "s" / "d" / "y" (without "")')
+# choose_block(a, 1)
+def paint_block(board, player, pointer):
+    null_space = nullplace(board)
+    for i in range(-1, 2):
+        for j in range(-1, 2):
+            if (pointer[0] + i, pointer[1] + j) in null_space:
+                board[pointer[0] + i, pointer[1] + j] = player
+    # print_board(board, player, np.array([100, 100]))
+    return board
+
+def score(board, player):
+    place = np.where(board == player)
+    place = list(zip(place[0], place[1]))
+    return len(place)
+def game_over(board):
+    null_place = nullplace(board)
+    if null_place == []:
+        player1 = score(board, 1)
+        player2 = score(board, 2)
+        if player1 == player2:
+            print('Game over, everyone is the winner!')
+        elif player1 > player2:
+            print('Game over, player1 is the winner!')
+        else:
+            print('Game over, player2 is the winner!')
+        return True
+    else:
+        return False
+def start():
+    board = board_generate(11, 13)
+    player = 1
+    while True:
+        if game_over(board):
+            return None
+
+        pointer = choose_block(board, player)
+        board = paint_block(board, player, pointer)
+        if player == 1:
+            player = 2
+        else:
+            player = 1
+start()
