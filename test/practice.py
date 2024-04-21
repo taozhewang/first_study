@@ -322,7 +322,7 @@ def tarrain(n, r):
     h[0: r, (n // 2) * r : (n // 2 + 1) * r] = plain(r)
     h[(n - 1) * r: n * r, (n // 2) * r : (n // 2 + 1) * r] = plain(r)
     h[0, (n * r) // 2], h[(n * r - 1), (n * r) // 2] = 1, 2
-    print(h)
+    # print(h)
     return h
 
 # for i in range(1000):
@@ -409,7 +409,7 @@ def let_over():
     else:
         return False
 def start():
-    board = tarrain(5, 6)
+    board = tarrain(3, 6)
     board = obstacles(board, 15)
     player = 1
     while True:
