@@ -204,7 +204,7 @@ def tarrain(n, r, kind):
     elif kind == 'marsh':
         for row in range(n):
             for column in range(n):
-                name = np.random.choice([river, lake, rockylake])
+                name = np.random.choice([river, lake, rockylake], p = [0.2, 0.3, 0.5])
                 t = name(r)
                 if column == 0:
                     m = copy.deepcopy(t)
@@ -238,7 +238,7 @@ def tarrain(n, r, kind):
     elif kind == 'navigation':
         for row in range(n):
             for column in range(n):
-                name = np.random.choice([sea, island])
+                name = np.random.choice([sea, island, rockylake], p = [0.4, 0.5, 0.1])
                 t = name(r)
                 if column == 0:
                     m = copy.deepcopy(t)
@@ -368,7 +368,7 @@ def let_over():
     else:
         return False
 def start():
-    k = input('which kind of map do you want? \n 1:shores and hills; 2:mountains; \n 3:marsh; 4:miniworld; \n 5:navigation; 6:chaos; \n else:superplain, \n choose a number to enter').strip()
+    k = input('which kind of map do you want? \n 1:shores and hills; 2:mountains; \n 3:marsh(recommended); 4:miniworld; \n 5:navigation; 6:chaos; \n else:superplain, \n choose a number to enter').strip()
     if k == '1':
         kind = 'shores and hills'
     elif k == '2':
@@ -383,7 +383,7 @@ def start():
         kind = 'chaos'
     else:
         kind = 'Ciallo~(∠·ω<)⌒★'
-    board = tarrain(7, 6, kind)
+    board = tarrain(5, 5, kind)
     # board = obstacles(board, 15)
     player = 1
     while True:

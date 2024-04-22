@@ -15,17 +15,17 @@ RV = norm(loc = mu, scale = sigma)
 def expectation(RV, k):
     def f(x):
         pdf = RV.pdf
-        return ((x - k) ** 2) * pdf(x)
+        return (np.maximum((x - k), 0)) * pdf(x)
     return quad(f, -np.inf, np.inf)
-# print('1.1:', expectation(RV, 2))
+# print('1.1:', expectation(RV, 0.4))
 
 def mc_expectation(RV, k, N):
     I = np.ones(N)
     for j in range(1, N + 1):
         X = RV.rvs(j)
-        I[j - 1] = sum((X - k) ** 2) / j
+        I[j - 1] = sum(np.maximum((X - k), 0)) / j
     return I
-# print('1.2:', mc_expectation(RV, 2, 10))
+# print('1.2:', mc_expectation(RV, 0.4, 20))
 
 def plot_mc_convergence(RV, k, N):
     x = np.arange(N)
@@ -39,7 +39,7 @@ def plot_mc_convergence(RV, k, N):
     plt.xlabel('x')
     plt.ylabel('y')
     plt.show()
-# plot_mc_convergence(RV, 2, 10000)
+# plot_mc_convergence(RV, 0.4, 1000)
 
 # Quantile
 def quantile00(RV, u = 0.5):
@@ -58,7 +58,7 @@ def compare_speed_ig(u):
              timeit.timeit(f'scipy.stats.norminvgauss(0.5, 0.2).ppf({u})', number = 1000, globals = globals()))
 # print(compare_speed_nm(0.5))
 # print(compare_speed_st(0.5))
-# # print(compare_speed_ig(0.5))
+# print(compare_speed_ig(0.5))
 def empirical(N, u):
     def em_quantile(N, u):
         Y = np.ones(N - 1)
@@ -87,20 +87,20 @@ def AVaR0(RV, alpha):
 def AVaR1(RV, alpha):
     def f(x):
         def g(y):
-            return ((y - x) ** 2) * RV.pdf(y)
+            return (np.maximum((y - x), 0)) * RV.pdf(y)
         result, err = quad(g, -np.inf, np.inf)
         return result / alpha + x
     return minimize(f, x0 = 0)
 def AVaR2(RV, alpha):
     def f(x):
-        return (x - RV.ppf(1 - alpha) ** 2) * RV.pdf(x)
+        return np.maximum((x - RV.ppf(1 - alpha)), 0) * RV.pdf(x)
     result, err =quad(f, -np.inf, np.inf)
     return RV.ppf(1 - alpha) + result / alpha
 # a1 = AVaR0(RV, alpha)
 # a2 = AVaR1(RV, alpha)
 # a3 = AVaR2(RV, alpha)
 # print(a1, a2, a3, sep = '\n')
-# print(a1, a2)
+
 N = 1000
 X = RV.rvs(N)
 def mc_AVaR0(X, alpha):
@@ -110,14 +110,14 @@ def mc_AVaR0(X, alpha):
     return result / alpha, err / alpha
 def mc_AVaR1(X, alpha):
     def f(x):
-        return x + sum((X - x) ** 2) / (len(X) * alpha)
+        return x + sum(np.maximum((X - x), 0)) / (len(X) * alpha)
     return minimize(f, x0 = 0)
 def mc_AVaR2(X, alpha):
     def f(x):
         N = 1000
         X = RV.rvs(N)
         return np.quantile(X, x)
-    return f(1 - alpha) + sum((X - f(1 - alpha)) ** 2) / (len(X) * alpha)
+    return f(1 - alpha) + sum(np.maximum((X - f(1 - alpha)), 0)) / (len(X) * alpha)
 # ma1 = mc_AVaR0(np.random.random(N), alpha)
 # ma2 = mc_AVaR1(np.random.random(N), alpha)
 # ma3 = mc_AVaR2(np.random.random(N), alpha)
@@ -151,11 +151,11 @@ def mc_AVaR0_dim2(X, alpha):
 # print(mc_AVaR0_dim2(X, alpha))
 def mc_AVaR1_dim2(X, alpha):
     def f(x):
-        return x + sum((X - x) ** 2) / (alpha * len(X))
+        return x + sum(np.maximum((X - x), 0)) / (alpha * len(X))
     return minimize(f, x0 = 0.5)
 # print(mc_AVaR1_dim2(X, alpha))
 def mc_AVaR2_dim2(X, alpha):
-    return np.quantile(X, 1 - alpha) + (sum(X - np.quantile(X, 1 - alpha) ** 2)) / (alpha * len(X))
+    return np.quantile(X, 1 - alpha) + (sum(np.maximum(X - np.quantile(X, 1 - alpha), 0))) / (alpha * len(X))
 # print(mc_AVaR2_dim2(X, alpha))
 #case 5
 mu = np.array([0.2, 0.5, -0.1, 0, 0.6])
@@ -177,9 +177,9 @@ def mc_AVaR0_dim5(X, alpha):
 # print(mc_AVaR0_dim2(X, alpha))
 def mc_AVaR1_dim2(X, alpha):
     def f(x):
-        return x + sum((X - x) ** 2) / (alpha * len(X))
+        return x + sum(np.maximum((X - x), 0)) / (alpha * len(X))
     return minimize(f, x0 = 0.5)
 # print(mc_AVaR1_dim2(X, alpha))
 def mc_AVaR2_dim2(X, alpha):
-    return np.quantile(X, 1 - alpha) + (sum(X - np.quantile(X, 1 - alpha) ** 2)) / (alpha * len(X))
+    return np.quantile(X, 1 - alpha) + (sum(np.maximum(X - np.quantile(X, 1 - alpha), 0))) / (alpha * len(X))
 # print(mc_AVaR2_dim2(X, alpha))
