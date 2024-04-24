@@ -1,63 +1,63 @@
-#%%
-# cutoff
-import numpy as np
-import copy
-# L 为目标，type 为 dict
-# l 为原料
-# attention: L 必须升序排列，不然第三部分会出错（代码是默认升序写的）
-L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
-l = 12000
-need = np.array([[852, 660, 162]])
+# #%%
+# # cutoff
+# import numpy as np
+# import copy
+# # L 为目标，type 为 dict
+# # l 为原料
+# # attention: L 必须升序排列，不然第三部分会出错（代码是默认升序写的）
+# L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
+# l = 12000
+# need = np.array([[852, 660, 162]])
 
-def decom(l, L):
-    # 第一步
-    def count_decomposition1(l, L, count, pointer):
-        L_keys = list(L.keys())
-        L_values = list(L.values())
-        if len(L_keys) == pointer:
-            return [count]
-        elif l < L_values[pointer]:
-            return count_decomposition1(l, L, count, pointer + 1)
-        else:
-            return count_decomposition1(l - L_values[pointer], L, count + [L_keys[pointer]],
-                                        pointer) + count_decomposition1(l, L, count, pointer + 1)
-    result1 = count_decomposition1(l, L, [], 0)
-    # 防止出现[]的情况
-    del result1[len(result1) - 1]
-    print(result1)
+# def decom(l, L):
+#     # 第一步
+#     def count_decomposition1(l, L, count, pointer):
+#         L_keys = list(L.keys())
+#         L_values = list(L.values())
+#         if len(L_keys) == pointer:
+#             return [count]
+#         elif l < L_values[pointer]:
+#             return count_decomposition1(l, L, count, pointer + 1)
+#         else:
+#             return count_decomposition1(l - L_values[pointer], L, count + [L_keys[pointer]],
+#                                         pointer) + count_decomposition1(l, L, count, pointer + 1)
+#     result1 = count_decomposition1(l, L, [], 0)
+#     # 防止出现[]的情况
+#     del result1[len(result1) - 1]
+#     print(result1)
 
-    # 第二步
-    def count_decomposition2(l, L, count, pointer):
-        L_keys = list(L.keys())
-        L_values = list(L.values())
-        if l < 0:
-            return [count]
-        elif pointer == len(L_keys) - 1:
-            return count_decomposition2(l - L_values[pointer], L, count + [L_keys[pointer]], pointer)
-        else:
-            return count_decomposition2(l - L_values[pointer], L, count + [L_keys[pointer]],
-                                        pointer) + count_decomposition2(l, L, count, pointer + 1)
-    result2 = count_decomposition2(l, L, [], 0)
-    print(result2)
+#     # 第二步
+#     def count_decomposition2(l, L, count, pointer):
+#         L_keys = list(L.keys())
+#         L_values = list(L.values())
+#         if l < 0:
+#             return [count]
+#         elif pointer == len(L_keys) - 1:
+#             return count_decomposition2(l - L_values[pointer], L, count + [L_keys[pointer]], pointer)
+#         else:
+#             return count_decomposition2(l - L_values[pointer], L, count + [L_keys[pointer]],
+#                                         pointer) + count_decomposition2(l, L, count, pointer + 1)
+#     result2 = count_decomposition2(l, L, [], 0)
+#     print(result2)
 
-    # 第三步
-    result3_medium = count_decomposition1(2 * l, L, [], 0)
-    # 防止出现不能由尾料减尾尾料得到的组合
-    l1 = min(len(l) for l in result1)
-    l2 = min(len(l) for l in result2)
-    l3 = l1 + l2
-    result3 = []
-    for i in result3_medium:
-        if len(i) >= l3 and i not in result2:
-            result3.append(i)
-    print(result3)
-    return result1, result2, result3
-# decom(l, L)
+#     # 第三步
+#     result3_medium = count_decomposition1(2 * l, L, [], 0)
+#     # 防止出现不能由尾料减尾尾料得到的组合
+#     l1 = min(len(l) for l in result1)
+#     l2 = min(len(l) for l in result2)
+#     l3 = l1 + l2
+#     result3 = []
+#     for i in result3_medium:
+#         if len(i) >= l3 and i not in result2:
+#             result3.append(i)
+#     print(result3)
+#     return result1, result2, result3
+# # decom(l, L)
 
-# 返回：所有可能出现的组合
-#%%
-l = 12000
-L = {'L1' : 4170, 'L2' : 4350, 'L3' : 4700}
+# # 返回：所有可能出现的组合
+# #%%
+# l = 12000
+# L = {'L1' : 4170, 'L2' : 4350, 'L3' : 4700}
 
 # def decom_quant(l, L):
 #     ways = {}
@@ -233,6 +233,8 @@ K = {0: [1, 3, 4], 1: [5, 2, 4], 2: [1, 9, 1],
 # # rrresult = find_min(L, need, result, rresult)
 # # print(rrresult)
 #%%
+import numpy as np
+import copy
 l = 12000
 L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
 need = np.array([852, 658, 162])
@@ -283,7 +285,7 @@ def decom_pattern(l, L):
 count = 0
 result = {}
 # here we can change the range
-for i in range(1, 9):
+for i in range(1, 11):
     k = decom_pattern(i * l, L)
     for r in k.values():
         result[count] = r
@@ -428,3 +430,51 @@ def find_min1():
     return more
 m = find_min1()
 print(m)
+
+#%%
+def decom(l, L):
+# 第一步：从L中允许重复取样，只要满足L的总size小于l的组合   
+    result1 = set()
+    def count_decomposition1(dst_dict, temp_sum, temp_combo, max_sum, result):
+    # 如果当前和大于 max_sum,则剪枝
+        if temp_sum > max_sum:
+            return
+        # 如果当前和大于0,则将当前组合添加到结果中,并去重
+        if temp_sum>0:
+            result.add(tuple(sorted(temp_combo)))
+        # 回溯
+        for key in L:
+            temp_combo.append(key)
+            count_decomposition1(dst_dict, temp_sum + L[key], temp_combo, max_sum, result)
+            temp_combo.pop()
+    count_decomposition1(L, 0, [], l, result1)
+    print(result1)
+
+    result2 = set()
+    def count_decomposition2(dst_dict, temp_sum, temp_combo, max_sum, result):
+    # 如果当前和大于 max_sum,则加入并剪枝
+        if temp_sum > max_sum:
+            result.add(tuple(sorted(temp_combo)))
+            return
+        # 回溯
+        for key in L:
+            temp_combo.append(key)
+            count_decomposition2(dst_dict, temp_sum + L[key], temp_combo, max_sum, result)
+            temp_combo.pop()
+    count_decomposition2(L, 0, [], l, result2)
+    print(result2)
+
+
+    # 第三步：从L中允许重复取样，找出所有满足L的总size小于2*l的组合
+    result3_medium = set()
+    count_decomposition1(L, 0, [], 2*l, result3_medium)
+    print(result3_medium)
+
+    # 防止出现不能由尾料减尾尾料得到的组合
+    result3 = set()
+    for r in result3_medium:
+        if r not in result1 and r not in result2:
+            result3.add(r)
+    print(result3)
+    return result1, result2, result3
+decom(l, L)
