@@ -38,7 +38,7 @@ class Agent:
         assert len(self.dst_nums) == len(self.dst_lengths), "输出长度的个数必需和输出种类一致"
         assert len(self.dst_nums) <= self.max_dst_nums, "输出种类个数必需小于最大允许种类" 
 
-    # 获得可以走的动作列表
+    # 获得可以执行的动作列表,动作列表的索引为目标钢筋的索引，第一段值表示可以执行裁剪动作，第二段值表示可以执行拼接动作
     def get_actions(self):
         # 可用动作列表 0 无法执行 1 可执行
         self.available_actions = np.zeros(2*self.max_dst_nums, dtype=int) 
@@ -54,11 +54,14 @@ class Agent:
             # 目标钢筋长度
             dst_length = self.dst_lengths[i]
             find=False
+            # 找到可以拼接的钢筋，即至少有2个钢筋，且长度需要小于目标钢筋长度并且最小尺寸需要大于200
+            can_combination = [line for line in self.unused_lines if line>=200 and line<dst_length]
+            if len(can_combination)<2: continue
             # 枚举所有可能的组合包括2-3个钢筋
             for k in range(2, 4):
-                for combination in combinations(self.unused_lines, k):
-                    # 组合长度大于等于目标钢筋长度, 且组合中钢筋长度大于200
-                    if sum(combination)>=dst_length and min(combination)>200:
+                for combination in combinations(can_combination, k):
+                    # 组合长度大于等于目标钢筋长度
+                    if sum(combination)>=dst_length:
                         find=True
                         break
                 if find:
@@ -106,11 +109,13 @@ class Agent:
         else:
             find=False
             # 枚举所有可能的组合包括2-3个钢筋
-            for i in range(2, 4):
-                for combination in combinations(self.unused_lines, i):
+            # 首先需要找到可以拼接的钢筋，即至少有2个钢筋，且长度需要小于目标钢筋长度并且最小尺寸需要大于200
+            can_combination = [line for line in self.unused_lines if line>=200 and line<dst_length]
+            for k in range(2, 4):
+                for combination in combinations(can_combination, k):
                     # 组合长度大于等于目标钢筋长度,并且最小尺寸需要大于200
                     combination_size = sum(combination)
-                    if combination_size>=dst_length and min(combination)>200:
+                    if combination_size>=dst_length:
                         find=True
                         # 减少目标钢筋数量
                         self.dst_nums[dst_index]-=1
