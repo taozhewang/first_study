@@ -38,7 +38,7 @@ class Agent:
         assert len(self.dst_nums) == len(self.dst_lengths), "输出长度的个数必需和输出种类一致"
         assert len(self.dst_nums) <= self.max_dst_nums, "输出种类个数必需小于最大允许种类" 
 
-    # 获得可以走的动作列表
+    # 获得可以执行的动作列表,动作列表的索引为目标钢筋的索引，第一段值表示可以执行裁剪动作，第二段值表示可以执行拼接动作
     def get_actions(self):
         # 可用动作列表 0 无法执行 1 可执行
         self.available_actions = np.zeros(2*self.max_dst_nums, dtype=int) 
