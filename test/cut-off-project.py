@@ -233,162 +233,162 @@ K = {0: [1, 3, 4], 1: [5, 2, 4], 2: [1, 9, 1],
 # # rrresult = find_min(L, need, result, rresult)
 # # print(rrresult)
 #%%
-import numpy as np
-import copy
-l = 12000
-L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
-need = np.array([852, 658, 162])
-losses1 = 50
-losses2 = 40
-def f():
-    def decom_pattern(l, L):
-        def count_decomposition1(l, L, count, pointer):
-            L_keys = list(L.keys())
-            L_values = list(L.values())
-            # limit the losses
-            if l <= losses1:
-                return [count]
-            elif l < L_values[pointer]:
-                return []
-            elif len(L_keys) == pointer + 1:
-                return count_decomposition1(l - L_values[pointer], L, count + [L_keys[pointer]],
-                                            pointer)
-            else:
-                return count_decomposition1(l - L_values[pointer], L, count + [L_keys[pointer]],
-                                            pointer) + count_decomposition1(l, L, count, pointer + 1)
-        result1 = count_decomposition1(l, L, [], 0)
-        # string -> numbers
-        def scan_result(L, a):
-            Num = []
-            for i in L.keys():
-                num = 0
-                for j in a:
-                    if i == j:
-                        num += 1
-                Num.append(num)
-            return Num
-        # length calculator
-        def quant(l, L, a):
-            for j in a:
-                l = l - L[j]
-            return l
-        # check the length of the left
-        good_pattern = {}
-        count = 0
-        for i in result1:
-            count += 1
-            k = quant(l, L, i)
-            good_pattern[count] = [i, k]
-        # use numbers instead of strings
-        for p in good_pattern.keys():
-            good_pattern[p] = [scan_result(L, good_pattern[p][0]), good_pattern[p][1]]
-        return good_pattern
-    count = 0
-    result = {}
-    # here we can change the range
-    for i in range(1, 11):
-        k = decom_pattern(i * l, L)
-        for r in k.values():
-            result[count] = r
-            count += 1
-    print(result)
-    '''
-    {0: [[1, 3, 4], 50], 1: [[5, 2, 4], 0], 
-    2: [[1, 9, 1], 50], 3: [[8, 3, 3], 50], 
-    4: [[5, 8, 1], 0], 5: [[12, 2, 3], 0], 
-    6: [[8, 9, 0], 50], 7: [[3, 4, 9], 0]}
-    '''
+# import numpy as np
+# import copy
+# l = 12000
+# L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
+# need = np.array([852, 658, 162])
+# losses1 = 50
+# losses2 = 40
+# def f():
+#     def decom_pattern(l, L):
+#         def count_decomposition1(l, L, count, pointer):
+#             L_keys = list(L.keys())
+#             L_values = list(L.values())
+#             # limit the losses
+#             if l <= losses1:
+#                 return [count]
+#             elif l < L_values[pointer]:
+#                 return []
+#             elif len(L_keys) == pointer + 1:
+#                 return count_decomposition1(l - L_values[pointer], L, count + [L_keys[pointer]],
+#                                             pointer)
+#             else:
+#                 return count_decomposition1(l - L_values[pointer], L, count + [L_keys[pointer]],
+#                                             pointer) + count_decomposition1(l, L, count, pointer + 1)
+#         result1 = count_decomposition1(l, L, [], 0)
+#         # string -> numbers
+#         def scan_result(L, a):
+#             Num = []
+#             for i in L.keys():
+#                 num = 0
+#                 for j in a:
+#                     if i == j:
+#                         num += 1
+#                 Num.append(num)
+#             return Num
+#         # length calculator
+#         def quant(l, L, a):
+#             for j in a:
+#                 l = l - L[j]
+#             return l
+#         # check the length of the left
+#         good_pattern = {}
+#         count = 0
+#         for i in result1:
+#             count += 1
+#             k = quant(l, L, i)
+#             good_pattern[count] = [i, k]
+#         # use numbers instead of strings
+#         for p in good_pattern.keys():
+#             good_pattern[p] = [scan_result(L, good_pattern[p][0]), good_pattern[p][1]]
+#         return good_pattern
+#     count = 0
+#     result = {}
+#     # here we can change the range
+#     for i in range(1, 11):
+#         k = decom_pattern(i * l, L)
+#         for r in k.values():
+#             result[count] = r
+#             count += 1
+#     print(result)
+#     '''
+#     {0: [[1, 3, 4], 50], 1: [[5, 2, 4], 0], 
+#     2: [[1, 9, 1], 50], 3: [[8, 3, 3], 50], 
+#     4: [[5, 8, 1], 0], 5: [[12, 2, 3], 0], 
+#     6: [[8, 9, 0], 50], 7: [[3, 4, 9], 0]}
+#     '''
 
-    def accum2():
-        # for calculating how many patterns are used
-        op = []
-        fake_op = copy.deepcopy(result)
-        for i in result.keys():
-            fake_op[i] = 0
-        convert = {}
-        count = 0
-        for i in result.keys():
-            x, y = result[i]
-            # define the loss you want
-            if y <= losses2:
-                op.append(x)
-                convert[count] = i
-                count += 1
-        print(op)
+#     def accum2():
+#         # for calculating how many patterns are used
+#         op = []
+#         fake_op = copy.deepcopy(result)
+#         for i in result.keys():
+#             fake_op[i] = 0
+#         convert = {}
+#         count = 0
+#         for i in result.keys():
+#             x, y = result[i]
+#             # define the loss you want
+#             if y <= losses2:
+#                 op.append(x)
+#                 convert[count] = i
+#                 count += 1
+#         print(op)
 
-        def ratio(op, need):
-            ratio_need = np.array(need / np.sum(need))
-            possibility_list = np.array([])
-            for i in op:
-                ratio_type = np.array(i / np.sum(i))
-                ratio_distance = np.sum((ratio_type - ratio_need) ** 2)
-                possibility_list = np.append(possibility_list, ratio_distance)
-            po1 = 1 / possibility_list ** 4
-            po2 = po1 / np.sum(po1)
-            return po2
-        curr_need = copy.deepcopy(need)
-        while True:
-            r = ratio(op, curr_need)
-            choose = np.random.choice(range(len(op)), p = r)
-            curr_need = curr_need - op[choose]
-            if any(curr_need < 0):
-                return curr_need + op[choose], fake_op
-            fake_op[convert[choose]] += 1
-    left, acc = accum2()
-    print(left, acc)
+#         def ratio(op, need):
+#             ratio_need = np.array(need / np.sum(need))
+#             possibility_list = np.array([])
+#             for i in op:
+#                 ratio_type = np.array(i / np.sum(i))
+#                 ratio_distance = np.sum((ratio_type - ratio_need) ** 2)
+#                 possibility_list = np.append(possibility_list, ratio_distance)
+#             po1 = 1 / possibility_list ** 4
+#             po2 = po1 / np.sum(po1)
+#             return po2
+#         curr_need = copy.deepcopy(need)
+#         while True:
+#             r = ratio(op, curr_need)
+#             choose = np.random.choice(range(len(op)), p = r)
+#             curr_need = curr_need - op[choose]
+#             if any(curr_need < 0):
+#                 return curr_need + op[choose], fake_op
+#             fake_op[convert[choose]] += 1
+#     left, acc = accum2()
+#     print(left, acc)
 
-    accumulator = {}
-    for i in result.keys():
-        accumulator[i] = 0
+#     accumulator = {}
+#     for i in result.keys():
+#         accumulator[i] = 0
 
-    ways = {}
-    def accum3(result, left, accumulator, pointer, countor):
-        null_space = np.where(left > 0)
-        null_number = np.array([result[pointer][0][i] for i in null_space[0]])
-        if all(left <= 0):
-            ways[countor] = accumulator
-            return accumulator
-        elif all(null_number == 0):
-            if pointer < len(result.keys()) - 1:
-                accum3(result, left, accumulator, pointer + 1, countor)
-                return None
-            else:
-                return None
-        elif pointer == len(result.keys()) - 1:
-            ac = copy.deepcopy(accumulator)
-            ac[pointer] += 1
-            l = left - result[pointer][0]
-            accum3(result, l, ac, pointer, countor)
-            return None
-        else:
-            ac = copy.deepcopy(accumulator)
-            ac[pointer] += 1
-            l = left - result[pointer][0]
-            accum3(result, l, ac, pointer, countor)
-            accum3(result, left, accumulator, pointer + 1, countor + 1)
-            None
-    accum3(result, left, accumulator, 0, 0)
-    print(ways)
-    def find_min1():
-        more = []
-        for way in ways.values():
-            total_sum = {}
-            for i in ways.keys():
-                total_sum[i] = way[i] + acc[i]
-            materials = np.array([0 for _ in range(len(need))])
-            waste = 0
-            for i in total_sum.keys():
-                materials += np.array(result[i][0]) * total_sum[i]
-                waste += result[i][1] * total_sum[i]
-            over_produce = materials - need
-            L_length = list(L.values())
-            over_p = 0
-            for i in range(len(over_produce)):
-                over_p += L_length[i] * over_produce[i]
-            more.append(np.array([over_p, waste]))
-        return more
-    m = find_min1()
-    print(m)
+#     ways = {}
+#     def accum3(result, left, accumulator, pointer, countor):
+#         null_space = np.where(left > 0)
+#         null_number = np.array([result[pointer][0][i] for i in null_space[0]])
+#         if all(left <= 0):
+#             ways[countor] = accumulator
+#             return accumulator
+#         elif all(null_number == 0):
+#             if pointer < len(result.keys()) - 1:
+#                 accum3(result, left, accumulator, pointer + 1, countor)
+#                 return None
+#             else:
+#                 return None
+#         elif pointer == len(result.keys()) - 1:
+#             ac = copy.deepcopy(accumulator)
+#             ac[pointer] += 1
+#             l = left - result[pointer][0]
+#             accum3(result, l, ac, pointer, countor)
+#             return None
+#         else:
+#             ac = copy.deepcopy(accumulator)
+#             ac[pointer] += 1
+#             l = left - result[pointer][0]
+#             accum3(result, l, ac, pointer, countor)
+#             accum3(result, left, accumulator, pointer + 1, countor + 1)
+#             None
+#     accum3(result, left, accumulator, 0, 0)
+#     print(ways)
+#     def find_min1():
+#         more = []
+#         for way in ways.values():
+#             total_sum = {}
+#             for i in ways.keys():
+#                 total_sum[i] = way[i] + acc[i]
+#             materials = np.array([0 for _ in range(len(need))])
+#             waste = 0
+#             for i in total_sum.keys():
+#                 materials += np.array(result[i][0]) * total_sum[i]
+#                 waste += result[i][1] * total_sum[i]
+#             over_produce = materials - need
+#             L_length = list(L.values())
+#             over_p = 0
+#             for i in range(len(over_produce)):
+#                 over_p += L_length[i] * over_produce[i]
+#             more.append(np.array([over_p, waste]))
+#         return more
+#     m = find_min1()
+#     print(m)
 # f()
 #%%
 # def decom(l, L):
@@ -522,11 +522,14 @@ def decom(l, L):
             # print(patterns)
         return patterns
     patterns = pattern_oringin(l, L, losses1)
+    '''patterns: {0: [{'L1' : xx, 'L2' : xx, 'L3' : xx}, 0],
+                1: [{'L1' : xx, 'L2' : xx, 'L3' : xx}, 50]}'''
     # print(patterns)
 
     def accum2(result):
         # for calculating how many patterns are used
         op = []
+        # fake_op用于统计在逼近need时所用的pattern的种类及个数
         fake_op = copy.deepcopy(result)
         for key in result:
             fake_op[key] = 0
@@ -551,73 +554,135 @@ def decom(l, L):
             ratio_need = np.array(need / np.sum(need))
             possibility_list = np.array([])
             for i in op:
+                # 提高各组分比例离目标比例最近的pattern被选中的概率
+                # pattern的比例
                 ratio_type = np.array(i / np.sum(i))
+                # pattern比例和目标need比例的距离
                 ratio_distance = np.sum((ratio_type - ratio_need) ** 2)
                 possibility_list = np.append(possibility_list, ratio_distance)
+                '''possibility_list: [0.12809917 0.09141508 0.36264978]'''
+            # 4只是设定的一个参数，可以修改，取4次方只是因为逼近效果好一点
             po1 = 1 / possibility_list ** 4
+            # 将概率调整至和为1的情况
             po2 = po1 / np.sum(po1)
+            '''po2: [1.31134366e-01 1.09466700e-01 1.11207025e-03 1.31846626e-02
+                    6.22324483e-03 6.02589438e-01 1.45555565e-05 1.50820746e-04
+                    1.31134366e-01 4.11999268e-03 8.69783355e-04]'''
             return po2
         curr_need = copy.deepcopy(need)
         while True:
+            # r = po2
             r = ratio(op, curr_need)
+            # 随机选择一个pattern进行叠加
             choose = np.random.choice(range(len(op)), p = r)
+            # 对当前的need进行削减
             curr_need = curr_need - op[choose]
+            # 截止条件：当当前的need出现有小于0的项时，返回前一个need、所用的pattern的种类及个数
             if any(curr_need < 0):
                 return curr_need + op[choose], fake_op
+            # 如果没有到截止条件，则计入选中的pattern
             fake_op[convert[choose]] += 1
     left, acc = accum2(patterns)
+    '''left: [2 0 1], 
+    acc: {0: 0, 1: 22, 2: 0, 3: 0, 4: 29, 5: 0, 6: 0, 7: 2, 8: 0, 9: 1, 
+          10: 0, 11: 29, 12: 0, 13: 0, 14: 19, 15: 0, 16: 0, 17: 0, 18: 0}'''
     print(left, acc)
 
+    # accumulator是统计最终用了多少个pattern用的
     accumulator = {}
-    for i in patterns.keys():
-        accumulator[i] = 0
+    for key in patterns:
+        accumulator[key] = 0
+    '''accumulator: {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 
+                    10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0}'''
 
+
+    # 此处用尾料没那么少的pattern来组合
+    # 在need降低到足够小的时候，使用遍历找出满足need的组合
+    # (还有一种方法，直接将need剩余的项从原料中取，而不依靠pattern)
+    # 组合的方法集合ways
     ways = {}
-    def accum3(result, left, accumulator, pointer, countor):
+    def accum3(result, left, accumulator, pointer, count):
+        '''result: {0: [{'L1' : xx, 'L2' : xx, 'L3' : xx}, 0],
+                    1: [{'L1' : xx, 'L2' : xx, 'L3' : xx}, 50]}'''
         null_space = np.where(left > 0)
-        null_number = np.array([result[pointer][0][i] for i in null_space[0]])
+        '''null_space: (array([0, 2], dtype=int64),)
+            null_space[0]: [0, 2]'''
+        pattern, waste = result[pointer]
+        pattern_values = list(pattern.values())
+        '''pattern: {'L1' : xx, 'L2' : xx, 'L3' : xx}
+            null_number: [xx, xx]'''
+        null_number = np.array([pattern_values[i] for i in null_space[0]])
+        # 当need被减到0以下时，返回组合
         if all(left <= 0):
-            ways[countor] = accumulator
-            return accumulator
+            # 将组合储存进ways里面
+            ways[count] = accumulator
+            return None
+        # 如果出现need = [0, 3, 0]，但pattern = [5, 0, 2]的情况，自动转到下一个
         elif all(null_number == 0):
+            # 如果没有到最后一个，则顺延到下一个pattern
             if pointer < len(result.keys()) - 1:
-                accum3(result, left, accumulator, pointer + 1, countor)
+                accum3(result, left, accumulator, pointer + 1, count)
                 return None
+            # 否则不返回任何值
             else:
                 return None
+        # 如果到最后一个，那么持续减去最后一种pattern
         elif pointer == len(result.keys()) - 1:
             ac = copy.deepcopy(accumulator)
             ac[pointer] += 1
-            l = left - result[pointer][0]
-            accum3(result, l, ac, pointer, countor)
+            l = left - pattern_values
+            accum3(result, l, ac, pointer, count)
             return None
+        # 如果不是最后一个，那么减去当前pattern或顺延到下一个pattern
         else:
             ac = copy.deepcopy(accumulator)
             ac[pointer] += 1
-            l = left - result[pointer][0]
-            accum3(result, l, ac, pointer, countor)
-            accum3(result, left, accumulator, pointer + 1, countor + 1)
-            None
+            l = left - pattern_values
+            accum3(result, l, ac, pointer, count)
+            accum3(result, left, accumulator, pointer + 1, count + 1)
+            return None
     accum3(patterns, left, accumulator, 0, 0)
     print(ways)
+
+    # 统计出所有目前计算得到的组合，并将其用料和尾料显示出来
     def find_min1():
         more = []
+        combination = []
         for way in ways.values():
             total_sum = {}
             for i in ways.keys():
                 total_sum[i] = way[i] + acc[i]
+                '''(for example) 
+                total_sum: {0: 0, 1: 18, 2: 0, 3: 0, 4: 27, 5: 0, 6: 0, 7: 0, 8: 0, 9: 1, 
+                            10: 0, 11: 31, 12: 0, 13: 0, 14: 22, 15: 0, 16: 0, 17: 0, 18: 2}'''
             materials = np.array([0 for _ in range(len(need))])
+            '''materials: [0, 0, 0]'''
             waste = 0
-            for i in total_sum.keys():
-                materials += np.array(patterns[i][0]) * total_sum[i]
-                waste += patterns[i][1] * total_sum[i]
+            for key in total_sum:
+                pattern = patterns[key][0]
+                '''pattern: {'L1': xx, 'L2': xx, 'L3': xx}'''
+                pattern_values = list(pattern.values())
+                '''pattern_values: [xx, xx, xx]'''
+                materials += np.array(pattern_values) * total_sum[key]
+                waste += patterns[key][1] * total_sum[key]
+            # over_produce 指过量的目标
             over_produce = materials - need
+            '''over_produce: [1 4 8]'''
             L_length = list(L.values())
+            '''L_length: [4100, 4350, 4700]'''
+            # 统计过量目标所浪费的长度
             over_p = 0
             for i in range(len(over_produce)):
                 over_p += L_length[i] * over_produce[i]
             more.append(np.array([over_p, waste]))
-        return more
-    m = find_min1()
-    print(m)
+            combination.append(materials)
+        return more, combination
+    x, y= find_min1()
+    # 打印得到的结果
+    ways_set = list(ways.values())
+    statistics = list(zip(ways_set, x))
+    count = 0
+    for i in statistics:
+        print(f'{count + 1}: combination: \n {y[count]} \n remainings: \n {i[1]}')
+        count += 1
 decom(l, L)
