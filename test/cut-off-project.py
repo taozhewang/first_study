@@ -445,7 +445,7 @@ l = 12000
 L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
 need = np.array([552, 658, 462])
 radius = 9
-losses1 = 50
+losses1 = 100
 losses2 = 40
 def decom(l, L):
     # 计算pattern
