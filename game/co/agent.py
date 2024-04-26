@@ -171,7 +171,7 @@ class Agent:
         # 统计未使用的钢筋长度
         unused_line_sum = sum(self.unused_lines)
         # 奖励函数 钢筋直径的平方 * 钢筋长度/1000 * 钢筋重量 * 每吨价格 + 已使用的钢筋接头数量 * 10
-        reward = (self.line_size**2*unused_line_sum/1000*0.00617*2000 + self.used_joints*10+self.ref_reward)/self.ref_reward
+        reward = (self.line_size**2*unused_line_sum/1000*0.00617*2000 + self.used_joints*10)/self.ref_reward
         # if reward<-1: reward = -1
         return reward
     
@@ -215,7 +215,7 @@ if __name__ == '__main__':
         agent.step(action)
             
     reward = agent.get_reward()
-    print("奖励：",reward,(1-reward)*agent.ref_reward)
+    print("奖励：",reward,reward*agent.ref_reward)
     print("剩余钢筋长度：",agent.unused_lines)
     print("已使用的钢筋接头数量：",agent.used_joints)
     print("已使用的钢筋数量：",agent.used_num)

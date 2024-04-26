@@ -87,9 +87,9 @@ class MCTS:
             self.Q[state][action] += (reward - self.Q[state][action]) / self.N[state][action]
             
 if __name__ == "__main__":
-    agent = Agent(line_length=12000, dst_lengths=[4100, 4350, 4700], dst_nums=[552, 658, 462])
-    # agent = Agent(line_length=12000, dst_lengths=[4100, 4350, 4700], dst_nums=[8, 5, 3])
-    mcts = MCTS(num_simulations=100, max_num_steps=1000, cpuct=5)
+    # agent = Agent(line_length=12000, dst_lengths=[4100, 4350, 4700], dst_nums=[552, 658, 462])
+    agent = Agent(line_length=12000, dst_lengths=[4100, 4350, 4700], dst_nums=[55, 65, 46])
+    mcts = MCTS(num_simulations=200, max_num_steps=10000, cpuct=5)
     all_dst_nums=agent.dst_nums_totle    
     while not agent.is_done():
         if agent.step_count%100==0:
@@ -101,7 +101,7 @@ if __name__ == "__main__":
         agent.step(action)
             
     reward = agent.get_reward()
-    print("奖励：",reward,(1-reward)*agent.ref_reward)
+    print("奖励：",reward,reward*agent.ref_reward)
     print("剩余钢筋长度：",agent.unused_lines)
     print("已使用的钢筋接头数量：",agent.used_joints)
     print("已使用的钢筋数量：",agent.used_num)           
