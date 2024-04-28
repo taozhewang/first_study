@@ -443,9 +443,9 @@ import numpy as np
 import copy
 l = 12000
 L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
-need = np.array([552, 658, 462])
+need = np.array([855, 688, 231])
 radius = 9
-losses1 = 100
+losses1 = 60
 losses2 = 40
 def decom(l, L):
     # 计算pattern
@@ -524,7 +524,7 @@ def decom(l, L):
     patterns = pattern_oringin(l, L, losses1)
     '''patterns: {0: [{'L1' : xx, 'L2' : xx, 'L3' : xx}, 0],
                 1: [{'L1' : xx, 'L2' : xx, 'L3' : xx}, 50]}'''
-    # print(patterns)
+    print(patterns)
 
     def accum2(result):
         # for calculating how many patterns are used
@@ -562,9 +562,13 @@ def decom(l, L):
                 possibility_list = np.append(possibility_list, ratio_distance)
                 '''possibility_list: [0.12809917 0.09141508 0.36264978]'''
             # 4只是设定的一个参数，可以修改，取4次方只是因为逼近效果好一点
-            po1 = 1 / possibility_list ** 4
+            m = np.mean(possibility_list) ** 4
+            po1 = 1 / (possibility_list + np.array([m for _ in possibility_list])) ** 4
+            # po1 = 1 / possibility_list ** 4
             # 将概率调整至和为1的情况
+            # print(po1)
             po2 = po1 / np.sum(po1)
+            # print(po2)
             '''po2: [1.31134366e-01 1.09466700e-01 1.11207025e-03 1.31846626e-02
                     6.22324483e-03 6.02589438e-01 1.45555565e-05 1.50820746e-04
                     1.31134366e-01 4.11999268e-03 8.69783355e-04]'''
@@ -577,8 +581,11 @@ def decom(l, L):
             choose = np.random.choice(range(len(op)), p = r)
             # 对当前的need进行削减
             curr_need = curr_need - op[choose]
+            # print(curr_need)
             # 截止条件：当当前的need出现有小于0的项时，返回前一个need、所用的pattern的种类及个数
-            if any(curr_need < 0):
+            if all(curr_need == 0):
+                return curr_need, fake_op
+            elif any(curr_need < 0):
                 return curr_need + op[choose], fake_op
             # 如果没有到截止条件，则计入选中的pattern
             fake_op[convert[choose]] += 1
@@ -685,4 +692,109 @@ def decom(l, L):
     for i in statistics:
         print(f'{count + 1}: combination: \n {y[count]} \n remainings: \n {i[1]}')
         count += 1
-decom(l, L)
+# decom(l, L)
+
+# K = [np.array([5, 2, 4]), np.array([5, 8, 1]), np.array([12,  2,  3]), np.array([3, 4, 9]), 
+#      np.array([12,  8,  0]), np.array([ 3, 10,  6]), np.array([ 1,  0, 17]), np.array([19,  2,  2]),
+#        np.array([10,  4,  8]), np.array([ 3, 16,  3]), np.array([ 1,  6, 14])]
+# J = np.array([4100, 4350, 4700])
+# print((K @ J.T) / 12000)
+
+losses1 = 50
+n = 9 # max multiple of l
+'''patterns: [[[5, 2, 4], [0, 4, 10, 3]], [[number1, number2, number3], [left, ls, cut, paste]]]
+cut, paste: integers
+count: length
+accumulator: [5, 2, 4] ~ the number of L1 L2 L3
+
+'''
+patterns_left = []
+patterns_right = []
+cut = 0
+paste = 0
+count = 0
+accumulator = [0 for _ in L.keys()]
+pointer = 0
+def decomposition1(l, L, n, count, cut, paste, accumulator, pointer):
+    L_values = list(L.values())
+    stage = count // l
+    count += L_values[pointer]
+    Re_stage, Re_end_of_the_stage = count // l, count % l
+    Re_end_of_the_stage = l * (Re_stage + bool(Re_end_of_the_stage)) - count
+    Re_accumulator = copy.deepcopy(accumulator)
+    # print(Re_accumulator, count, Re_stage, Re_end_of_the_stage)
+    if pointer == len(L_values) - 1:
+        # print(Re_accumulator, pointer)
+        if Re_stage == n and Re_end_of_the_stage == 0:
+            Re_accumulator[pointer] += 1
+            patterns_left.append(Re_accumulator)
+            patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
+            return
+        elif Re_stage == n:
+            return
+        else:
+            traverse = bool(Re_end_of_the_stage)
+            cut += traverse
+            paste += (Re_stage - stage + traverse - 1) * (Re_stage - stage)
+            Re_accumulator[pointer] += 1
+            if Re_end_of_the_stage <= losses1:
+                patterns_left.append(Re_accumulator)
+                patterns_right.append([Re_end_of_the_stage, Re_stage + traverse, cut, paste])
+                pointer = 0
+                # print(Re_accumulator, pointer)
+                decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
+            else:
+                decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
+    elif Re_stage == n and Re_end_of_the_stage == 0:
+        Re_accumulator[pointer] += 1
+        patterns_left.append(Re_accumulator)
+        patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
+        return
+    elif Re_stage == n:
+        return
+    else:
+        # print(Re_accumulator, count, Re_stage, Re_end_of_the_stage)
+        decomposition1(l, L, n, count - L_values[pointer], cut, paste, Re_accumulator, pointer + 1)
+        # print(Re_accumulator, count, Re_stage, Re_end_of_the_stage)
+        traverse = bool(Re_end_of_the_stage)
+        cut += traverse
+        paste += (Re_stage - stage + traverse - 1) * (Re_stage - stage)
+        Re_accumulator[pointer] += 1
+        if Re_end_of_the_stage <= losses1:
+            patterns_left.append(Re_accumulator)
+            patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
+            pointer = 0
+            # print(Re_accumulator, pointer)
+            decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
+        else:
+            # print(Re_accumulator, count, Re_stage, Re_end_of_the_stage)
+            decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
+            # print(Re_accumulator, pointer)
+decomposition1(l, L, n, count, cut, paste, accumulator, pointer)
+print(patterns_left, patterns_right, sep = '\n')
+def patterns_simplify(patterns_left, patterns_right):
+    patterns_left_plus, patterns_right_plus = [], []
+    k = len(patterns_left)
+    for i in range(k):
+        patl = patterns_left[i]
+        if patl not in patterns_left_plus:
+            patterns_left_plus.append(patl)
+            patterns_right_plus.append(patterns_right[i])
+        else:
+            origin_index = patterns_left_plus.index(patl)
+            cut = patterns_right_plus[origin_index][2]
+            if patterns_right[i][2] < cut:
+                patterns_left_plus.pop(origin_index)
+                patterns_right_plus.pop(origin_index)
+                patterns_left_plus.append(patl)
+                patterns_right_plus.append(patterns_right[i])
+    patterns = list(zip(patterns_left_plus, patterns_right_plus))
+    return patterns
+patterns = patterns_simplify(patterns_left, patterns_right)
+print(patterns)
+
+        
+        
+        
+            
+        
