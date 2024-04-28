@@ -163,6 +163,11 @@ def tarrain(n, r, kind):
             column = np.random.choice(range(r))
             rivers[:, column] = 0
         return rivers
+    def ridge(r):
+        ridges= np.zeros((r, r), dtype = np.uint32)
+        pn = np.random.random(1)
+        n = np.pi * pn * 2
+        
     if kind == 'shores and hills':
         for row in range(n):
             for column in range(n):
@@ -383,7 +388,7 @@ def start():
         kind = 'chaos'
     else:
         kind = 'Ciallo~(∠·ω<)⌒★'
-    board = tarrain(5, 5, kind)
+    board = tarrain(6, 5, kind)
     # board = obstacles(board, 15)
     player = 1
     while True:
