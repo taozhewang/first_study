@@ -4,3 +4,4 @@ cached_*
 .vscode/
 .ideas/
 __pycache__/
+temp/

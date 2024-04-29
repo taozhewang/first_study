@@ -1,10 +1,8 @@
 #%%
 import numpy as np
-from collections import Counter
-import itertools
-
-
+from core import pattern_oringin, calc_loss_joint, calc_cost
 import copy
+
 # 原始钢筋长度
 l = 12000
 # 钢筋的规格
@@ -15,13 +13,10 @@ L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
 need = np.array([552, 658, 462])
 
 # 最大的组合数
-radius = 12
+radius = 10
 
 # 组合数最小余料
 losses1 = 50
-
-# 完整匹配的最小余料
-losses2 = 40
 
 '''
 按最小余料，找出最长 radius 的组合，并计算其余料
@@ -30,51 +25,9 @@ idx: 组合的id: [pattern: {} 组合的种类:数量, loss: 组合的余料, jo
 patterns:{idx: [pattern, loss, joint, cost, eer]} 
 '''
 def decom(l, L):
-    # 产生patterns，最低1个组合，因为需要处理尾料
-    def pattern_oringin(l, L, losses1):
-        patterns = {}
-        idx = 0
-        for i in range(1, radius):
-            # 按组合数产生组合
-            combinations = itertools.product(L, repeat=i)
-            for combination in combinations:   
-                # 统计总长度             
-                pattern_length = sum([L[key] for key in combination])
-                # 计算余料
-                loss = pattern_length%l if pattern_length>l else l-pattern_length
-                # 这里过滤余料大于losses1的组合，需要保留为1，2的组合，方便尾料的处理
-                if loss <= losses1 or i < len(L):
-                    # 统计组合中的数量，返回dict {key1:count,key2:count,...}
-                    # 计算接头数量
-                    joint = 0
-                    _l = l
-                    for key in combination:
-                        if _l>=L[key]:
-                            _l -= L[key]
-                        else:
-                            joint += 1
-                            _l += l 
-                    # 计算成本
-                    cost = l_size**2*loss/1000*0.00617*2000 + joint*10
-                    # 计算能效比
-                    eer = cost/len(combination)
-
-                    # 这里的key需要和L的key对应，如果不在组合中，则count为0
-                    combination_counter = Counter(combination)                    
-                    pattern={}
-                    for key in L:
-                        if key in combination_counter:
-                            pattern[key] = combination_counter[key]
-                        else:
-                            pattern[key] = 0
-
-                    # 记录pattern和loss，返回dict {idx: [pattern, loss]}                                                        
-                    patterns[idx]=[pattern, loss, joint, cost, eer]
-                    idx += 1
-        return patterns           
     
     # 求各种组合的列表
-    patterns = pattern_oringin(l, L, losses1)
+    patterns = pattern_oringin(l, L, losses1, radius)
     '''patterns: {0: [{'L1' : xx, 'L2' : xx, 'L3' : xx}, 0,0,0,0],
                 1: [{'L1' : xx, 'L2' : xx, 'L3' : xx}, 50,3,400,100]}'''
     patterns_length = len(patterns)
@@ -201,8 +154,8 @@ def decom(l, L):
             if np.all(left == 0):
                 # 将当前使用方案储存进ways里面，返回
                 ways[count] = accumulator
-                # 限制ways的长度为3，防止内存溢出
-                if len(ways)>=3: return
+                # 限制ways的长度为5，防止内存溢出
+                if len(ways)>=5: return
                 continue
 
             # 如果pointer已经指向最后一个pattern，则跳过
@@ -215,8 +168,8 @@ def decom(l, L):
 
             # 扣减数量
             l = left - pattern_values
-            # 如果扣减后没变或者有负数，则跳过
-            if not np.equal(l, left).all() and not np.any(l < 0): 
+            # 如果有负数，则跳过
+            if not np.any(l < 0): 
                 ac = copy.deepcopy(accumulator)
                 if pointer in ac:
                     ac[pointer] += 1
@@ -267,8 +220,7 @@ def decom(l, L):
     
     x, y= find_min1()
     # 打印得到的结果
-    ways_set = list(ways.values())
-    statistics = list(zip(ways_set, x))
+    statistics = list(zip(y, x))
     count = 0
     for i in statistics:
         print(f'{count + 1}: combination: \n {y[count]} \n loss: {i[1][0]} \n joint: {i[1][1]} \n cost: {i[1][2]}')
