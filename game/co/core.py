@@ -17,7 +17,7 @@ def calc_loss_joint(need_num, l, need_len, l_min=200):
     loss = 0
     joint = 0
     _l = l
-    for i in range(need_num):
+    for i in range(len(need_num)):
         if need_num[i]>0:
             # 依次计算每个钢筋的接头数量和余料
             for j in range(need_num[i]):
