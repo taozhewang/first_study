@@ -18,7 +18,7 @@ l_size = 32
 L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
 # 目标钢筋的数量
 need = np.array([552, 658, 462],dtype=int)
-max_num = np.max(2)
+max_num = 1 #np.max(need)
 
 # 最大的组合长度
 radius = 10
