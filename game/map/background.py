@@ -22,8 +22,8 @@ block_data = pd.DataFrame(columns = block_id,
 # print(block_data)
 
 # floor
-floor_numbers = 2
-floor_kind = ['ground', 'water']
+floor_numbers = 3
+floor_kind = ['ground', 'water', 'rock']
 floor_id = np.arange(floor_numbers)
 floor_data = pd.DataFrame(columns = floor_id, index = ['floor name'], data = [floor_kind])
 # print(floor_data)
@@ -41,5 +41,24 @@ tool_kind = ['weapon', 'weapon', 'weapon', 'weapon', 'shield',
              'armor', 'tool', 'tool', 'tool', 'tool']
 tool_name = ['stick', 'stone', 'sword', 'wand', 'shield', 
              'cuirass', 'hammer', 'axe', 'pickaxe', 'bandage']
-tool_at = [1, 2, 4, 5, 1, 1, 3, 3, 3, -1]
-tool_range = [2, 1, 3, 5, 1, 1, 3, 3, 3, 1]
+tool_at =    [1, 2, 4, 5, 1, 1, 3, 3, 3, -1]
+tool_range = [2, 1, 3, 5, 1, 1, 3, 3, 3,  3]
+tool_id = np.arange(tool_number)
+tool_data = pd.DataFrame(columns = tool_id, 
+                         index = ['tool name', 'tool kind', 'tool AT', 'tool range'], 
+                         data = [tool_name, tool_kind, tool_at, tool_range])
+# print(tool_data)
+
+# creature
+creature_number = 6
+creature_kind = ['tiny monster', 'normal monster', 'huge monster', 'traverser', 'villager', 'soldier']
+creature_hp =    [5, 10, 25, 100, 20, 30]
+creature_df =    [0,  1,  1,   1,  1,  2]
+creature_at =    [1,  1,  3,   1,  1,  2]
+creature_range = [1,  1,  1,   2,  1,  2]
+creature_id = np.arange(creature_number)
+creature_data = pd.DataFrame(columns = creature_id, 
+                             index = ['creature name', 'creature HP', 'creature DF', 'creature AT', 'creature range'],
+                             data = [creature_kind, creature_hp, creature_df, creature_at, creature_range])
+# print(creature_data)
+
