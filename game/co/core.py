@@ -34,8 +34,14 @@ def calc_loss_joint(need_num, l, need_len, l_min=200):
     return loss, joint
 
 # 产生patterns，最低1个组合，最高max_len个组合
-# 计算余料和接头数量，计算成本，计算能效比
-# patterns: 所有组合的列表，每个元素为 [{"L1":count,"L2":count,...}, loss, joint, cost, eer]
+# 计算废料和接头数量，计算成本，计算能效比
+# patterns: 所有组合的辞典，key为索引 每个元素为 [counter, loss, joint, cost, eer, combin]
+# counter : 组合计数 [1,2,0]
+# loss ：废料长度
+# joint： 接头数量
+# cost： 废料+接头的成本
+# err: 能效比 cost/sum(counter)
+# list: 组合列表["L1","L1","L3",....]
 def pattern_oringin(l, L, max_loss, max_len=10, l_min=200, l_size=32):
     '''
     l: 原始钢筋定长
@@ -51,6 +57,7 @@ def pattern_oringin(l, L, max_loss, max_len=10, l_min=200, l_size=32):
         # 按组合数产生组合
         combinations = itertools.product(L, repeat=i)
         for combination in combinations:   
+            combination=list(combination)
             # 计算接头数量和余料
             loss = 0
             # 计算接头数量
@@ -79,14 +86,14 @@ def pattern_oringin(l, L, max_loss, max_len=10, l_min=200, l_size=32):
 
                 # 这里的key需要和L的key对应，如果不在组合中，则count为0
                 combination_counter = Counter(combination)                    
-                pattern={}
-                for key in L:
+                counter=np.zeros(len(L), dtype=int)
+                for i, key in enumerate(L):
                     if key in combination_counter:
-                        pattern[key] = combination_counter[key]
+                        counter[i] = combination_counter[key]
                     else:
-                        pattern[key] = 0
+                        counter[i] = 0
                 
                 # 记录pattern和loss，返回dict {idx: [pattern, loss]}                                                        
-                patterns[idx]=[pattern, loss, joint, cost, eer]
+                patterns[idx]=[counter, loss, joint, cost, eer, combination]
                 idx += 1
     return patterns   
