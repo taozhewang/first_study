@@ -10,7 +10,7 @@ def plain(r, q = 0):
     return plains
 
 def hill(r, density):
-    density = int(density)
+    density = int(density) * 2
     hills = np.zeros((r, r))
     rows = np.random.randint(r, size = density)
     columns = np.random.randint(r, size = density)
@@ -33,10 +33,11 @@ def lake(r, size):
         for column in range(r):
             distance = (row - r / 2) ** 2 + (column - r / 2) ** 2
             k = np.maximum(distance - size ** 2, 0)
-            p_ = 1 / ((k * (k + size)) + 1)
+            p_ = 1 / ((k * (k + size / 2)) + 1)
             lakes[row, column] = np.random.choice([0, 1], p = [1 - p_, p_])
     lakes[r // 2, r // 2] = 3
     return lakes
+
 # print(plain(11), hill(11, 16), mountain(11, 8), lake(11, 9), sep ='\n')
 
 def river(board):
@@ -55,10 +56,10 @@ def river(board):
         last_forward = np.array([random_r, random_c])
         while row > 0 and row < rmax - 1 and column > 0 and column < cmax - 1:
             board[row, column] = 1
-            board[row - 1, column] = np.random.choice([0, 1], p = [0.4, 0.6])
-            board[row + 1, column] = np.random.choice([0, 1], p = [0.4, 0.6])
-            board[row, column - 1] = np.random.choice([0, 1], p = [0.4, 0.6])
-            board[row, column + 1] = np.random.choice([0, 1], p = [0.4, 0.6])
+            board[row - 1, column] = np.random.choice([board[row - 1, column], 1], p = [0.4, 0.6])
+            board[row + 1, column] = np.random.choice([board[row + 1, column], 1], p = [0.4, 0.6])
+            board[row, column - 1] = np.random.choice([board[row, column - 1], 1], p = [0.4, 0.6])
+            board[row, column + 1] = np.random.choice([board[row, column + 1], 1], p = [0.4, 0.6])
 
             h = np.dot(last_forward, f)
             h = np.maximum(h, np.zeros(9))
@@ -70,8 +71,10 @@ def river(board):
             row += forward[0]
             column += forward[1]
             last_forward = forward
-            a = board[np.maximum(row - 1, 0), column] + board[np.minimum(row + 1, rmax - 1), column]
+            a = 0
+            a += board[np.maximum(row - 1, 0), column] + board[np.minimum(row + 1, rmax - 1), column]
             a += board[row, np.maximum(column - 1, 0)] + board[row, np.minimum(column + 1, cmax - 1)]
+            # print(a)
             if a >= 5:
                 break
     return board
@@ -80,7 +83,7 @@ def tarrain_origin(rdim, cdim, r):
     board = np.zeros((rdim * r, cdim * r))
     for row in range(rdim):
         for column in range(cdim):
-            t = np.random.choice([plain, hill, mountain, lake], p = [0.175, 0.325, 0.3, 0.2])
+            t = np.random.choice([plain, hill, mountain, lake], p = [0.175, 0.325, 0.325, 0.175])
             board[row * r : (row + 1) * r, column * r : (column + 1) * r] = t(r, np.sqrt(r))
     return river(board)
 board = tarrain_origin(7, 3, 8)
