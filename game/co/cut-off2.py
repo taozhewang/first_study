@@ -96,7 +96,7 @@ for gen in range(gen_max):
         # 记录最佳适应度个体
         if best_fitnesses > fitnesses[i]:
             best_fitnesses = fitnesses[i]
-            best_individual = individual
+            best_individual = np.copy(individual)
             # 如果最佳个体发生变化，将计数器清零
             nochange_count = 0
 
@@ -140,7 +140,7 @@ for gen in range(gen_max):
         最佳完成度: {best_used} 目标: {need} 变异个数: {best_variation_count}")
     
     # 如果数量达到目标，且20次没有变化，则停止进化
-    if np.all(best_used==need) and nochange_count>20:
+    if np.array_equal(best_used,need) and nochange_count>20:
         print("已完成目标，停止进化")
         break
 

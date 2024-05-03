@@ -33,6 +33,15 @@ def calc_loss_joint(need_num, l, need_len, l_min=200):
     if _l<l: loss += _l
     return loss, joint
 
+# 计算当前组合最终完成的长度
+# solution: [0,...,] 表示选择该种组合的选择数量,长度为patterns的长度
+# patterns: 所有组合的列表，每个元素为 [counter, loss, joint, cost, eer, combin]
+def calc_completion_lenghts(solution, need, patterns):
+    hascut_lengths = np.zeros_like(need)
+    for i in patterns:
+        hascut_lengths += patterns[i][0]*solution[i]
+    return hascut_lengths
+
 # 产生patterns，最低1个组合，最高max_len个组合
 # 计算废料和接头数量，计算成本，计算能效比
 # patterns: 所有组合的辞典，key为索引 每个元素为 [counter, loss, joint, cost, eer, combin]
@@ -97,3 +106,4 @@ def pattern_oringin(l, L, max_loss, max_len=10, l_min=200, l_size=32):
                 patterns[idx]=[counter, loss, joint, cost, eer, combination]
                 idx += 1
     return patterns   
+

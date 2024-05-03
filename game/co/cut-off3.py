@@ -2,7 +2,7 @@
 import numpy as np
 import random
 
-from core import pattern_oringin, calc_loss_joint, calc_cost
+from core import pattern_oringin, calc_loss_joint, calc_cost, calc_completion_lenghts
 
 '''
 用模拟退火算法求解钢筋切割问题
@@ -34,21 +34,11 @@ max_temperature = 1000
 # 退火速率
 cooling_rate = 0.99999
 
-
 # 初始化解
 # patterns_length 组合的长度
 # max_num 最大的组合数量
 def init_solution(patterns_length, max_num):
     return np.random.randint(0, max_num+1, patterns_length)   
-
-# 计算当前组合最终完成的长度
-# solution: [0,...,] 表示选择该种组合的选择数量,长度为patterns的长度
-# patterns: 所有组合的列表，每个元素为 [counter, loss, joint, cost, eer, combin]
-def calc_hascut_lenghts(solution, patterns):
-    hascut_lengths = np.zeros_like(need)
-    for i in patterns:
-        hascut_lengths += patterns[i][0]*solution[i]
-    return hascut_lengths
 
 # 评估函数
 def evaluate(solution, need, patterns):
@@ -76,7 +66,7 @@ print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
 print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合，因为需要处理尾料
 
 # 邻域操作
-def get_neighbor(solution, patterns_length, need, patterns):
+def get_neighbor(solution, patterns_length):
     neighbor = np.copy(solution)
     # 随机选择一个钢筋类别
     index = random.randint(0, patterns_length - 1)
@@ -96,7 +86,7 @@ def simulated_annealing(max_iterations, max_temperature, cooling_rate):
     # 计算当前解的评估值
     current_waste = evaluate(current_solution, need, patterns)
     # 最佳解
-    best_solution = current_solution[:]
+    best_solution = np.copy(current_solution)
     # 最佳解的评估值
     best_waste = current_waste
     # 连续无改进次数
@@ -104,16 +94,17 @@ def simulated_annealing(max_iterations, max_temperature, cooling_rate):
     for i in range(max_iterations):
 
         if i%1000 == 0:
-            best_used = calc_hascut_lenghts(best_solution, patterns)
+            best_used = calc_completion_lenghts(best_solution, need, patterns)
             print(f"{i}: 当前成本={current_waste}, 最佳成本={best_waste}, 最佳完成度: {best_used} 目标: {need}")
             # 如果数量匹配，且连续10000次没有改进，则退出循环
-            if np.all(best_used-need)==0 and nochange_count>10000:
+            if np.array_equal(best_used,need) and nochange_count>10000:
                 print("已达到目标，退出循环")
                 break
         
         nochange_count += 1
-        neighbor = get_neighbor(current_solution,patterns_length, need, patterns)
-
+        # 产生邻域解
+        neighbor = get_neighbor(current_solution,patterns_length)
+        # 计算邻域解的评估值
         neighbor_waste = evaluate(neighbor,need, patterns)
 
         # 计算差距
@@ -123,7 +114,7 @@ def simulated_annealing(max_iterations, max_temperature, cooling_rate):
             current_solution = neighbor
             current_waste = neighbor_waste
             if neighbor_waste < best_waste:
-                best_solution = neighbor
+                best_solution = np.copy(neighbor)
                 best_waste = neighbor_waste
                 nochange_count = 0
         else:
