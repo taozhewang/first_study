@@ -30,7 +30,7 @@ losses1 = 30
 # 最大循环次数
 max_iterations = 1000000
 # 禁忌期限
-tabu_tenure = 100
+tabu_tenure = 200
 
 # 初始化解
 # patterns_length 组合的长度
@@ -87,16 +87,22 @@ def check_tabu(tabu_list, neighbor):
 def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num):
     # 初始解
     tabu_list = []
+    tabu_waste_list = []
+    # 初始解
     current_solution = init_solution(patterns_length, max_num)
-    tabu_list.append(current_solution)
-
     # 初始评估
-    current_waste = np.inf
+    current_waste = evaluate(current_solution, need, patterns)
+    tabu_list.append(current_solution)
+    tabu_waste_list.append(current_waste)   
+
     # 记录最佳解
     best_solution = np.copy(current_solution)
     # 记录最佳解的评估
-    best_waste = current_waste
+    best_waste = np.inf
+    # 记录连续没有改进的次数
     nochange_count = 0
+
+    # 动态调整异动个数
     variation_count = patterns_length//2
     for i in range(max_iterations):
         # 从禁忌表中获得一组邻域解
@@ -104,8 +110,7 @@ def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num):
         # 计算邻域解的评估
         neighbors_waste = [evaluate(neighbor, need, patterns) for neighbor in neighbors]
         # 选择最佳邻域解
-        best_neighbor, best_neighbor_waste = min(zip(neighbors, neighbors_waste), key=lambda x: x[1])
-        avg_waste = sum(neighbors_waste)/len(neighbors_waste)
+        best_neighbor, best_neighbor_waste = min(zip(neighbors, neighbors_waste), key=lambda x: x[1])       
 
         # 禁忌搜索
         # 如果邻域解比最佳解好，更新最佳解
@@ -117,24 +122,27 @@ def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num):
         nochange_count += 1
 
         # 如果邻域解比当前解好，且邻域解不在禁忌表中，则更新当前解
-        if best_neighbor_waste <= current_waste and not check_tabu(tabu_list,best_neighbor):
-            current_solution = best_neighbor
-            current_waste = best_neighbor_waste
-            # 记录最佳解
-            tabu_list.append(best_neighbor)
-            # 限制禁忌表的长度
-            if len(tabu_list) > tabu_tenure:
-                tabu_list.pop(0)
+        avg_waste = sum(tabu_waste_list)/len(tabu_waste_list)
+        for idx, waste in enumerate(neighbors_waste):
+            if waste < avg_waste and not check_tabu(tabu_list, neighbors[idx]):
+                # 记录最佳解
+                tabu_list.append(neighbors[idx])
+                tabu_waste_list.append(waste)
+                # 限制禁忌表的长度,删除掉最差的解
+                if len(tabu_list) > tabu_tenure:
+                    idx = np.argmax(tabu_waste_list)
+                    tabu_list.pop(idx)
+                    tabu_waste_list.pop(idx)
 
         if i % 10 == 0:
             best_used = calc_completion_lenghts(best_solution, need, patterns)
 
             # 动态调整异动个数
-            variation_count = np.sum(np.abs(best_used-need))//10
+            variation_count = np.sum(np.abs(best_used-need))//100
             if variation_count>patterns_length//2: variation_count=patterns_length//2
             if variation_count<2: variation_count=2
 
-            print(f"{i}: 当前成本={current_waste}, 平均邻域成本={avg_waste}, 最佳成本={best_waste}, 最佳完成度: {best_used} 目标: {need} 异动个数: {variation_count}")
+            print(f"{i}: 平均禁忌成本={avg_waste}, 最佳成本={best_waste}, 最佳完成度: {best_used} 目标: {need} 异动个数: {variation_count}")
 
             # 如果数量匹配，且连续100次没有改进，则退出循环
             if np.array_equal(best_used, need) and nochange_count>100:
