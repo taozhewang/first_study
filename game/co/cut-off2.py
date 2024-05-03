@@ -103,8 +103,8 @@ for gen in range(gen_max):
             # 计算需要变异的数量,前期多变异，后期少变异，最低保留2处变异地方
             best_variation_count = np.sum(np.abs(number))
             best_variation_count = best_variation_count//10
-            if best_variation_count<1:
-                best_variation_count=1
+            if best_variation_count<2:
+                best_variation_count=2
 
     nochange_count += 1
     
@@ -127,6 +127,8 @@ for gen in range(gen_max):
             v = 1 if random.random()<0.5 else -1
             for idx in ids:
                 idx = random.randint(0, patterns_length-1)
+                # 如果只剩下2个变异位置，则变异方向随机
+                if best_variation_count==2: v = 1 if random.random()<0.5 else -1
                 offspring[i][idx] += v
                 if offspring[i][idx] < 0: offspring[i][idx] = 0
 
@@ -134,11 +136,11 @@ for gen in range(gen_max):
     population = np.array(offspring)
     best_used = calc_hascut_lenghts(best_individual, patterns)
 
-    print(f"进化次数：{gen}, 当前最低适应度(成本)：{np.min(fitnesses)}, 平均适应度(成本)：{np.mean(fitnesses)},\
+    print(f"进化次数：{gen}, 最低适应度(成本)：{best_fitnesses}, 平均适应度(成本)：{np.mean(fitnesses)},\
         最佳完成度: {best_used} 目标: {need} 变异个数: {best_variation_count}")
     
-    # 如果数量达到目标，且100次没有变化，则停止进化
-    if np.all(best_used==0) and nochange_count>100:
+    # 如果数量达到目标，且20次没有变化，则停止进化
+    if np.all(best_used==need) and nochange_count>20:
         print("已完成目标，停止进化")
         break
 
