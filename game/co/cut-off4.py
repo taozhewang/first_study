@@ -85,25 +85,20 @@ def check_tabu(tabu_list, neighbor):
 
 # 禁忌搜索算法
 def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num):
-    # 初始解
-    tabu_list = []
-    tabu_waste_list = []
-    # 初始解
-    current_solution = init_solution(patterns_length, max_num)
+    # 采用随机初始解
+    tabu_list = [init_solution(patterns_length, max_num) for i in range(tabu_tenure)]
     # 初始评估
-    current_waste = evaluate(current_solution, need, patterns)
-    tabu_list.append(current_solution)
-    tabu_waste_list.append(current_waste)   
+    tabu_waste_list = [evaluate(solution, need, patterns) for solution in tabu_list]
 
     # 记录最佳解
-    best_solution = np.copy(current_solution)
+    best_solution = None
     # 记录最佳解的评估
     best_waste = np.inf
     # 记录连续没有改进的次数
     nochange_count = 0
 
     # 动态调整异动个数
-    variation_count = patterns_length//2
+    variation_count = patterns_length//8
     for i in range(max_iterations):
         # 从禁忌表中获得一组邻域解
         neighbors = [get_neighbor(solution, patterns_length, variation_count) for solution in tabu_list]
@@ -121,13 +116,15 @@ def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num):
             
         nochange_count += 1
 
-        # 如果邻域解比当前解好，且邻域解不在禁忌表中，则更新当前解
+        # 如果邻域解比禁忌组的平均成本好，且邻域解不在禁忌表中，则更新禁忌组
         avg_waste = sum(tabu_waste_list)/len(tabu_waste_list)
+        update_count = 0
         for idx, waste in enumerate(neighbors_waste):
             if waste < avg_waste and not check_tabu(tabu_list, neighbors[idx]):
                 # 记录最佳解
                 tabu_list.append(neighbors[idx])
                 tabu_waste_list.append(waste)
+                update_count += 1
                 # 限制禁忌表的长度,删除掉最差的解
                 if len(tabu_list) > tabu_tenure:
                     idx = np.argmax(tabu_waste_list)
@@ -142,7 +139,7 @@ def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num):
             if variation_count>patterns_length//2: variation_count=patterns_length//2
             if variation_count<2: variation_count=2
 
-            print(f"{i}: 平均禁忌成本={avg_waste}, 最佳成本={best_waste}, 最佳完成度: {best_used} 目标: {need} 异动个数: {variation_count}")
+            print(f"{i}: 禁忌组平均成本:{avg_waste}, 更新个数:{update_count}, 最佳成本:{best_waste}, 最佳完成度: {best_used} 目标: {need} 异动个数: {variation_count}")
 
             # 如果数量匹配，且连续100次没有改进，则退出循环
             if np.array_equal(best_used, need) and nochange_count>100:
