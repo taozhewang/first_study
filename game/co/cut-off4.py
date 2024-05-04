@@ -91,9 +91,6 @@ def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num):
     tabu_list = np.array([init_solution(patterns_length, max_num) for i in range(tabu_tenure)])
     tabu_waste_list = evaluate(tabu_list, need, patterns_lengths, patterns_costs)
 
-    # # 初始评估
-    # tabu_waste_list = [evaluate(solution, need, patterns_lengths, patterns_costs) for solution in tabu_list]
-
     # 记录最佳解
     best_solution = None
     # 记录最佳解的评估
