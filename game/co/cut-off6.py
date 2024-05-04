@@ -7,6 +7,9 @@ from core import pattern_oringin, calc_cost_by_unmatched, calc_cost, calc_comple
 '''
 用麻雀算法（粒子群算法）求解钢筋切割问题
 
+废料长度: 227100
+接头数量: 418
+总成本: 2873851.936
 '''
 
 # 原始钢筋长度
@@ -75,34 +78,32 @@ for i in range(max_iter):
         # 更新速度和位置
         velocities[j] = velocities[j] + c1 * random.random() * (pbest[j] - population[j]) + \
                         c2 * random.random() * (gbest - population[j])
-        
-        # 加一个扰动，防止粒子陷入局部最优
-        population[j] = population[j] + np.random.rand(patterns_length) * 0.1
-        
+                
         velocities[j] = np.clip(velocities[j], 0, 1)  # 限制速度范围
         if np.all(velocities[j] == 0):  # 随机初始化速度
             velocities[j] = np.random.rand(patterns_length)
 
+        population[j][velocities[j]>0.5] += 1  # 粒子位置更新
         population[j][velocities[j]<0.1] = 0  # 粒子位置更新
-        population[j][velocities[j]>0.1] += 1  # 粒子位置更新
 
         # 更新个体最优
         sol_fitness = fitness(population[j], patterns)
         if sol_fitness < pbest_fitness[j]:
             pbest[j] = population[j].copy()
             pbest_fitness[j] = sol_fitness
-            nochange_count = 0
+            
         # 更新全局最优
         if sol_fitness < gbest_fitness:
             gbest_fitness = sol_fitness
             gbest = population[j].copy()
+            nochange_count = 0
 
     best_used = calc_completion_lenghts(gbest, need, patterns)        
-    print(f"第{i+1}次迭代，局部平均成本: {np.mean(pbest_fitness)}, 最优成本: {gbest_fitness}, 切割方案: {best_used} 目标: {need} ")
+    print(f"第{i+1}次迭代，局部平均成本: {np.mean(pbest_fitness)}, 最佳成本: {gbest_fitness}, 最佳完成度: {best_used} 目标: {need} 停滞次数: {nochange_count}")
 
     nochange_count += 1
     # 如果数量匹配，且连续100次没有改进，则退出循环
-    if np.array_equal(best_used, need) and nochange_count>100:
+    if np.array_equal(best_used, need) and nochange_count>20:
         print("已达到目标，退出循环")
         break          
 
