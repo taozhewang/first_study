@@ -13,7 +13,7 @@ def calc_cost_by_unmatched(need_num, l, need_len, l_size=32):
     need_num: 匹配完毕后剩余未匹配的钢筋数量 = need - sum(solution)
     l: 原始钢筋定长
     need_len: 目标钢筋长度
-    l_min: 最小废料长度
+    l_size: 钢筋的直径
     '''
     loss = 0
     for i in range(len(need_num)):
