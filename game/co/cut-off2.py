@@ -2,10 +2,14 @@
 import numpy as np
 import random
 
-from core import pattern_oringin, calc_loss_joint, calc_cost
+from core import pattern_oringin, calc_cost_by_unmatched
 
 '''
 用遗传算法求解钢筋切割问题
+
+废料长度: 251100
+接头数量: 420
+总成本: 3177139.776
 '''
 
 # 原始钢筋长度
@@ -16,6 +20,7 @@ l_min = 200
 l_size = 32
 # 目标钢筋长度
 L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
+L_values = np.array(list(L.values()))
 # 目标钢筋的数量
 need = np.array([552, 658, 462],dtype=int)
 
@@ -53,14 +58,9 @@ def fitness(individual, patterns):
     # 如果组合的长度不足以切割目标钢筋，这里多匹配和少匹配都算到里面
     bar_lengths = need - hascut_lengths
     # 计算尾料的成本
-    dl=np.array(list(L.values()))
-    loss, joint = calc_loss_joint(bar_lengths, l, dl, l_min)
-    cost += calc_cost(loss, joint, l_size)
-    # 返回适应度和完成距离目标的距离.距离采用绝对值距离*100000倍
-    cost += float(np.sum(np.abs(bar_lengths)))*100000
+    cost += calc_cost_by_unmatched(bar_lengths, l, L_values, l_size)
     # 返回了综合适应度，以及完成距离目标的距离（用于后期调整变异个数） 
     return cost, bar_lengths
-
 
 # 求各种组合的列表
 patterns = pattern_oringin(l, L, losses1, radius)

@@ -6,31 +6,22 @@ import itertools
 def calc_cost(loss, joint, l_size):
     return l_size**2*loss/1000*0.00617*2000 + joint*10
 
-# 按照普通拼接计算长度产生的废料和接头数量
-def calc_loss_joint(need_num, l, need_len, l_min=200):
+# 由剩余未匹配的钢筋数量计算成本
+# 这里直接最大化成本，方便后续的拟合
+def calc_cost_by_unmatched(need_num, l, need_len, l_size=32):
     '''
-    need_num: 目标钢筋数量
+    need_num: 匹配完毕后剩余未匹配的钢筋数量 = need - sum(solution)
     l: 原始钢筋定长
     need_len: 目标钢筋长度
     l_min: 最小废料长度
     '''
     loss = 0
-    joint = 0
-    _l = l
     for i in range(len(need_num)):
-        if need_num[i]>0:
-            # 依次计算每个钢筋的接头数量和余料
-            for j in range(need_num[i]):
-                if _l < need_len[i]:
-                    if _l < l_min:
-                        loss += _l
-                        _l = l
-                    else:
-                        _l += l 
-                        joint += 1
-                _l -= need_len[i]
-    if _l<l: loss += _l
-    return loss, joint
+        if need_num[i]>0:   # 剩余未匹配的钢筋数量
+            loss += float((l-need_len[i])*need_num[i])
+        else:               # 多匹配的钢筋数量
+            loss += float(l*-need_num[i])
+    return calc_cost(loss, 0, l_size)    
 
 # 计算当前组合最终完成的长度
 # solution: [0,...,] 表示选择该种组合的选择数量,长度为patterns的长度

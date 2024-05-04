@@ -2,10 +2,14 @@
 import numpy as np
 import random
 
-from core import pattern_oringin, calc_loss_joint, calc_cost, calc_completion_lenghts
+from core import pattern_oringin, calc_cost_by_unmatched, calc_completion_lenghts
 
 '''
 用模拟退火算法求解钢筋切割问题
+
+废料长度: 311100
+接头数量: 425
+总成本: 3935359.376
 '''
 
 # 原始钢筋长度
@@ -16,6 +20,7 @@ l_min = 200
 l_size = 32
 # 目标钢筋长度
 L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
+L_values = np.array(list(L.values()))
 # 目标钢筋的数量
 need = np.array([552, 658, 462],dtype=int)
 
@@ -51,11 +56,7 @@ def evaluate(solution, need, patterns):
     # 如果组合的长度不足以切割目标钢筋，这里多匹配和少匹配都算到里面
     bar_lengths = need - hascut_lengths
     # 计算尾料的成本
-    dl=np.array(list(L.values()))
-    loss, joint = calc_loss_joint(bar_lengths, l, dl, l_min)
-    cost += calc_cost(loss, joint, l_size)
-    # 计算成本和完成距离目标的距离
-    cost += float(np.sum(np.abs(bar_lengths)))*100000
+    cost += calc_cost_by_unmatched(bar_lengths, l, L_values, l_size)
     return cost
 
 # 求各种组合的列表
@@ -106,7 +107,7 @@ def simulated_annealing(max_iterations, max_temperature, cooling_rate):
 
             print(f"{i}: 当前成本={current_waste} 最佳成本={best_waste} 最佳完成度: {best_used} 目标: {need} 异动个数: {variation_count} 温度: {temperature}")
             # 如果数量匹配，且连续10000次没有改进，则退出循环
-            if np.array_equal(best_used,need) and nochange_count>10000:
+            if np.array_equal(best_used,need) and nochange_count>1000:
                 print("已达到目标，退出循环")
                 break
 

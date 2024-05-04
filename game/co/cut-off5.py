@@ -2,7 +2,7 @@
 import numpy as np
 import random
 
-from core import pattern_oringin, calc_loss_joint, calc_cost, calc_completion_lenghts
+from core import pattern_oringin, calc_cost_by_unmatched, calc_cost, calc_completion_lenghts
 
 '''
 用蚁群算法求解钢筋切割问题
@@ -16,6 +16,7 @@ l_min = 200
 l_size = 32
 # 目标钢筋长度
 L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
+L_values = np.array(list(L.values()))
 # 目标钢筋的数量
 need = np.array([552, 658, 462], dtype=int)
 
@@ -32,7 +33,7 @@ max_iterations = 1000000
 # 蚂蚁数量
 ant_count = 100  
 # 信息素持久因子
-rho = 0.9  
+rho = 0.5  
 # 信息素重要程度因子
 alpha = 1 
 # 启发式因子 
@@ -49,11 +50,7 @@ def evaluate(solution, need, patterns):
     # 如果组合的长度不足以切割目标钢筋，这里多匹配和少匹配都算到里面
     bar_lengths = need - hascut_lengths
     # 计算尾料的成本
-    dl=np.array(list(L.values()))
-    loss, joint = calc_loss_joint(bar_lengths, l, dl, l_min)
-    cost += calc_cost(loss, joint, l_size)    
-    # 计算成本和完成距离目标的距离
-    cost += np.sum(np.abs(bar_lengths))*1000
+    cost += calc_cost_by_unmatched(bar_lengths, l, L_values, l_size)
     return cost
 
 # 定义蚂蚁类
@@ -75,12 +72,17 @@ class Ant:
         has_cut_off=np.copy(self.need)
 
         patterns_idxs = list(range(self.patterns_length))
-        while np.any(has_cut_off > 0):
+        while np.any(has_cut_off > 0):            
             loa_lengths = self.cut_off_to_rod_length(has_cut_off)
-            probabilities = pheromone[loa_lengths]**alpha * heuristic
-            probabilities = probabilities/np.sum(probabilities)
-
-            choice = np.random.choice(patterns_idxs, p=probabilities)
+            if len(self.path) == 0:
+                # 第一步随机选择路径
+                choice = random.choice(patterns_idxs)
+            else:
+                # 计算路径的启发式信息
+                probabilities = pheromone[loa_lengths]**alpha * heuristic
+                probabilities = probabilities/np.sum(probabilities)
+                # 选择路径
+                choice = np.random.choice(patterns_idxs, p=probabilities)
 
             # 如果此路不通，标记信息素为0
             has_cut_off -= self.patterns[choice][0]
@@ -93,14 +95,12 @@ class Ant:
 
             solution[choice] += 1
             self.path.append((loa_lengths, choice))            
-
+        # print(np.var(probabilities))
         self.cost = evaluate(solution, self.need, self.patterns)
 
 # 求各种组合的列表
 patterns = pattern_oringin(l, L, losses1, radius)
 patterns_length = len(patterns)
-for i in range(40):    
-    print(f"patterns[0]:", patterns[i])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
 print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合，因为需要处理尾料
 
@@ -108,10 +108,15 @@ print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合�
 rod_length = np.sum([need[i] * (10**i) for i in range(len(need))])
 # 初始化信息素矩阵 从一个状态到另外一个状态的概率
 pheromone = np.ones((rod_length+1, patterns_length))
+
 # 初始化启发式信息，这个是个常数，不用更新，表示的是路径之间的相关度
 heuristic = (np.ones(patterns_length)/patterns_length)**beta
 
 # 主循环
+change_count = 0
+best_cost = np.inf
+best_solution = None
+best_used = None
 for iteration in range(10000):
     ants = [Ant(patterns, need) for _ in range(ant_count)]
 
@@ -119,18 +124,28 @@ for iteration in range(10000):
     for ant in ants:
         ant.construct_solution(pheromone, heuristic)
 
+    # 输出最优解
+    costs = np.array([ant.cost for ant in ants])
+    curr_min_idx = np.argmin(costs)
+    curr_best_cost = costs[curr_min_idx]
+    curr_avg_cost = np.mean(costs)
+
+    change_count +=1
+    if curr_best_cost < best_cost:
+        solution = np.zeros(patterns_length, dtype=int)
+        for rod_length, length in ants[curr_min_idx].path:
+            solution[length] += 1
+
+        change_count = 0
+        best_cost = curr_best_cost
+        best_solution = solution
+        best_used = calc_completion_lenghts(solution, need, patterns)
+
     # 更新信息素
-    best_cost = min(ant.cost for ant in ants)
-    best_ants = [ant for ant in ants if ant.cost == best_cost]
-    for ant in best_ants:
-        for rod_length, length in ant.path:
-            pheromone[rod_length][length] += 1 / ant.cost
+    for ant in ants:
+        for rod_length, choice in ant.path:
+            pheromone[rod_length][choice] += best_cost / ant.cost
     pheromone *= rho
 
-    # 输出最优解
-    best_ant = min(ants, key=lambda ant: ant.cost)
-    best_solution = np.zeros(patterns_length, dtype=int)
-    for rod_length, length in best_ant.path:
-        best_solution[length] += 1
-    best_used = calc_completion_lenghts(best_solution, need, patterns)
-    print(f"{iteration}: 最佳成本: {best_ant.cost} 最佳路径: {best_used} 目标: {need}",)
+
+    print(f"{iteration}: 最佳成本: {best_cost} 当前平均成本: {curr_avg_cost} 最佳路径: {best_used} 目标: {need} 停滞次数: {change_count}")

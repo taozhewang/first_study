@@ -2,10 +2,14 @@
 import numpy as np
 import random
 
-from core import pattern_oringin, calc_loss_joint, calc_cost, calc_completion_lenghts
+from core import pattern_oringin, calc_cost_by_unmatched, calc_completion_lenghts
 
 '''
 用禁忌搜索算法求解钢筋切割问题
+
+废料长度: 227100
+接头数量: 418
+总成本: 2873851.936
 '''
 
 # 原始钢筋长度
@@ -16,6 +20,7 @@ l_min = 200
 l_size = 32
 # 目标钢筋长度
 L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
+L_values = np.array(list(L.values()))
 # 目标钢筋的数量
 need = np.array([552, 658, 462],dtype=int)
 
@@ -45,15 +50,11 @@ def evaluate(solutions, need, patterns_lengths, patterns_costs):
     hascut_lengths = solutions.dot(patterns_lengths)    
     # print(cost.shape, hascut_lengths.shape)
 
-    dl=np.array(list(L.values()))
     for i in range(len(cost)):
         # 如果组合的长度不足以切割目标钢筋，这里多匹配和少匹配都算到里面
         bar_lengths = need - hascut_lengths[i]
         # 计算尾料的成本
-        loss, joint = calc_loss_joint(bar_lengths, l, dl, l_min)
-        cost[i] += calc_cost(loss, joint, l_size)    
-        # 计算成本和完成距离目标的距离
-        cost[i] += float(np.sum(np.abs(bar_lengths)))*100000
+        cost[i] += calc_cost_by_unmatched(bar_lengths, l, L_values, l_size)    
     return cost
 
 # 求各种组合的列表

@@ -1,7 +1,15 @@
 #%%
 import numpy as np
-from core import pattern_oringin, calc_loss_joint, calc_cost
+from core import pattern_oringin
 import copy
+
+'''
+用相似度去扣减钢筋，使得总长度接近目标长度
+
+废料长度: 443100
+接头数量: 382
+总成本: 5602902.496000002
+'''
 
 # 原始钢筋长度
 l = 12000
