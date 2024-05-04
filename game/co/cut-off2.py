@@ -102,7 +102,7 @@ for gen in range(gen_max):
 
             # 计算需要变异的数量,前期多变异，后期少变异，最低保留2处变异地方
             best_variation_count = np.sum(np.abs(number))
-            best_variation_count = best_variation_count//10
+            best_variation_count = best_variation_count//5
             if best_variation_count<2:
                 best_variation_count=2
 
