@@ -56,8 +56,8 @@ def fitness(individual, patterns):
     dl=np.array(list(L.values()))
     loss, joint = calc_loss_joint(bar_lengths, l, dl, l_min)
     cost += calc_cost(loss, joint, l_size)
-    # 返回适应度和完成距离目标的距离.距离采用绝对值距离*1000倍
-    cost += np.sum(np.abs(bar_lengths))*1000
+    # 返回适应度和完成距离目标的距离.距离采用绝对值距离*10000倍
+    cost += np.sum(np.abs(bar_lengths))*10000
     # 返回了综合适应度，以及完成距离目标的距离（用于后期调整变异个数） 
     return cost, bar_lengths
 
