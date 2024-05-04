@@ -24,7 +24,7 @@ max_num = 1
 # 最大的组合长度
 radius = 10
 # 组合数最小余料
-losses1 = 30
+losses1 = 50
 
 # 禁忌搜索参数
 # 最大循环次数
@@ -39,21 +39,21 @@ def init_solution(patterns_length, max_num):
     return np.random.randint(0, max_num+1, patterns_length)   
 
 # 评估函数
-def evaluate(solution, need, patterns):
-    hascut_lengths = np.zeros_like(need)
-    cost = 0
-    for i in patterns:
-        hascut_lengths += patterns[i][0]*solution[i]
-        cost += patterns[i][3]*solution[i]
+def evaluate(solutions, need, patterns_lengths, patterns_costs):
+    # print(solutions.shape, patterns_costs.shape, patterns_lengths.shape)
+    cost = solutions.dot(patterns_costs)
+    hascut_lengths = solutions.dot(patterns_lengths)    
+    # print(cost.shape, hascut_lengths.shape)
 
-    # 如果组合的长度不足以切割目标钢筋，这里多匹配和少匹配都算到里面
-    bar_lengths = need - hascut_lengths
-    # 计算尾料的成本
     dl=np.array(list(L.values()))
-    loss, joint = calc_loss_joint(bar_lengths, l, dl, l_min)
-    cost += calc_cost(loss, joint, l_size)    
-    # 计算成本和完成距离目标的距离
-    cost += np.sum(np.abs(bar_lengths))*1000
+    for i in range(len(cost)):
+        # 如果组合的长度不足以切割目标钢筋，这里多匹配和少匹配都算到里面
+        bar_lengths = need - hascut_lengths[i]
+        # 计算尾料的成本
+        loss, joint = calc_loss_joint(bar_lengths, l, dl, l_min)
+        cost[i] += calc_cost(loss, joint, l_size)    
+        # 计算成本和完成距离目标的距离
+        cost[i] += float(np.sum(np.abs(bar_lengths)))*100000
     return cost
 
 # 求各种组合的列表
@@ -62,6 +62,8 @@ patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
 print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合，因为需要处理尾料
+patterns_lengths = np.array([patterns[i][0] for i in range(patterns_length)])
+patterns_costs = np.array([patterns[i][3] for i in range(patterns_length)])
 
 # 邻域操作
 def get_neighbor(solution, patterns_length, variation_count):
@@ -86,9 +88,8 @@ def check_tabu(tabu_list, neighbor):
 # 禁忌搜索算法
 def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num):
     # 采用随机初始解
-    tabu_list = [init_solution(patterns_length, max_num) for i in range(tabu_tenure)]
-    # 初始评估
-    tabu_waste_list = [evaluate(solution, need, patterns) for solution in tabu_list]
+    tabu_list = np.array([init_solution(patterns_length, max_num) for i in range(tabu_tenure)])
+    tabu_waste_list = evaluate(tabu_list, need, patterns_lengths, patterns_costs)
 
     # 记录最佳解
     best_solution = None
@@ -101,11 +102,12 @@ def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num):
     variation_count = patterns_length//8
     for i in range(max_iterations):
         # 从禁忌表中获得一组邻域解
-        neighbors = [get_neighbor(solution, patterns_length, variation_count) for solution in tabu_list]
+        neighbors = np.array([get_neighbor(solution, patterns_length, variation_count) for solution in tabu_list])
         # 计算邻域解的评估
-        neighbors_waste = [evaluate(neighbor, need, patterns) for neighbor in neighbors]
+        neighbors_waste = evaluate(neighbors, need, patterns_lengths, patterns_costs)
         # 选择最佳邻域解
-        best_neighbor, best_neighbor_waste = min(zip(neighbors, neighbors_waste), key=lambda x: x[1])       
+        best_idx = np.argmin(neighbors_waste)
+        best_neighbor, best_neighbor_waste = neighbors[best_idx], neighbors_waste[best_idx]       
 
         # 禁忌搜索
         # 如果邻域解比最佳解好，更新最佳解
@@ -122,20 +124,17 @@ def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num):
         for idx, waste in enumerate(neighbors_waste):
             if waste < avg_waste and not check_tabu(tabu_list, neighbors[idx]):
                 # 记录最佳解
-                tabu_list.append(neighbors[idx])
-                tabu_waste_list.append(waste)
                 update_count += 1
-                # 限制禁忌表的长度,删除掉最差的解
-                if len(tabu_list) > tabu_tenure:
-                    idx = np.argmax(tabu_waste_list)
-                    tabu_list.pop(idx)
-                    tabu_waste_list.pop(idx)
+                # 更新禁忌表，找到最差的解，替换为邻域解
+                worst_idx = np.argmax(tabu_waste_list)
+                tabu_list[worst_idx]=neighbors[idx]
+                tabu_waste_list[worst_idx]=waste
 
         if i % 10 == 0:
             best_used = calc_completion_lenghts(best_solution, need, patterns)
 
             # 动态调整异动个数
-            variation_count = np.sum(np.abs(best_used-need))//100
+            variation_count = np.sum(np.abs(best_used-need))//50
             if variation_count>patterns_length//2: variation_count=patterns_length//2
             if variation_count<2: variation_count=2
 
