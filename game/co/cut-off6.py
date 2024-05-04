@@ -83,7 +83,7 @@ for i in range(max_iter):
         if np.all(velocities[j] == 0):  # 随机初始化速度
             velocities[j] = np.random.rand(patterns_length)
 
-        population[j][velocities[j]<0] -= 1   # 如果速度大于0，则减少1
+        population[j][velocities[j]<0] -= 1   # 如果速度小于0，则减少1
         population[j][velocities[j]>0] += 1   # 如果速度大于0，则增加1
         population[population<0] = 0  # 限制钢筋数量范围]
 
