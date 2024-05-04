@@ -61,7 +61,7 @@ print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合�
 
 
 # 初始化种群
-population = np.random.randint(0, 5, size=(population_size, patterns_length))
+population = np.random.randint(0, 3, size=(population_size, patterns_length))
 velocities = np.zeros((population_size, patterns_length))
 pbest = population.copy()
 gbest = np.zeros(patterns_length)
@@ -83,8 +83,9 @@ for i in range(max_iter):
         if np.all(velocities[j] == 0):  # 随机初始化速度
             velocities[j] = np.random.rand(patterns_length)
 
+        population[j][velocities[j]<0] -= 1   # 如果速度大于0，则减少1
         population[j][velocities[j]>0] += 1   # 如果速度大于0，则增加1
-        population[j][velocities[j]<0] = 0     # 如果速度为负数，则置零
+        population[population<0] = 0  # 限制钢筋数量范围]
 
         # 更新个体最优
         sol_fitness = fitness(population[j], patterns)
