@@ -6,6 +6,10 @@ from core import pattern_oringin, calc_cost_by_unmatched, calc_cost, calc_comple
 
 '''
 用蚁群算法求解钢筋切割问题
+
+废料长度: 263100
+接头数量: 421
+总成本: 3328783.6960000005
 '''
 
 # 原始钢筋长度
@@ -55,16 +59,17 @@ def evaluate(solution, need, patterns):
 
 # 定义蚂蚁类
 class Ant:
-    def __init__(self, patterns, need):
+    def __init__(self, patterns, need, max_pattern_length):
         self.path = []  # 解决方案路径
         self.cost = 0   # 成本
         self.patterns = patterns
         self.patterns_length = len(patterns)
         self.need = need
+        self.max_pattern_length = max_pattern_length
 
     # 计算剩余长度的路径ID
     def cut_off_to_rod_length(self, has_cut_off):
-        return np.sum([has_cut_off[i] * (10**i) for i in range(len(has_cut_off))])
+        return np.sum([(has_cut_off[i]%max_pattern_length) * (10**i) for i in range(len(has_cut_off))])
 
     # 构建解决方案
     def construct_solution(self, pheromone, heuristic):
@@ -81,12 +86,15 @@ class Ant:
                 # 计算路径的启发式信息
                 probabilities = pheromone[loa_lengths]**alpha * heuristic
                 probabilities = probabilities/np.sum(probabilities)
+
                 # 选择路径
                 choice = np.random.choice(patterns_idxs, p=probabilities)
 
+
+
             # 如果此路不通，标记信息素为0
             has_cut_off -= self.patterns[choice][0]
-            if np.any(has_cut_off < 0):
+            if np.any(has_cut_off < 0) :
                 pheromone[loa_lengths][choice]=0
                 # 回溯所有步骤的信息素*0.5
                 # for _loa_lengths, _choice in self.path:
@@ -103,9 +111,11 @@ patterns = pattern_oringin(l, L, losses1, radius)
 patterns_length = len(patterns)
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
 print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合，因为需要处理尾料
+patterns_lengths = np.array([patterns[i][0] for i in range(patterns_length)])
+max_pattern_length = np.max(patterns_lengths)
 
 # 路径的长度，也就是状态的数量，这里不允许超量切割，所以是钢筋的剩余状态hash数量 
-rod_length = np.sum([need[i] * (10**i) for i in range(len(need))])
+rod_length = np.sum([max_pattern_length * (10**i) for i in range(len(need))])
 # 初始化信息素矩阵 从一个状态到另外一个状态的概率
 pheromone = np.ones((rod_length+1, patterns_length))
 
@@ -113,30 +123,34 @@ pheromone = np.ones((rod_length+1, patterns_length))
 heuristic = (np.ones(patterns_length)/patterns_length)**beta
 
 # 主循环
-change_count = 0
+nochange_count = 0
 best_cost = np.inf
 best_solution = None
 best_used = None
+avg_cost = 0
 for iteration in range(10000):
-    ants = [Ant(patterns, need) for _ in range(ant_count)]
+    ants = [Ant(patterns, need, max_pattern_length) for _ in range(ant_count)]
 
     # 构建解决方案
     for ant in ants:
         ant.construct_solution(pheromone, heuristic)
 
-    # 输出最优解
+    # 计算当前蚂蚁的最优解
     costs = np.array([ant.cost for ant in ants])
     curr_min_idx = np.argmin(costs)
     curr_best_cost = costs[curr_min_idx]
     curr_avg_cost = np.mean(costs)
+    # 更新平均成本
+    avg_cost = avg_cost*0.9 + curr_avg_cost*0.1
+    nochange_count +=1
 
-    change_count +=1
+    # 更新最优解
     if curr_best_cost < best_cost:
         solution = np.zeros(patterns_length, dtype=int)
         for rod_length, length in ants[curr_min_idx].path:
             solution[length] += 1
 
-        change_count = 0
+        nochange_count = 0
         best_cost = curr_best_cost
         best_solution = solution
         best_used = calc_completion_lenghts(solution, need, patterns)
@@ -144,8 +158,32 @@ for iteration in range(10000):
     # 更新信息素
     for ant in ants:
         for rod_length, choice in ant.path:
-            pheromone[rod_length][choice] += best_cost / ant.cost
+            pheromone[rod_length][choice] += avg_cost / ant.cost
     pheromone *= rho
 
+    # 如果数量匹配，且连续100次没有改进，则退出循环
+    if np.array_equal(best_used, need) and nochange_count>20:
+        print("已达到目标，退出循环")
+        break   
 
-    print(f"{iteration}: 最佳成本: {best_cost} 当前平均成本: {curr_avg_cost} 最佳路径: {best_used} 目标: {need} 停滞次数: {change_count}")
+    print(f"{iteration}: 最佳成本: {best_cost} 当前平均成本: {curr_avg_cost} 最佳路径: {best_used} 目标: {need} 停滞次数: {nochange_count}")
+
+# 打印最佳解决方案
+bar_lengths = np.zeros(len(need),dtype=int)
+for i, key in enumerate(patterns):
+    bar_lengths += patterns[key][0]*best_solution[i]
+        
+loss  = np.sum([num*patterns[i][1] for i,num in enumerate(best_solution)])
+joint = np.sum([num*patterns[i][2] for i,num in enumerate(best_solution)])
+cost  = np.sum([num*patterns[i][3] for i,num in enumerate(best_solution)])
+
+print("最佳方案为：")
+# 将最佳方案的组合输出
+for i,num in enumerate(best_solution):
+    if num > 0:
+        print(num, '*', patterns[i][-1])
+        
+print("最后结果:", bar_lengths, "目标:", need)
+print("废料长度:", loss)
+print("接头数量:", joint)
+print("总成本:", cost)
