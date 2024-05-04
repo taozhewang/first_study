@@ -21,15 +21,14 @@ def calc_loss_joint(need_num, l, need_len, l_min=200):
         if need_num[i]>0:
             # 依次计算每个钢筋的接头数量和余料
             for j in range(need_num[i]):
-                if _l >= need_len[i]:
-                    _l -= need_len[i]
-                else:
+                if _l < need_len[i]:
                     if _l < l_min:
                         loss += _l
                         _l = l
                     else:
                         _l += l 
                         joint += 1
+                _l -= need_len[i]
     if _l<l: loss += _l
     return loss, joint
 
@@ -73,15 +72,14 @@ def pattern_oringin(l, L, max_loss, max_len=10, l_min=200, l_size=32):
             joint = 0
             _l = l
             for key in combination: # ["L1","L2","L3"]
-                if _l>=L[key]:
-                    _l -= L[key]
-                else:
+                if _l<L[key]:
                     if _l<l_min:
                         loss += _l
                         _l = l
                     else:
                         _l += l 
                         joint += 1
+                _l -= L[key]
             # 计算余料                        
             if _l<l: loss += _l
 
