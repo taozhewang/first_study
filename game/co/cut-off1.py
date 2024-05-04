@@ -12,10 +12,11 @@ L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
 # 目标钢筋的数量
 need = np.array([552, 658, 462])
 
-# 最大的组合数
+# 目标钢筋最大的组合数
 radius = 10
 
 # 组合数最小余料
+# 组合产生的不可用的余料总和的最大长度
 losses1 = 50
 
 '''
@@ -32,7 +33,7 @@ def decom(l, L):
                    1: [[1,0,1], 50,3,400,100,["L1","L3"]]} '''
     patterns_length = len(patterns)
     print(f"patterns[0]:", patterns[0])
-    print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
+    print(f"patterns[{patterns_length - 1}]:", patterns[patterns_length-1])
     print(f"patterns length: {patterns_length}")
 
     # 求组合的的使用情况
@@ -180,7 +181,12 @@ def decom(l, L):
     accum3(patterns, left)
     print(f"找到 {len(ways)} 种尾料处理办法：")
     print(ways)
-
+    for i in ways.keys():
+        for j in ways[i].keys():
+            print(patterns[j])
+        print()
+    for i in range(60):
+        print(patterns[i])
     # 统计出所有目前计算得到的组合，并将其用料和尾料显示出来
     def find_min1(acc, ways):
         statistics = []
