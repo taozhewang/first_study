@@ -24,7 +24,7 @@ max_num = 1
 # 最大的组合长度
 radius = 10
 # 组合数最小余料
-losses1 = 30
+losses1 = 50
 
 # 模拟退火参数
 # 最大循环次数
@@ -55,7 +55,7 @@ def evaluate(solution, need, patterns):
     loss, joint = calc_loss_joint(bar_lengths, l, dl, l_min)
     cost += calc_cost(loss, joint, l_size)    
     # 计算成本和完成距离目标的距离
-    cost += np.sum(np.abs(bar_lengths))*1000
+    cost += np.sum(np.abs(bar_lengths))*10000
     return cost
 
 # 求各种组合的列表

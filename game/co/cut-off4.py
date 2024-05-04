@@ -24,7 +24,7 @@ max_num = 1
 # 最大的组合长度
 radius = 10
 # 组合数最小余料
-losses1 = 30
+losses1 = 50
 
 # 禁忌搜索参数
 # 最大循环次数
@@ -53,7 +53,7 @@ def evaluate(solution, need, patterns):
     loss, joint = calc_loss_joint(bar_lengths, l, dl, l_min)
     cost += calc_cost(loss, joint, l_size)    
     # 计算成本和完成距离目标的距离
-    cost += np.sum(np.abs(bar_lengths))*1000
+    cost += np.sum(np.abs(bar_lengths))*10000
     return cost
 
 # 求各种组合的列表
@@ -135,7 +135,7 @@ def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num):
             best_used = calc_completion_lenghts(best_solution, need, patterns)
 
             # 动态调整异动个数
-            variation_count = np.sum(np.abs(best_used-need))//100
+            variation_count = np.sum(np.abs(best_used-need))//50
             if variation_count>patterns_length//2: variation_count=patterns_length//2
             if variation_count<2: variation_count=2
 
