@@ -30,9 +30,9 @@ losses1 = 50
 # 最大循环次数
 max_iterations = 1000000
 # 最大温度
-max_temperature = 1000
+max_temperature = 100000
 # 退火速率
-cooling_rate = 0.99999
+cooling_rate = 0.99
 
 # 初始化解
 # patterns_length 组合的长度
@@ -53,9 +53,9 @@ def evaluate(solution, need, patterns):
     # 计算尾料的成本
     dl=np.array(list(L.values()))
     loss, joint = calc_loss_joint(bar_lengths, l, dl, l_min)
-    cost += calc_cost(loss, joint, l_size)    
+    cost += calc_cost(loss, joint, l_size)
     # 计算成本和完成距离目标的距离
-    cost += np.sum(np.abs(bar_lengths))*10000
+    cost += float(np.sum(np.abs(bar_lengths)))*100000
     return cost
 
 # 求各种组合的列表
@@ -66,15 +66,16 @@ print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
 print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合，因为需要处理尾料
 
 # 邻域操作
-def get_neighbor(solution, patterns_length):
+def get_neighbor(solution, patterns_length, variation_count):
     neighbor = np.copy(solution)
-    # 随机选择一个钢筋类别
-    index = random.randint(0, patterns_length - 1)
-    # 随机选择数量
-    if neighbor[index] == 0:
-        neighbor[index] = 1
-    else:
-        neighbor[index] += 1 if random.random()<0.5 else -1
+    ids = np.random.choice(patterns_length, variation_count, replace=False)
+    # 为了加快收敛，变异方向固定
+    v = 1 if random.random()<0.5 else -1
+    for idx in ids:
+        # 如果只剩下2个变异位置，则变异方向随机
+        if variation_count==2: v = 1 if random.random()<0.5 else -1
+        neighbor[idx] += v
+        if neighbor[idx] < 0: neighbor[idx]= 0
     return neighbor
 
 # 模拟退火算法
@@ -91,25 +92,40 @@ def simulated_annealing(max_iterations, max_temperature, cooling_rate):
     best_waste = current_waste
     # 连续无改进次数
     nochange_count = 0
+
+    # 动态调整异动个数
+    variation_count = patterns_length//8    
     for i in range(max_iterations):
 
-        if i%1000 == 0:
+        if i%100 == 0:
             best_used = calc_completion_lenghts(best_solution, need, patterns)
-            print(f"{i}: 当前成本={current_waste}, 最佳成本={best_waste}, 最佳完成度: {best_used} 目标: {need}")
+            # 动态调整异动个数
+            variation_count = np.sum(np.abs(best_used-need))//20
+            if variation_count>patterns_length//2: variation_count=patterns_length//2
+            if variation_count<2: variation_count=2
+
+            print(f"{i}: 当前成本={current_waste} 最佳成本={best_waste} 最佳完成度: {best_used} 目标: {need} 异动个数: {variation_count} 温度: {temperature}")
             # 如果数量匹配，且连续10000次没有改进，则退出循环
             if np.array_equal(best_used,need) and nochange_count>10000:
                 print("已达到目标，退出循环")
                 break
-        
+
+        # 如果长期没有减，用最佳解接着跑
+        if nochange_count%100 == 0:
+            current_solution = best_solution
+            current_waste = best_waste
+            # 温度降低一下
+            temperature *= cooling_rate
+
         nochange_count += 1
         # 产生邻域解
-        neighbor = get_neighbor(current_solution,patterns_length)
+        neighbor = get_neighbor(current_solution, patterns_length, variation_count)
         # 计算邻域解的评估值
         neighbor_waste = evaluate(neighbor,need, patterns)
 
         # 计算差距
         delta = (neighbor_waste - current_waste)
-        if delta < 0:
+        if delta <= 0:
             # 如果成本减少，接受邻域解
             current_solution = neighbor
             current_waste = neighbor_waste
@@ -121,10 +137,9 @@ def simulated_annealing(max_iterations, max_temperature, cooling_rate):
             # 如果成本增加，概率接收邻域解
             probability = np.exp(-delta / temperature)
             if random.uniform(0, 1) < probability:
+                # print("接受邻域解", probability, delta, temperature)
                 current_solution = neighbor
                 current_waste = neighbor_waste
-
-        temperature *= cooling_rate
 
     return best_solution, best_waste
 
