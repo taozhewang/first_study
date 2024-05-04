@@ -24,17 +24,17 @@ max_num = 1
 # 最大的组合长度
 radius = 10
 # 组合数最小余料
-losses1 = 30
+losses1 = 50
 
 # 蚁群算法参数
 # 最大循环次数
 max_iterations = 1000000
 # 蚂蚁数量
-ant_count = 50  
+ant_count = 100  
 # 信息素持久因子
-rho = 0.5  
+rho = 0.9  
 # 信息素重要程度因子
-alpha = 0.1 
+alpha = 1 
 # 启发式因子 
 beta = 2  
 
@@ -73,23 +73,22 @@ class Ant:
     def construct_solution(self, pheromone, heuristic):
         solution = np.zeros(self.patterns_length, dtype=int)
         has_cut_off=np.copy(self.need)
+
+        patterns_idxs = list(range(self.patterns_length))
         while np.any(has_cut_off > 0):
             loa_lengths = self.cut_off_to_rod_length(has_cut_off)
+            probabilities = pheromone[loa_lengths]**alpha * heuristic
+            probabilities = probabilities/np.sum(probabilities)
 
-            probabilities = [(pheromone[loa_lengths][i] ** alpha) * (heuristic[i] ** beta) for i in range(self.patterns_length)]
-            total = sum(probabilities)
-            probabilities = [p / total for p in probabilities]
-
-            choice = np.random.choice(range(self.patterns_length), p=probabilities)
+            choice = np.random.choice(patterns_idxs, p=probabilities)
 
             # 如果此路不通，标记信息素为0
             has_cut_off -= self.patterns[choice][0]
             if np.any(has_cut_off < 0):
                 pheromone[loa_lengths][choice]=0
-                # 如果所有的路都不通，则上一步的信息素置0
-                if np.all(pheromone[loa_lengths] == 0):
-                    _loa_lengths, _choice = self.path[-1]
-                    pheromone[_loa_lengths][_choice] = 0
+                # 回溯所有步骤的信息素*0.5
+                # for _loa_lengths, _choice in self.path:
+                #     pheromone[_loa_lengths][_choice] *= 0.5
                 break    
 
             solution[choice] += 1
@@ -100,19 +99,20 @@ class Ant:
 # 求各种组合的列表
 patterns = pattern_oringin(l, L, losses1, radius)
 patterns_length = len(patterns)
-print(f"patterns[0]:", patterns[0])
+for i in range(40):    
+    print(f"patterns[0]:", patterns[i])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
 print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合，因为需要处理尾料
 
 # 路径的长度，也就是状态的数量，这里不允许超量切割，所以是钢筋的剩余状态hash数量 
 rod_length = np.sum([need[i] * (10**i) for i in range(len(need))])
 # 初始化信息素矩阵 从一个状态到另外一个状态的概率
-pheromone = np.ones((rod_length + 1, patterns_length + 1))
+pheromone = np.ones((rod_length+1, patterns_length))
 # 初始化启发式信息，这个是个常数，不用更新，表示的是路径之间的相关度
-heuristic = [1 / patterns_length for _ in range(patterns_length)]        
+heuristic = (np.ones(patterns_length)/patterns_length)**beta
 
 # 主循环
-for iteration in range(100):
+for iteration in range(10000):
     ants = [Ant(patterns, need) for _ in range(ant_count)]
 
     # 构建解决方案
