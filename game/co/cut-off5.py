@@ -67,7 +67,7 @@ class Ant:
         self.need = need
         self.max_pattern_length = max_pattern_length
 
-    # 计算剩余长度的路径ID
+    # 计算剩余长度的路径ID, 这里将超过pattern长度的部分都归为一个路径
     def cut_off_to_rod_length(self, has_cut_off):
         return np.sum([(has_cut_off[i]%max_pattern_length) * (10**i) for i in range(len(has_cut_off))])
 
@@ -86,19 +86,13 @@ class Ant:
                 # 计算路径的启发式信息
                 probabilities = pheromone[loa_lengths]**alpha * heuristic
                 probabilities = probabilities/np.sum(probabilities)
-
                 # 选择路径
                 choice = np.random.choice(patterns_idxs, p=probabilities)
-
-
 
             # 如果此路不通，标记信息素为0
             has_cut_off -= self.patterns[choice][0]
             if np.any(has_cut_off < 0) :
                 pheromone[loa_lengths][choice]=0
-                # 回溯所有步骤的信息素*0.5
-                # for _loa_lengths, _choice in self.path:
-                #     pheromone[_loa_lengths][_choice] *= 0.5
                 break    
 
             solution[choice] += 1
