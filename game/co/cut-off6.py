@@ -79,12 +79,12 @@ for i in range(max_iter):
         velocities[j] = velocities[j] + c1 * random.random() * (pbest[j] - population[j]) + \
                         c2 * random.random() * (gbest - population[j])
                 
-        velocities[j] = np.clip(velocities[j], 0, 1)  # 限制速度范围
+        velocities[j] = np.clip(velocities[j], -1, 1)  # 限制速度范围
         if np.all(velocities[j] == 0):  # 随机初始化速度
             velocities[j] = np.random.rand(patterns_length)
 
-        population[j][velocities[j]>0.5] += 1  # 粒子位置更新
-        population[j][velocities[j]<0.1] = 0  # 粒子位置更新
+        population[j][velocities[j]>0] += 1  # 如果速度大于0.5，则增加1
+        population[j][velocities[j]<0] = 0     # 如果速度为负数，则置零
 
         # 更新个体最优
         sol_fitness = fitness(population[j], patterns)
