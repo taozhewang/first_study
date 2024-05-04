@@ -154,6 +154,7 @@ def decom(l, L):
             if np.all(left == 0):
                 # 将当前使用方案储存进ways里面，返回
                 ways[count] = accumulator
+                if len(ways)>5: break
                 continue
 
             # 如果pointer已经指向最后一个pattern，则跳过

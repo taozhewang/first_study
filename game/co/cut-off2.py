@@ -24,7 +24,7 @@ max_num = 1
 # 最大的组合长度
 radius = 10
 # 组合数最小余料
-losses1 = 30
+losses1 = 50
 
 # 遗传算法参数
 pop_size = 200  # 种群大小
