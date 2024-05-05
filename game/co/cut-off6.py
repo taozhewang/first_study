@@ -103,7 +103,7 @@ for i in range(max_iter):
 
     nochange_count += 1
     # 如果数量匹配，且连续100次没有改进，则退出循环
-    if np.array_equal(best_used, need) and nochange_count>100:
+    if np.array_equal(best_used, need) and nochange_count>20:
         print("已达到目标，退出循环")
         break          
 
