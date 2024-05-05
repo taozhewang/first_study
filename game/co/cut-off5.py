@@ -2,7 +2,7 @@
 import numpy as np
 import random
 
-from core import pattern_oringin, calc_cost_by_unmatched, calc_cost, calc_completion_lenghts
+from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_completion_lenghts
 
 '''
 用蚁群算法求解钢筋切割问题
@@ -101,7 +101,7 @@ class Ant:
         self.cost = evaluate(solution, self.need, self.patterns)
 
 # 求各种组合的列表
-patterns = pattern_oringin(l, L, sampling_count, radius)
+patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
 patterns_length = len(patterns)
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
 print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合，因为需要处理尾料

@@ -29,7 +29,7 @@ max_num = 1
 # 最大的组合长度
 radius = 10
 # 组合的采样数量
-sampling_count = 6000
+sampling_count = 5000
 
 # 粒子群算法参数
 population_size = 200  # 粒子数量

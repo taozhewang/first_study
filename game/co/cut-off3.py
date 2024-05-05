@@ -2,7 +2,7 @@
 import numpy as np
 import random
 
-from core import pattern_oringin, calc_cost_by_unmatched, calc_completion_lenghts
+from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_completion_lenghts
 
 '''
 用模拟退火算法求解钢筋切割问题
@@ -62,7 +62,7 @@ def evaluate(solution, need, patterns):
     return cost
 
 # 求各种组合的列表
-patterns = pattern_oringin(l, L, sampling_count, radius)
+patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
