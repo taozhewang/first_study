@@ -66,7 +66,7 @@ patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
-print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合，因为需要处理尾料
+print(f"patterns length: {patterns_length}")
 
 # 邻域操作
 def get_neighbor(solution, patterns_length, variation_count):

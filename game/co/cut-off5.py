@@ -104,7 +104,7 @@ class Ant:
 patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
 patterns_length = len(patterns)
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
-print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合，因为需要处理尾料
+print(f"patterns length: {patterns_length}")
 patterns_lengths = np.array([patterns[i][0] for i in range(patterns_length)])
 max_pattern_length = np.max(patterns_lengths)
 

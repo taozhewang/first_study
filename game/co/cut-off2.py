@@ -67,7 +67,7 @@ patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
-print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合，因为需要处理尾料
+print(f"patterns length: {patterns_length}")
 
 # 初始化种群 
 population = np.random.randint(0, max_num+1, (pop_size, patterns_length))  # 种群初始化，二进制编码
