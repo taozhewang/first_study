@@ -1,14 +1,14 @@
 #%%
 import numpy as np
-from core import pattern_oringin
+from core import pattern_oringin_by_loss
 import copy
 
 '''
 用相似度去扣减钢筋，使得总长度接近目标长度
 
-废料长度: 443100
-接头数量: 382
-总成本: 5602902.496000002
+废料长度: 1163100
+接头数量: 388
+总成本: 14700997.695999999
 '''
 
 # 原始钢筋长度
@@ -35,13 +35,19 @@ patterns:{idx: [pattern, loss, joint, cost, eer]}
 def decom(l, L):
     
     # 求各种组合的列表
-    patterns = pattern_oringin(l, L, losses1, radius)
+    patterns, patterns_tail = pattern_oringin_by_loss(l, L, losses1, radius)
     '''patterns: { 0: [[0,1,0], 0, 0, 0, 0,  ["L2"]],
                    1: [[1,0,1], 50,3,400,100,["L1","L3"]]} '''
     patterns_length = len(patterns)
+    patterns_tail_length = len(patterns_tail)
+
     print(f"patterns[0]:", patterns[0])
     print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
     print(f"patterns length: {patterns_length}")
+
+    print(f"patterns_tail[0]:", patterns_tail[0])
+    print(f"patterns_tail[{patterns_tail_length}]:", patterns[patterns_tail_length-1])
+    print(f"patterns_tail length: {patterns_tail_length}")
 
     # 求组合的的使用情况
     def accum2(patterns):
@@ -187,7 +193,8 @@ def decom(l, L):
 
             stack.append((left, accumulator, pointer+1, count))  
 
-    accum3(patterns, left)
+    print("第二次匹配：")
+    accum3(patterns_tail, left)
     print(f"找到 {len(ways)} 种尾料处理办法：")
     print(ways)
 

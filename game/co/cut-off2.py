@@ -8,8 +8,8 @@ from core import pattern_oringin, calc_cost_by_unmatched
 用遗传算法求解钢筋切割问题
 
 废料长度: 251100
-接头数量: 420
-总成本: 3177139.776
+接头数量: 418
+总成本: 3177119.7759999996
 '''
 
 # 原始钢筋长度
@@ -28,8 +28,8 @@ need = np.array([552, 658, 462],dtype=int)
 max_num = 1
 # 最大的组合长度
 radius = 10
-# 组合数最小余料
-losses1 = 50
+# 组合的采样数量
+sampling_count = 5000
 
 # 遗传算法参数
 pop_size = 200  # 种群大小
@@ -63,7 +63,7 @@ def fitness(individual, patterns):
     return cost, bar_lengths
 
 # 求各种组合的列表
-patterns = pattern_oringin(l, L, losses1, radius)
+patterns = pattern_oringin(l, L, sampling_count, radius)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
@@ -76,8 +76,10 @@ population = np.random.randint(0, max_num+1, (pop_size, patterns_length))  # 种
 best_individual=None
 # 记录最佳适应度
 best_fitnesses=np.inf
-# 初始化变异个数为整体的1/8
-best_variation_count = patterns_length//8
+# 初始化变异个数为整体的1/16
+best_variation_count = patterns_length//16
+# 最小变异个数
+min_variation_count = 3
 
 # 进化停顿次数
 nochange_count = 0
@@ -100,13 +102,15 @@ for gen in range(gen_max):
             # 如果最佳个体发生变化，将计数器清零
             nochange_count = 0
 
-            # 计算需要变异的数量,前期多变异，后期少变异，最低保留2处变异地方
-            best_variation_count = np.sum(np.abs(number))
-            best_variation_count = best_variation_count//5
-            if best_variation_count<2:
-                best_variation_count=2
-
     nochange_count += 1
+
+    if nochange_count % 5 ==0:
+        # 计算需要变异的数量,前期多变异，后期少变异，最低保留2处变异地方
+        # best_variation_count = np.sum(np.abs(number))
+        # best_variation_count = best_variation_count//5
+        best_variation_count = best_variation_count//2
+        if best_variation_count<min_variation_count:
+            best_variation_count=min_variation_count
     
     # 选择一半最小适应度的个体作为父代
     parents = np.array([population[i] for i in np.argsort(fitnesses)[:pop_size//2]])  
@@ -128,7 +132,7 @@ for gen in range(gen_max):
             for idx in ids:
                 idx = random.randint(0, patterns_length-1)
                 # 如果只剩下2个变异位置，则变异方向随机
-                if best_variation_count==2: v = 1 if random.random()<0.5 else -1
+                if best_variation_count==min_variation_count: v = 1 if random.random()<0.5 else -1
                 offspring[i][idx] += v
                 if offspring[i][idx] < 0: offspring[i][idx] = 0
 
@@ -137,7 +141,7 @@ for gen in range(gen_max):
     best_used = calc_hascut_lenghts(best_individual, patterns)
 
     print(f"进化次数：{gen}, 最低适应度(成本)：{best_fitnesses}, 平均适应度(成本)：{np.mean(fitnesses)},\
-        最佳完成度: {best_used} 目标: {need} 变异个数: {best_variation_count}")
+    最佳完成度: {best_used} 目标: {need} 变异个数: {best_variation_count} 停滞次数: {nochange_count}")
     
     # 如果数量达到目标，且20次没有变化，则停止进化
     if np.array_equal(best_used,need) and nochange_count>20:

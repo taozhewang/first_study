@@ -2,10 +2,10 @@
 import numpy as np
 import random
 
-from core import pattern_oringin, calc_cost_by_unmatched, calc_cost, calc_completion_lenghts
+from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_completion_lenghts
 
 '''
-用麻雀算法（粒子群算法）求解钢筋切割问题
+用粒子群算法求解钢筋切割问题
 
 废料长度: 227100
 接头数量: 418
@@ -28,8 +28,8 @@ need = np.array([552, 658, 462], dtype=int)
 max_num = 1
 # 最大的组合长度
 radius = 10
-# 组合数最小余料
-losses1 = 50
+# 组合的采样数量
+sampling_count = 6000
 
 # 粒子群算法参数
 population_size = 200  # 粒子数量
@@ -53,12 +53,11 @@ def fitness(solution, patterns):
     return cost
 
 # 求各种组合的列表
-patterns = pattern_oringin(l, L, losses1, radius)
+patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
 print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合，因为需要处理尾料
-
 
 # 初始化种群
 population = np.random.randint(0, 3, size=(population_size, patterns_length))

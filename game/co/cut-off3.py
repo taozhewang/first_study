@@ -7,9 +7,9 @@ from core import pattern_oringin, calc_cost_by_unmatched, calc_completion_lenght
 '''
 用模拟退火算法求解钢筋切割问题
 
-废料长度: 311100
-接头数量: 425
-总成本: 3935359.376
+废料长度: 263100
+接头数量: 418
+总成本: 3328753.6959999995
 '''
 
 # 原始钢筋长度
@@ -28,8 +28,10 @@ need = np.array([552, 658, 462],dtype=int)
 max_num = 1
 # 最大的组合长度
 radius = 10
-# 组合数最小余料
-losses1 = 50
+# 组合的采样数量
+sampling_count = 5000
+# 最小变异个数
+min_variation_count = 3
 
 # 模拟退火参数
 # 最大循环次数
@@ -60,7 +62,7 @@ def evaluate(solution, need, patterns):
     return cost
 
 # 求各种组合的列表
-patterns = pattern_oringin(l, L, losses1, radius)
+patterns = pattern_oringin(l, L, sampling_count, radius)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
@@ -74,7 +76,7 @@ def get_neighbor(solution, patterns_length, variation_count):
     v = 1 if random.random()<0.5 else -1
     for idx in ids:
         # 如果只剩下2个变异位置，则变异方向随机
-        if variation_count==2: v = 1 if random.random()<0.5 else -1
+        if variation_count==min_variation_count: v = 1 if random.random()<0.5 else -1
         neighbor[idx] += v
         if neighbor[idx] < 0: neighbor[idx]= 0
     return neighbor
@@ -103,7 +105,7 @@ def simulated_annealing(max_iterations, max_temperature, cooling_rate):
             # 动态调整异动个数
             variation_count = np.sum(np.abs(best_used-need))//20
             if variation_count>patterns_length//2: variation_count=patterns_length//2
-            if variation_count<2: variation_count=2
+            if variation_count<min_variation_count: variation_count=min_variation_count
 
             print(f"{i}: 当前成本={current_waste} 最佳成本={best_waste} 最佳完成度: {best_used} 目标: {need} 异动个数: {variation_count} 温度: {temperature}")
             # 如果数量匹配，且连续10000次没有改进，则退出循环
@@ -122,7 +124,7 @@ def simulated_annealing(max_iterations, max_temperature, cooling_rate):
         # 产生邻域解
         neighbor = get_neighbor(current_solution, patterns_length, variation_count)
         # 计算邻域解的评估值
-        neighbor_waste = evaluate(neighbor,need, patterns)
+        neighbor_waste = evaluate(neighbor, need, patterns)
 
         # 计算差距
         delta = (neighbor_waste - current_waste)
