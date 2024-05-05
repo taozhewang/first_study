@@ -37,6 +37,29 @@ def calc_completion_lenghts(solution, need, patterns):
         hascut_lengths += patterns[i][0]*solution[i]
     return hascut_lengths
 
+# 计算当前组合的余料和接头数量
+def calc_loss_joint(combination, l, l_min):
+    '''
+    combination: 组合列表，[3000,3000,4000,...]
+    l: 原始钢筋定长
+    l_min: 最小接头数量
+    '''
+    loss = 0
+    joint = 0
+    _l = l
+    for length in combination: 
+        if _l<length: 
+            if _l<l_min:    # 剩余长度小于最小接头数量
+                loss += _l
+                _l = l
+            else:           # 用接头连接下一个钢筋
+                _l += l 
+                joint += 1
+        _l -= length
+    # 计算余料                        
+    if _l<l: loss += _l
+    return loss, joint
+
 # 产生patterns，最低1个组合，最高max_len个组合
 # 计算废料和接头数量，计算成本，计算能效比
 # patterns: 所有组合的辞典，key为索引 每个元素为 [counter, loss, joint, cost, eer, combin]
@@ -65,25 +88,10 @@ def pattern_oringin_by_sampling(l, L, sampling_count, max_len=10, l_min=200, l_s
         # 按组合数产生组合
         combinations = itertools.product(L, repeat=i)
         for combination in combinations:   
-            combination=list(combination)
-            # 计算接头数量和余料
-            loss = 0
-            # 计算接头数量
-            joint = 0
-            _l = l
-            for key in combination: # ["L1","L2","L3"]
-                if _l<L[key]:
-                    if _l<l_min:
-                        loss += _l
-                        _l = l
-                    else:
-                        _l += l 
-                        joint += 1
-                _l -= L[key]
-            # 计算余料                        
-            if _l<l: loss += _l
+            combination_values=[L[key] for key in combination]
 
-            # 统计组合中的数量，返回dict {key1:count,key2:count,...}
+            # 计算接头数量和余料
+            loss, joint = calc_loss_joint(combination_values, l, l_min)
             # 计算成本
             cost = calc_cost(loss, joint, l_size)
             # 计算能效比
@@ -145,25 +153,10 @@ def pattern_oringin_by_loss(l, L, max_loss, max_len=10, l_min=200, l_size=32):
     for i in range(1, max_len):
         # 按组合数产生组合
         combinations = itertools.product(L, repeat=i)
-        for combination in combinations:   
-            combination=list(combination)
+        for combination in combinations:               
+            combination_values=[L[key] for key in combination]
             # 计算接头数量和余料
-            loss = 0
-            # 计算接头数量
-            joint = 0
-            _l = l
-            for key in combination: # ["L1","L2","L3"]
-                if _l<L[key]:
-                    if _l<l_min:
-                        loss += _l
-                        _l = l
-                    else:
-                        _l += l 
-                        joint += 1
-                _l -= L[key]
-            # 计算余料                        
-            if _l<l: loss += _l
-                
+            loss, joint = calc_loss_joint(combination_values, l, l_min)
 
             # 这里过滤余料大于losses1的组合，需要保留为1，2的组合，方便尾料的处理
             if loss <= max_loss or i < len(L):
