@@ -7,9 +7,9 @@ from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_compl
 '''
 用模拟退火算法求解钢筋切割问题
 
-废料长度: 263100
+废料长度: 227100
 接头数量: 418
-总成本: 3328753.6959999995
+总成本: 2873851.936
 '''
 
 # 原始钢筋长度
@@ -113,11 +113,8 @@ def simulated_annealing(max_iterations, max_temperature, cooling_rate):
                 print("已达到目标，退出循环")
                 break
 
-        # 如果长期没有减，用最佳解接着跑
+        # 如果长期没有减,温度降低一下
         if nochange_count%100 == 0:
-            current_solution = best_solution
-            current_waste = best_waste
-            # 温度降低一下
             temperature *= cooling_rate
 
         nochange_count += 1

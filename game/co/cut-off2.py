@@ -7,9 +7,9 @@ from core import pattern_oringin_by_sampling, calc_cost_by_unmatched
 '''
 用遗传算法求解钢筋切割问题
 
-废料长度: 251100
+废料长度: 227100
 接头数量: 418
-总成本: 3177119.7759999996
+总成本: 2873851.9359999998
 '''
 
 # 原始钢筋长度
