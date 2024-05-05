@@ -85,7 +85,7 @@ for i in range(max_iter):
 
         population[j][velocities[j]<0] -= 1   # 如果速度小于0，则减少1
         population[j][velocities[j]>0] += 1   # 如果速度大于0，则增加1
-        population[population<0] = 0  # 限制钢筋数量范围]
+        population[population<0] = 0  # 限制钢筋数量范围
 
         # 更新个体最优
         sol_fitness = fitness(population[j], patterns)
@@ -104,7 +104,7 @@ for i in range(max_iter):
 
     nochange_count += 1
     # 如果数量匹配，且连续100次没有改进，则退出循环
-    if np.array_equal(best_used, need) and nochange_count>20:
+    if np.array_equal(best_used, need) and nochange_count>100:
         print("已达到目标，退出循环")
         break          
 

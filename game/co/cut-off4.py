@@ -9,7 +9,7 @@ from core import pattern_oringin, calc_cost_by_unmatched, calc_completion_lenght
 
 废料长度: 227100
 接头数量: 418
-总成本: 2873851.936
+总成本: 2873851.9359999998
 '''
 
 # 原始钢筋长度
@@ -34,8 +34,10 @@ losses1 = 50
 # 禁忌搜索参数
 # 最大循环次数
 max_iterations = 1000000
-# 禁忌期限
-tabu_tenure = 200
+# 禁忌表大小
+tabu_tenure = 400
+# 最小变异个数
+min_variation_count = 2
 
 # 初始化解
 # patterns_length 组合的长度
@@ -73,8 +75,8 @@ def get_neighbor(solution, patterns_length, variation_count):
     # 为了加快收敛，变异方向固定
     v = 1 if random.random()<0.5 else -1
     for idx in ids:
-        # 如果只剩下2个变异位置，则变异方向随机
-        if variation_count==2: v = 1 if random.random()<0.5 else -1
+        # 如果到了最小变异个数，则变异方向随机
+        if variation_count==min_variation_count: v = 1 if random.random()<0.5 else -1
         neighbor[idx] += v
         if neighbor[idx] < 0: neighbor[idx]= 0
     return neighbor
@@ -137,12 +139,12 @@ def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num):
             # 动态调整异动个数
             variation_count = np.sum(np.abs(best_used-need))//50
             if variation_count>patterns_length//2: variation_count=patterns_length//2
-            if variation_count<2: variation_count=2
+            if variation_count<min_variation_count: variation_count=min_variation_count
 
-            print(f"{i}: 禁忌组平均成本:{avg_waste}, 更新个数:{update_count}, 最佳成本:{best_waste}, 最佳完成度: {best_used} 目标: {need} 异动个数: {variation_count}")
+            print(f"{i}: 禁忌组平均成本:{avg_waste}, 更新个数:{update_count}, 最佳成本:{best_waste}, 最佳完成度: {best_used} 目标: {need} 异动个数: {variation_count} 停滞次数: {nochange_count}")
 
-            # 如果数量匹配，且连续100次没有改进，则退出循环
-            if np.array_equal(best_used, need) and nochange_count>100:
+            # 如果数量匹配，且连续1000次没有改进，则退出循环
+            if np.array_equal(best_used, need) and nochange_count>1000:
                 print("已达到目标，退出循环")
                 break            
 
