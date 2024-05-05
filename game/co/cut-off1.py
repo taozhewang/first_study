@@ -39,7 +39,7 @@ def decom(l, L):
     '''patterns: { 0: [[0,1,0], 0, 0, 0, 0,  ["L2"]],
                    1: [[1,0,1], 50,3,400,100,["L1","L3"]]} '''
     patterns_length = len(patterns)
-    print(f"patterns[0]:", patterns[0])
+    print(f"patterns[1]:", patterns[0])
     print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
     print(f"patterns length: {patterns_length}")
 
@@ -51,6 +51,8 @@ def decom(l, L):
         fake_op = {}
         for key in patterns:
             fake_op[key] = 0
+        
+        print('fake_op:', fake_op)
 
         # op id 转换为 pattern id
         op_2_pattern = []
@@ -71,6 +73,9 @@ def decom(l, L):
         assert len(op) > 0, "no pattern can be used"
         print("op length:", len(op))
         
+        for i in range(40):
+            print(f'op{i}', op[i])
+            
         # 方法：比例 + 随机， 目的是用尾料最少的pattern组装或逼近所需的目标数目
         def ratio(op, need):
             #  目标占比
