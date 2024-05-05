@@ -46,7 +46,7 @@ def calc_completion_lenghts(solution, need, patterns):
 # cost： 废料+接头的成本
 # err: 能效比 cost/sum(counter)
 # list: 组合列表["L1","L1","L3",....]
-def pattern_oringin_by_sampling(l, L, sampling_count, max_len=10, l_min=200, l_size=32, include_less=False):
+def pattern_oringin_by_sampling(l, L, sampling_count, max_len=10, l_min=200, l_size=32, include_less=True):
     '''
     l: 原始钢筋定长
     L: 目标钢筋长度
@@ -100,7 +100,7 @@ def pattern_oringin_by_sampling(l, L, sampling_count, max_len=10, l_min=200, l_s
             
             # 记录pattern和loss，返回dict {idx: [pattern, loss]}
             # 如果有0的count，则保留在patterns_list_loss中，否则保留在patterns_list中  
-            if np.any(counter==0) and np.all(counter<3) and include_less:
+            if include_less and np.any(counter==0) and np.all(counter<=1):
                 patterns_list_keep.append([counter, loss, joint, cost, eer, combination])
             else:
                 patterns_list.append([counter, loss, joint, cost, eer, combination])
