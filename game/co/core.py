@@ -14,7 +14,7 @@ def calc_cost(loss, joint, l_size):
 
 # 由剩余未匹配的钢筋数量计算成本
 # 这里直接最大化成本，方便后续的拟合
-def calc_cost_by_unmatched(need_num, l, need_len, l_size=32):
+def calc_cost_by_unmatched2(need_num, l, need_len, l_size=32):
     '''
     need_num: 匹配完毕后剩余未匹配的钢筋数量 = need - sum(solution)
     l: 原始钢筋定长
@@ -28,6 +28,25 @@ def calc_cost_by_unmatched(need_num, l, need_len, l_size=32):
         else:               # 多匹配的钢筋数量
             loss += float(l*-need_num[i])
     return calc_cost(loss, 0, l_size)    
+
+# 这里直接最大化成本，方便后续的拟合
+def calc_cost_by_unmatched(need_num, l, need_len, l_size=32, l_min=200):
+    '''
+    need_num: 匹配完毕后剩余未匹配的钢筋数量 = need - sum(solution)
+    l: 原始钢筋定长
+    need_len: 目标钢筋长度
+    l_size: 钢筋的直径
+    '''
+    _loss = 0
+    combination = []
+    for i in range(len(need_num)):
+        if need_num[i]>0:   # 剩余未匹配的钢筋数量
+            combination += [need_len[i]]*need_num[i]
+        else:               # 多匹配的钢筋数量
+            _loss += float(l*-need_num[i])
+    loss, joint = calc_loss_joint(combination, l, l_min)
+
+    return calc_cost(loss+_loss, joint, l_size), loss, joint   
 
 # 计算当前组合最终完成的长度
 # solution: [0,...,] 表示选择该种组合的选择数量,长度为patterns的长度
@@ -70,7 +89,7 @@ def calc_loss_joint(combination, l, l_min):
 # cost： 废料+接头的成本
 # err: 能效比 cost/sum(counter)
 # list: 组合列表["L1","L1","L3",....]
-def pattern_oringin_by_sampling(l, L, sampling_count, max_len=10, l_min=200, l_size=32, include_less=True):
+def pattern_oringin_by_sampling(l, L, sampling_count, max_len=10, l_min=200, l_size=32, include_less=False):
     '''
     l: 原始钢筋定长
     L: 目标钢筋长度

@@ -7,9 +7,12 @@ from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_compl
 '''
 用粒子群算法求解钢筋切割问题
 
-废料长度: 227100
-接头数量: 418
-总成本: 2873851.936
+目标: [552 658 462] 已完成: [540 216 432] 还差: [ 12 442  30]
+已有成本: 3240.0 已有损失: 0 已有接头: 324
+还需成本: 141611.37600000002 还需损失: 11100 还需接头: 135
+总损失: 11100
+总接头: 459
+总成本: 144851.37600000002
 '''
 
 # 原始钢筋长度
@@ -27,9 +30,11 @@ need = np.array([552, 658, 462], dtype=int)
 # 初始化单个组合的最大数量
 max_num = 1
 # 最大的组合长度
-radius = 10
+radius = 13
 # 组合的采样数量
 sampling_count = 5000
+# 最大停滞次数
+max_stagnation = 100
 
 # 粒子群算法参数
 population_size = 200  # 粒子数量
@@ -48,12 +53,12 @@ def fitness(solution, patterns):
     # 如果组合的长度不足以切割目标钢筋，这里多匹配和少匹配都算到里面
     bar_lengths = need - hascut_lengths
     # 计算尾料的成本
-    cost += calc_cost_by_unmatched(bar_lengths, l, L_values, l_size)
+    cost += calc_cost_by_unmatched(bar_lengths, l, L_values, l_size)[0]
     # 返回成本 
     return cost
 
 # 求各种组合的列表
-patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
+patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius, include_less=False)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
@@ -99,11 +104,11 @@ for i in range(max_iter):
             nochange_count = 0
 
     best_used = calc_completion_lenghts(gbest, need, patterns)        
-    print(f"第{i+1}次迭代，局部平均成本: {np.mean(pbest_fitness)}, 最佳成本: {gbest_fitness}, 最佳完成度: {best_used} 目标: {need} 停滞次数: {nochange_count}")
+    print(f"{i}: 平均成本: {np.mean(pbest_fitness)}, 最佳成本: {gbest_fitness}, 最佳完成度: {best_used} 目标: {need} 停滞次数: {nochange_count}/{max_stagnation}")
 
     nochange_count += 1
-    # 如果数量匹配，且连续100次没有改进，则退出循环
-    if np.array_equal(best_used, need) and nochange_count>20:
+    # 如果达到最大停滞次数没有改进，则退出循环
+    if nochange_count>max_stagnation:
         print("已达到目标，退出循环")
         break          
 
@@ -116,13 +121,11 @@ loss  = np.sum([num*patterns[i][1] for i,num in enumerate(gbest)])
 joint = np.sum([num*patterns[i][2] for i,num in enumerate(gbest)])
 cost  = np.sum([num*patterns[i][3] for i,num in enumerate(gbest)])
 
-print("最佳方案为：")
-# 将最佳方案的组合输出
-for i,num in enumerate(gbest):
-    if num > 0:
-        print(num, '*', patterns[i][-1])
-        
-print("最后结果:", bar_lengths, "目标:", need)
-print("废料长度:", loss)
-print("接头数量:", joint)
-print("总成本:", cost)
+diff = need - bar_lengths
+diff_cost, diff_loss, diff_joint = calc_cost_by_unmatched(diff, l, L_values, l_size,l_min)
+print(f"目标: {need} 已完成: {bar_lengths} 还差: {diff}")
+print(f"已有成本: {cost} 已有损失: {loss} 已有接头: {joint}")
+print(f"还需成本: {diff_cost} 还需损失: {diff_loss} 还需接头: {diff_joint}")
+print(f"总损失: {loss+diff_loss}")
+print(f"总接头: {joint+diff_joint}")
+print(f"总成本: {cost+diff_cost}")
