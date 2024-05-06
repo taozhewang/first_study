@@ -42,11 +42,11 @@ def decom(l, L):
     patterns_tail_length = len(patterns_tail)
 
     print(f"patterns[0]:", patterns[0])
-    print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
+    print(f"patterns[{patterns_length-1}]:", patterns[patterns_length-1])
     print(f"patterns length: {patterns_length}")
 
     print(f"patterns_tail[0]:", patterns_tail[0])
-    print(f"patterns_tail[{patterns_tail_length}]:", patterns[patterns_tail_length-1])
+    print(f"patterns_tail[{patterns_tail_length-1}]:", patterns_tail[patterns_tail_length-1])
     print(f"patterns_tail length: {patterns_tail_length}")
 
     # 求组合的的使用情况

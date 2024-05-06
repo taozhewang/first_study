@@ -1,6 +1,7 @@
 import numpy as np
 from collections import Counter
 import itertools
+import random
 
 # 计算成本
 def calc_cost(loss, joint, l_size):
@@ -158,28 +159,26 @@ def pattern_oringin_by_loss(l, L, max_loss, max_len=10, l_min=200, l_size=32):
             # 计算接头数量和余料
             loss, joint = calc_loss_joint(combination_values, l, l_min)
 
+            # 这里的key需要和L的key对应，如果不在组合中，则count为0
+            combination_counter = Counter(combination)                    
+            counter=np.zeros(len(L), dtype=int)
+            for i, key in enumerate(L):
+                if key in combination_counter:
+                    counter[i] = combination_counter[key]
+                else:
+                    counter[i] = 0
+
             # 这里过滤余料大于losses1的组合，需要保留为1，2的组合，方便尾料的处理
-            if loss <= max_loss or i < len(L):
+            if loss <= max_loss or np.any(counter==0):
                 # 统计组合中的数量，返回dict {key1:count,key2:count,...}
                 # 计算成本
                 cost = calc_cost(loss, joint, l_size)
                 # 计算能效比
                 eer = cost/len(combination)
-
-                # 这里的key需要和L的key对应，如果不在组合中，则count为0
-                combination_counter = Counter(combination)                    
-                counter=np.zeros(len(L), dtype=int)
-                for i, key in enumerate(L):
-                    if key in combination_counter:
-                        counter[i] = combination_counter[key]
-                    else:
-                        counter[i] = 0
                 
-                if np.any(counter==0):
-                    patterns_list_keep.append([counter, loss, joint, cost, eer, combination])
-                else:
+                if not np.any(counter==0):
                     patterns_list.append([counter, loss, joint, cost, eer, combination])
-
+                patterns_list_keep.append([counter, loss, joint, cost, eer, combination])
 
     # 记录pattern和loss，返回dict {idx: [pattern, loss]}                                                        
     patterns = {}
@@ -194,3 +193,22 @@ def pattern_oringin_by_loss(l, L, max_loss, max_len=10, l_min=200, l_size=32):
     print("尾料组合数：", len(patterns_tail))
 
     return patterns, patterns_tail   
+
+if __name__ == "__main__":    
+    l = 12000       # 原始钢筋长度
+    l_size = 32     # 钢筋的规格
+    l_limit_len = 200   # 钢筋的最小可利用长度
+    L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}     # 目标钢筋长度
+    need = np.array([552, 658, 462])    # 目标钢筋的数量
+    
+    combination = []
+    for i,key in enumerate(L):
+        combination += [L[key]] * need[i]
+    
+    # 随机打散组合
+    random.shuffle(combination)
+    
+    loss, joint = calc_loss_joint(combination, l, l_limit_len)
+    reward = calc_cost(loss, joint, l_size)
+    print(f"钢筋总根数：", len(combination))        
+    print(f"成本: {reward} \t接头: {joint} \t剩余: {loss}")
