@@ -43,7 +43,7 @@ def calc_cost_by_unmatched(need_num, l, need_len, l_size=32, l_min=200):
         if need_num[i]>0:   # 剩余未匹配的钢筋数量
             combination += [need_len[i]]*need_num[i]
         else:               # 多匹配的钢筋数量
-            _loss += float(l*-need_num[i])
+            _loss += -l*float(need_num[i])
     loss, joint = calc_loss_joint(combination, l, l_min)
 
     return calc_cost(loss+_loss, joint, l_size), loss, joint   

@@ -7,12 +7,12 @@ from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_compl
 '''
 用禁忌搜索算法求解钢筋切割问题
 
-目标: [552 658 462] 已完成: [540 216 432] 还差: [ 12 442  30]
-已有成本: 3240.0 已有损失: 0 已有接头: 324
-还需成本: 141611.37600000002 还需损失: 11100 还需接头: 135
+目标: [552 658 462] 已完成: [552 402 460] 还差: [  0 256   2]
+已有成本: 80920.576 已有损失: 6100 已有接头: 384
+还需成本: 63880.8 还需损失: 5000 还需接头: 70
 总损失: 11100
-总接头: 459
-总成本: 144851.37600000002
+总接头: 454
+总成本: 144801.376
 '''
 
 # 原始钢筋长度
@@ -32,7 +32,7 @@ max_num = 1
 # 最大的组合长度
 radius = 13
 # 组合的采样数量
-sampling_count = 5000
+sampling_count = 10000
 
 
 # 禁忌搜索参数
@@ -171,6 +171,12 @@ for i, key in enumerate(patterns):
 loss  = np.sum([num*patterns[i][1] for i,num in enumerate(best_solution)])
 joint = np.sum([num*patterns[i][2] for i,num in enumerate(best_solution)])
 cost  = np.sum([num*patterns[i][3] for i,num in enumerate(best_solution)])
+
+print("最佳方案为：")
+# 将最佳方案的组合输出
+for i,num in enumerate(best_solution):
+    if num > 0:
+        print(num, '*', patterns[i][-1])
 
 diff = need - bar_lengths
 diff_cost, diff_loss, diff_joint = calc_cost_by_unmatched(diff, l, L_values, l_size,l_min)

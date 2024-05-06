@@ -176,6 +176,12 @@ loss  = np.sum([num*patterns[i][1] for i,num in enumerate(best_solution)])
 joint = np.sum([num*patterns[i][2] for i,num in enumerate(best_solution)])
 cost  = np.sum([num*patterns[i][3] for i,num in enumerate(best_solution)])
 
+print("最佳方案为：")
+# 将最佳方案的组合输出
+for i,num in enumerate(best_solution):
+    if num > 0:
+        print(num, '*', patterns[i][-1])
+
 diff = need - bar_lengths
 diff_cost, diff_loss, diff_joint = calc_cost_by_unmatched(diff, l, L_values, l_size,l_min)
 print(f"目标: {need} 已完成: {bar_lengths} 还差: {diff}")

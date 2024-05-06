@@ -7,12 +7,12 @@ from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_compl
 '''
 用粒子群算法求解钢筋切割问题
 
-目标: [552 658 462] 已完成: [540 216 432] 还差: [ 12 442  30]
-已有成本: 3240.0 已有损失: 0 已有接头: 324
-还需成本: 141611.37600000002 还需损失: 11100 还需接头: 135
+目标: [552 658 462] 已完成: [552 477 454] 还差: [  0 181   8]
+已有成本: 105751.088 已有损失: 8050 已有接头: 403
+还需成本: 39050.28799999999 还需损失: 3050 还需接头: 51
 总损失: 11100
-总接头: 459
-总成本: 144851.37600000002
+总接头: 454
+总成本: 144801.376
 '''
 
 # 原始钢筋长度
@@ -32,12 +32,12 @@ max_num = 1
 # 最大的组合长度
 radius = 13
 # 组合的采样数量
-sampling_count = 5000
+sampling_count = 20000
 # 最大停滞次数
-max_stagnation = 100
+max_stagnation = 10
 
 # 粒子群算法参数
-population_size = 200  # 粒子数量
+population_size = 500  # 粒子数量
 max_iter = 10000  # 最大迭代次数
 c1 = 2  # 个体学习因子
 c2 = 2  # 社会学习因子
@@ -65,7 +65,7 @@ print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
 print(f"patterns length: {patterns_length}")
 
 # 初始化种群
-population = np.random.randint(0, 3, size=(population_size, patterns_length))
+population = np.random.randint(0, max_num+1, size=(population_size, patterns_length))
 velocities = np.zeros((population_size, patterns_length))
 pbest = population.copy()
 gbest = np.zeros(patterns_length)
@@ -86,9 +86,11 @@ for i in range(max_iter):
         velocities[j] = np.clip(velocities[j], -1, 1)  # 限制速度范围
         if np.all(velocities[j] == 0):  # 随机初始化速度
             velocities[j] = np.random.rand(patterns_length)
+        
+        population[j][velocities[j]<-0.1] -= 1   # 如果速度小于0，则减少1
 
-        population[j][velocities[j]<0] -= 1   # 如果速度小于0，则减少1
-        population[j][velocities[j]>0] += 1   # 如果速度大于0，则增加1
+        population[j][velocities[j]>0.1] += 1   # 如果速度大于0，则增加1
+
         population[population<0] = 0  # 限制钢筋数量范围
 
         # 更新个体最优
@@ -120,6 +122,12 @@ for i, key in enumerate(patterns):
 loss  = np.sum([num*patterns[i][1] for i,num in enumerate(gbest)])
 joint = np.sum([num*patterns[i][2] for i,num in enumerate(gbest)])
 cost  = np.sum([num*patterns[i][3] for i,num in enumerate(gbest)])
+
+print("最佳方案为：")
+# 将最佳方案的组合输出
+for i,num in enumerate(gbest):
+    if num > 0:
+        print(num, '*', patterns[i][-1])
 
 diff = need - bar_lengths
 diff_cost, diff_loss, diff_joint = calc_cost_by_unmatched(diff, l, L_values, l_size,l_min)
