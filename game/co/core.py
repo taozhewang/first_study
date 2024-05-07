@@ -80,6 +80,24 @@ def calc_loss_joint(combination, l, l_min):
     if _l<l: loss += _l
     return loss, joint
 
+# 寻找当前组合的最小成本
+def get_min_cost_combination(combination, l, l_min=200, l_size=32):
+    '''
+    combination: 组合列表，[3000,3000,4000,...]
+    l: 原始钢筋定长
+    l_min: 最小接头数量
+    l_size: 钢筋的直径
+    '''
+    min_cost = 1e10
+    min_combination = []
+    for combination in itertools.permutations(combination):
+        loss, joint = calc_loss_joint(combination, l, l_min)
+        cost = calc_cost(loss, joint, l_size)
+        if cost < min_cost:    # 找到了最优解
+            min_cost = cost
+            min_combination = combination
+    return min_combination, min_cost
+
 # 产生patterns，最低1个组合，最高max_len个组合
 # 计算废料和接头数量，计算成本，计算能效比
 # patterns: 所有组合的辞典，key为索引 每个元素为 [counter, loss, joint, cost, eer, combin]
