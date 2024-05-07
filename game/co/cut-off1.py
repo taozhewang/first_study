@@ -6,9 +6,9 @@ import copy
 '''
 用相似度去扣减钢筋，使得总长度接近目标长度
 
-废料长度: 11100.0
-接头数量: 456.0
-总成本: 144821.376
+废料长度: 299100
+接头数量: 447
+总成本: 3783945.456
 '''
 
 # 原始钢筋长度
@@ -48,7 +48,7 @@ def decom(l, L):
         # for calculating how many patterns are used
         op = []
         # fake_op用于统计在逼近need时所用的pattern的种类及个数
-        fake_op = np.zeros(len(patterns))
+        fake_op = np.zeros(len(patterns), dtype=np.int16)
         
         # op id 转换为 pattern id
         op_2_pattern = []
