@@ -204,7 +204,7 @@ def pattern_oringin_by_sampling(l, L, sampling_count=-1, max_len=10, l_min=200, 
     if sampling_count>0:
         part_len = sampling_count-patterns_list_len
         if part_len>0:     # 如果当前记录不足，填充
-            p = np.array([float(1/i[3]) for i in patterns_list])
+            p = np.array([float(1/i[3]**2) for i in patterns_list])
             p = p/p.sum()
             patterns_list += random.choices(patterns_list, k=part_len, weights=p)
         elif part_len<0:   # 如果超过了，截断 
