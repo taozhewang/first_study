@@ -200,14 +200,15 @@ def pattern_oringin_by_sampling(l, L, sampling_count=-1, max_len=10, l_min=200, 
     print("组合数：", patterns_list_len)
     
     # 采样数
+    patterns_list = sorted(patterns_list, key=lambda x:x[3])
     if sampling_count>0:
         part_len = sampling_count-patterns_list_len
         if part_len>0:     # 如果当前记录不足，填充
-            for i in range(part_len):
-                patterns_list.append(patterns_list[i%part_len])   
+            p = np.array([float(1/i[3]) for i in patterns_list])
+            p = p/p.sum()
+            patterns_list += random.choices(patterns_list, k=part_len, weights=p)
         elif part_len<0:   # 如果超过了，截断 
-            # 按成本排序                                                            
-            patterns_list = sorted(patterns_list, key=lambda x:x[3])
+            # 按成本排序                                                                        
             patterns_list = patterns_list[:sampling_count]     
 
     # 转换成dict

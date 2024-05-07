@@ -30,11 +30,11 @@ need = np.array([552, 658, 462], dtype=int)
 # 初始化单个组合的最大数量
 max_num = 1
 # 最大的组合长度
-radius = 13
+radius = 14
 # 组合的采样数量
-sampling_count = 20000
+sampling_count = 10000
 # 最大停滞次数
-max_stagnation = 10
+max_stagnation = 20
 
 # 粒子群算法参数
 population_size = 500  # 粒子数量
@@ -58,7 +58,7 @@ def fitness(solution, patterns):
     return cost
 
 # 求各种组合的列表
-patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius, include_less=False)
+patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])

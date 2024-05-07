@@ -32,7 +32,7 @@ max_num = 3
 # 最大的组合长度
 radius = 13
 # 组合的采样数量
-sampling_count = 5000
+sampling_count = -1
 # 最大停滞次数
 max_stagnation = 20
 
