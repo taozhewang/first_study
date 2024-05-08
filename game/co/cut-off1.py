@@ -1,6 +1,6 @@
 #%%
 import numpy as np
-from core import pattern_oringin
+from core import pattern_oringin_by_loss
 import copy
 
 '''
@@ -8,7 +8,7 @@ import copy
 
 废料长度: 443100
 接头数量: 382
-总成本: 5602902.496000002
+总成本: 5602902.495999997
 '''
 
 # 原始钢筋长度
@@ -35,13 +35,23 @@ patterns:{idx: [pattern, loss, joint, cost, eer]}
 def decom(l, L):
     
     # 求各种组合的列表
-    patterns = pattern_oringin(l, L, losses1, radius)
+    patterns, patterns_tail = pattern_oringin_by_loss(l, L, losses1, radius)
     '''patterns: { 0: [[0,1,0], 0, 0, 0, 0,  ["L2"]],
                    1: [[1,0,1], 50,3,400,100,["L1","L3"]]} '''
     patterns_length = len(patterns)
+<<<<<<< HEAD
     print(f"patterns[1]:", patterns[0])
+=======
+    patterns_tail_length = len(patterns_tail)
+
+    print(f"patterns[0]:", patterns[0])
+>>>>>>> 6eed19af90c78bcd8e2e4c105e6208e1c9ac193e
     print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
     print(f"patterns length: {patterns_length}")
+
+    print(f"patterns_tail[0]:", patterns_tail[0])
+    print(f"patterns_tail[{patterns_tail_length}]:", patterns[patterns_tail_length-1])
+    print(f"patterns_tail length: {patterns_tail_length}")
 
     # 求组合的的使用情况
     def accum2(patterns):
@@ -192,47 +202,46 @@ def decom(l, L):
 
             stack.append((left, accumulator, pointer+1, count))  
 
-    accum3(patterns, left)
+    print("第二次匹配：")
+    accum3(patterns_tail, left)
     print(f"找到 {len(ways)} 种尾料处理办法：")
     print(ways)
 
-    # 统计出所有目前计算得到的组合，并将其用料和尾料显示出来
-    def find_min1(acc, ways):
-        statistics = []
+    # 合并第一次和第二次的结果，并将其用料和尾料显示出来
+    def find_min1(acc, ways, patterns, patterns_tail):
+        # 统计所有第二次匹配的成本，并找出最小的
+        cost_ways = {}
         for way_id in ways:
-            # 合并相同的pattern的数量    
-            total_sum = copy.copy(acc)
-            for id in ways[way_id]:
-                total_sum[id] += ways[way_id][id]
-            '''(for example) 
-            total_sum: {0: 0, 1: 18, 2: 0, 3: 0, 4: 27, 5: 0, 6: 0, 7: 0, 8: 0, 9: 1, 
-                        10: 0, 11: 31, 12: 0, 13: 0, 14: 22, 15: 0, 16: 0, 17: 0, 18: 2}'''
-            # 验算下输出材料的数量，后面检查是否和要求的一致
-            materials = np.zeros_like(need)
-            '''materials: [0, 0, 0]'''
-            loss =0
-            joint=0
-            cost =0
-            for id in total_sum:
-                pattern_values = patterns[id][0]
-                '''pattern_values: [xx, xx, xx]'''
-                materials += pattern_values * total_sum[id]
-                loss += patterns[id][1] * total_sum[id]
-                joint += patterns[id][2] * total_sum[id]
-                cost += patterns[id][3] * total_sum[id]
-       
-            statistics.append([total_sum, materials,loss, joint, cost])
+            cost = np.sum([patterns_tail[key][3]*value for key, value in ways[way_id].items()])
+            cost_ways[way_id]=cost
+        best_way_id = min(cost_ways.items(), key=lambda x: x[1])[0]
+        print(f"最佳尾料处理方案为：{best_way_id} 成本：{cost_ways[best_way_id]}")
+
+        statistics = {"patterns":[], "loss":0, "joint":0, "cost":0}
+        # 第一次匹配的结果
+        for acc_id in acc:
+            if acc[acc_id] > 0:
+                statistics["patterns"].append([acc[acc_id], patterns[acc_id][-1]])
+                statistics["loss"] += patterns[acc_id][1] * acc[acc_id]
+                statistics["joint"] += patterns[acc_id][2] * acc[acc_id]
+                statistics["cost"] += patterns[acc_id][3] * acc[acc_id]
+
+        # 合并第二次匹配的结果
+        for key, value in ways[best_way_id].items():
+            statistics["patterns"].append([value, patterns_tail[key][-1]])
+            statistics["loss"]  += patterns_tail[key][1] * value
+            statistics["joint"] += patterns_tail[key][2] * value
+            statistics["cost"]  += patterns_tail[key][3] * value
+
         return statistics
     
-    statistics = find_min1(acc, ways)
-    statistics = sorted(statistics, key=lambda x: x[4])
+    statistics = find_min1(acc, ways, patterns, patterns_tail)
     print("最佳方案为：")
     # 将最佳方案的组合输出
-    for id in statistics[0][0]:
-        if statistics[0][0][id] > 0:
-            print(statistics[0][0][id], '*', patterns[id][-1])
-    print("废料长度:", statistics[0][2])
-    print("接头数量:", statistics[0][3])
-    print("总成本:", statistics[0][4])
+    for value, pattern in statistics["patterns"]:
+        print(value, '*', pattern)
+    print("废料长度:", statistics["loss"])
+    print("接头数量:", statistics["joint"])
+    print("总成本:", statistics["cost"])
         
 decom(l, L)

@@ -2,7 +2,7 @@
 import numpy as np
 import random
 
-from core import pattern_oringin, calc_cost_by_unmatched, calc_completion_lenghts
+from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_completion_lenghts
 
 '''
 用禁忌搜索算法求解钢筋切割问题
@@ -28,14 +28,17 @@ need = np.array([552, 658, 462],dtype=int)
 max_num = 1
 # 最大的组合长度
 radius = 10
-# 组合数最小余料
-losses1 = 50
+# 组合的采样数量
+sampling_count = 5000
+
 
 # 禁忌搜索参数
 # 最大循环次数
 max_iterations = 1000000
-# 禁忌期限
+# 禁忌表大小
 tabu_tenure = 200
+# 最小变异个数
+min_variation_count = 3
 
 # 初始化解
 # patterns_length 组合的长度
@@ -58,7 +61,7 @@ def evaluate(solutions, need, patterns_lengths, patterns_costs):
     return cost
 
 # 求各种组合的列表
-patterns = pattern_oringin(l, L, losses1, radius)
+patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
@@ -70,13 +73,19 @@ patterns_costs = np.array([patterns[i][3] for i in range(patterns_length)])
 def get_neighbor(solution, patterns_length, variation_count):
     neighbor = np.copy(solution)
     ids = np.random.choice(patterns_length, variation_count, replace=False)
-    # 为了加快收敛，变异方向固定
-    v = 1 if random.random()<0.5 else -1
-    for idx in ids:
-        # 如果只剩下2个变异位置，则变异方向随机
-        if variation_count==2: v = 1 if random.random()<0.5 else -1
-        neighbor[idx] += v
-        if neighbor[idx] < 0: neighbor[idx]= 0
+    if variation_count==min_variation_count:
+        for idx in ids:
+            neighbor[idx] += 1 if random.random()<0.5 else -1
+    else:
+        v = 1 if random.random()<0.5 else -1
+        # 随机选择10%不同方向
+        values = np.array([v for i in range(variation_count)])
+        indices = np.random.choice(variation_count, size=int(0.1*variation_count), replace=False)
+        values[indices] = -values[indices]
+        for i,idx in enumerate(ids):
+            neighbor[idx] += values[i]
+
+    neighbor[neighbor<0] = 0
     return neighbor
 
 # 禁忌搜索,检查邻域解是否在禁忌表中
@@ -119,30 +128,29 @@ def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num):
             
         nochange_count += 1
 
-        # 如果邻域解比禁忌组的平均成本好，且邻域解不在禁忌表中，则更新禁忌组
-        avg_waste = sum(tabu_waste_list)/len(tabu_waste_list)
+        # 如果邻域解比当前解好，且邻域解不在禁忌表中，则更新禁忌组
         update_count = 0
         for idx, waste in enumerate(neighbors_waste):
-            if waste < avg_waste and not check_tabu(tabu_list, neighbors[idx]):
+            if waste < tabu_waste_list[idx] and not check_tabu(tabu_list, neighbors[idx]):
                 # 记录最佳解
                 update_count += 1
-                # 更新禁忌表，找到最差的解，替换为邻域解
                 worst_idx = np.argmax(tabu_waste_list)
                 tabu_list[worst_idx]=neighbors[idx]
                 tabu_waste_list[worst_idx]=waste
 
         if i % 10 == 0:
+            avg_waste = sum(tabu_waste_list)/len(tabu_waste_list)
             best_used = calc_completion_lenghts(best_solution, need, patterns)
 
             # 动态调整异动个数
             variation_count = np.sum(np.abs(best_used-need))//50
             if variation_count>patterns_length//2: variation_count=patterns_length//2
-            if variation_count<2: variation_count=2
+            if variation_count<min_variation_count: variation_count=min_variation_count
 
-            print(f"{i}: 禁忌组平均成本:{avg_waste}, 更新个数:{update_count}, 最佳成本:{best_waste}, 最佳完成度: {best_used} 目标: {need} 异动个数: {variation_count}")
+            print(f"{i}: 禁忌组平均成本:{avg_waste}, 更新个数:{update_count}, 最佳成本:{best_waste}, 最佳完成度: {best_used} 目标: {need} 异动个数: {variation_count} 停滞次数: {nochange_count}")
 
-            # 如果数量匹配，且连续100次没有改进，则退出循环
-            if np.array_equal(best_used, need) and nochange_count>100:
+            # 如果数量匹配，且连续1000次没有改进，则退出循环
+            if np.array_equal(best_used, need) and nochange_count>1000:
                 print("已达到目标，退出循环")
                 break            
 
@@ -163,7 +171,7 @@ print("最佳方案为：")
 # 将最佳方案的组合输出
 for i,num in enumerate(best_solution):
     if num > 0:
-        print(num, '*', patterns[i][-1])
+        print(num, '*', patterns[i][-1], patterns[i][3])
         
 print("最后结果:", bar_lengths, "目标:", need)
 print("废料长度:", loss)

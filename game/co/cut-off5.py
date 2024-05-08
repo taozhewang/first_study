@@ -2,14 +2,14 @@
 import numpy as np
 import random
 
-from core import pattern_oringin, calc_cost_by_unmatched, calc_cost, calc_completion_lenghts
+from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_completion_lenghts
 
 '''
 用蚁群算法求解钢筋切割问题
 
-废料长度: 263100
-接头数量: 421
-总成本: 3328783.6960000005
+废料长度: 227100
+接头数量: 418
+总成本: 2873851.936
 '''
 
 # 原始钢筋长度
@@ -28,14 +28,14 @@ need = np.array([552, 658, 462], dtype=int)
 max_num = 1
 # 最大的组合长度
 radius = 10
-# 组合数最小余料
-losses1 = 50
+# 组合的采样数量
+sampling_count = 5000
 
 # 蚁群算法参数
 # 最大循环次数
 max_iterations = 1000000
 # 蚂蚁数量
-ant_count = 100  
+ant_count = 200  
 # 信息素持久因子
 rho = 0.5  
 # 信息素重要程度因子
@@ -101,7 +101,7 @@ class Ant:
         self.cost = evaluate(solution, self.need, self.patterns)
 
 # 求各种组合的列表
-patterns = pattern_oringin(l, L, losses1, radius)
+patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
 patterns_length = len(patterns)
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
 print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合，因为需要处理尾料
@@ -149,7 +149,7 @@ for iteration in range(10000):
         best_solution = solution
         best_used = calc_completion_lenghts(solution, need, patterns)
 
-    # 更新信息素
+    # 更新信息素,用平均成本/蚂蚁的成本更新信息素
     for ant in ants:
         for rod_length, choice in ant.path:
             pheromone[rod_length][choice] += avg_cost / ant.cost
