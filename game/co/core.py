@@ -156,7 +156,7 @@ def pattern_oringin_by_sampling(l, L, sampling_count=-1, max_len=10, l_min=200, 
     patterns = {}
     # 完整组合
     patterns_list = []
-    # 如果有重复类别，只保留一种 {cost:[count]}
+    # 如果有重复类别，只保留余料最小的的组合 {count:cost}
     patterns_saved = {}
     for i in range(1, max_len):
         # 按组合数产生组合
@@ -180,17 +180,12 @@ def pattern_oringin_by_sampling(l, L, sampling_count=-1, max_len=10, l_min=200, 
                     counter[i] = combination_counter[key]
                 else:
                     counter[i] = 0
-            
-            # 清除相同的组合
-            if cost not in patterns_saved:
-                patterns_saved[cost]=[]
-            findSame=False
-            for c in patterns_saved[cost]:
-                if np.array_equal(c, counter):
-                    findSame=True
-                    break
-            if findSame: continue
-            patterns_saved[cost].append(counter)
+
+            counter_str = "_".join([str(i) for i in counter])      
+            # 清除高余料的组合
+            if counter_str in patterns_saved and cost>=patterns_saved[counter_str]:
+                continue
+            patterns_saved[counter_str]=cost
             
             # 记录pattern和loss，返回dict {idx: [pattern, loss]}
             # 如果有0的count，则保留在patterns_list_loss中，否则保留在patterns_list中  
@@ -203,10 +198,10 @@ def pattern_oringin_by_sampling(l, L, sampling_count=-1, max_len=10, l_min=200, 
     patterns_list = sorted(patterns_list, key=lambda x:x[3])
     if sampling_count>0:
         part_len = sampling_count-patterns_list_len
-        if part_len>0:     # 如果当前记录不足，填充
-            p = np.array([float(1/i[3]**2) for i in patterns_list])
+        if part_len>0:     # 如果当前记录不足，按 cost成本的倒数的平方为权重 重采样
+            p = np.array([float(1/i[3]) for i in patterns_list])
             p = p/p.sum()
-            patterns_list += random.choices(patterns_list, k=part_len, weights=p)
+            patterns_list = random.choices(patterns_list, k=sampling_count, weights=p)
         elif part_len<0:   # 如果超过了，截断 
             # 按成本排序                                                                        
             patterns_list = patterns_list[:sampling_count]     
