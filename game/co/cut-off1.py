@@ -74,8 +74,8 @@ def decom(l, L):
         assert len(op) > 0, "no pattern can be used"
         print("op length:", len(op))
         
-        for i in range(40):
-            print(f'op{i}', op[i])
+        # for i in range(40):
+        #     print(f'op{i}', op[i])
             
         # 方法：比例 + 随机， 目的是用尾料最少的pattern组装或逼近所需的目标数目
         def ratio(op, need):
