@@ -30,4 +30,4 @@ def av_action_move(board, source, player):
     boardplace_air = np.where(board[up: down, left: right] == 0)
     source_empty = np.where(source[up: down, left: right] <= 1)
     source_bridge = np.where(source[up: down, left: right] == 10) #bridge ID
-    air_place = 
+    air_place = 1
