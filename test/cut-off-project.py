@@ -1,170 +1,177 @@
-#################
-import numpy as np
-import copy
-l = 12000
-L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
-need = np.array([852, 658, 162])
-radius = 9
-losses1 = 60
-losses2 = 40
+# #################
+# import numpy as np
+# import copy
+# l = 12000
+# L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
+# # L = {'L2' : 4350, 'L1' : 4100, 'L3' : 4700}
+# # L = {'L2' : 4350, 'L3' : 4700, 'L1' : 4100}
+# # L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700, 'L4' : 3350, 'L5' : 3700, 'L6': 2100}
+# need = np.array([852, 658, 162])
+# radius = 4
+# losses1 = 0
+# losses2 = 40
 
-'''patterns: [([5, 2, 4], [0, 4, 10, 3]), ([number1, number2, number3], [left, ls, cut, paste])]
-cut, paste: integers
-count: length
-accumulator: [5, 2, 4] ~ the number of L1 L2 L3
+# '''patterns: [([5, 2, 4], [0, 4, 10, 3]), ([number1, number2, number3], [left, ls, cut, paste])]
+# cut, paste: integers
+# count: length
+# accumulator: [5, 2, 4] ~ the number of L1 L2 L3
 
-'''
-patterns_left = []
-patterns_right = []
-patterns_turn = []
-cut = 0
-paste = 0
-count = 0
-accumulator = [0 for _ in L.keys()]
-turn_accumulator = []
-pointer = 0
-def decomposition1(l, L, n, count, cut, paste, accumulator, turn_accumulator, pointer):
-    L_values = list(L.values())
-    stage = count // l
-    count += L_values[pointer]
-    Re_stage, Re_end_of_the_stage = count // l, count % l
-    Re_end_of_the_stage = l * (Re_stage + bool(Re_end_of_the_stage)) - count
-    Re_accumulator = copy.deepcopy(accumulator)
-    Re_turn_accumulator = copy.deepcopy(turn_accumulator)
-    if pointer == len(L_values) - 1:
-        if Re_stage == n and Re_end_of_the_stage == 0:
-            Re_accumulator[pointer] += 1
-            patterns_left.append(Re_accumulator)
-            patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
-            Re_turn_accumulator.append(pointer)
-            patterns_turn.append(Re_turn_accumulator)
-            return
-        elif Re_stage == n:
-            return
-        else:
-            traverse = bool(Re_end_of_the_stage)
-            cut += traverse
-            paste += (Re_stage - stage + traverse - 1) * (Re_stage - stage)
-            Re_accumulator[pointer] += 1
-            Re_turn_accumulator.append(pointer)
+# '''
+# patterns_left = []
+# patterns_right = []
+# patterns_turn = []
+# cut = 0
+# paste = 0
+# count = 0
+# accumulator = [0 for _ in L.keys()]
+# turn_accumulator = []
+# pointer = 0
+# def decomposition1(l, L, n, count, cut, paste, accumulator, turn_accumulator, pointer):
+#     L_values = list(L.values())
+#     stage = count // l
+#     count += L_values[pointer]
+#     Re_stage, Re_end_of_the_stage = count // l, count % l
+#     Re_end_of_the_stage = l * (Re_stage + bool(Re_end_of_the_stage)) - count
+#     Re_accumulator = copy.deepcopy(accumulator)
+#     Re_turn_accumulator = copy.deepcopy(turn_accumulator)
+#     if pointer == len(L_values) - 1:
+#         if Re_stage == n and Re_end_of_the_stage == 0:
+#             Re_accumulator[pointer] += 1
+#             patterns_left.append(Re_accumulator)
+#             patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
+#             Re_turn_accumulator.append(pointer)
+#             patterns_turn.append(Re_turn_accumulator)
+#             return
+#         elif Re_stage == n:
+#             return
+#         else:
+#             traverse = bool(Re_end_of_the_stage)
+#             cut += traverse
+#             paste += (Re_stage - stage + traverse - 1) * (Re_stage - stage)
+#             Re_accumulator[pointer] += 1
+#             Re_turn_accumulator.append(pointer)
             
-            if Re_end_of_the_stage <= losses1:
-                patterns_left.append(Re_accumulator)
-                patterns_right.append([Re_end_of_the_stage, Re_stage + traverse, cut, paste])
-                patterns_turn.append(Re_turn_accumulator)
-                pointer = 0
-                decomposition1(l, L, n, count, cut, paste, Re_accumulator, Re_turn_accumulator, pointer)
-            else:
-                decomposition1(l, L, n, count, cut, paste, Re_accumulator, Re_turn_accumulator, pointer)
-    elif Re_stage == n and Re_end_of_the_stage == 0:
-        Re_accumulator[pointer] += 1
-        patterns_left.append(Re_accumulator)
-        patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
-        Re_turn_accumulator.append(pointer)
-        patterns_turn.append(Re_turn_accumulator)
-        return
-    elif Re_stage == n:
-        return
-    else:
-        decomposition1(l, L, n, count - L_values[pointer], cut, paste, Re_accumulator, Re_turn_accumulator, pointer + 1)
-        traverse = bool(Re_end_of_the_stage)
-        cut += traverse
-        paste += (Re_stage - stage + traverse - 1) * (Re_stage - stage)
-        Re_accumulator[pointer] += 1
-        Re_turn_accumulator.append(pointer)
+#             if Re_end_of_the_stage <= losses1:
+#                 patterns_left.append(Re_accumulator)
+#                 patterns_right.append([Re_end_of_the_stage, Re_stage + traverse, cut, paste])
+#                 patterns_turn.append(Re_turn_accumulator)
+#                 pointer = 0
+#                 decomposition1(l, L, n, count, cut, paste, Re_accumulator, Re_turn_accumulator, pointer)
+#             else:
+#                 decomposition1(l, L, n, count, cut, paste, Re_accumulator, Re_turn_accumulator, pointer)
+
+#             # decomposition1(l, L, n, count, cut, paste, Re_accumulator, Re_turn_accumulator, pointer)
             
-        if Re_end_of_the_stage <= losses1:
-            patterns_left.append(Re_accumulator)
-            patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
-            patterns_turn.append(Re_turn_accumulator)
-            pointer = 0
-            decomposition1(l, L, n, count, cut, paste, Re_accumulator, Re_turn_accumulator, pointer)
-        else:
-            decomposition1(l, L, n, count, cut, paste, Re_accumulator, Re_turn_accumulator, pointer)
-decomposition1(l, L, radius, count, cut, paste, accumulator, turn_accumulator, pointer)
-def patterns_simplify(patterns_left, patterns_right, patterns_turn):
-    patterns_left_plus, patterns_right_plus = [], []
-    patterns_turn_plus = []
-    k = len(patterns_left)
-    for i in range(k):
-        patl = patterns_left[i]
-        if patl not in patterns_left_plus:
-            patterns_left_plus.append(patl)
-            patterns_right_plus.append(patterns_right[i])
-            patterns_turn_plus.append(patterns_turn[i])
-        else:
-            origin_index = patterns_left_plus.index(patl)
-            cut = patterns_right_plus[origin_index][2]
-            if patterns_right[i][2] < cut:
-                patterns_left_plus.pop(origin_index)
-                patterns_right_plus.pop(origin_index)
-                patterns_left_plus.append(patl)
-                patterns_right_plus.append(patterns_right[i])
-                patterns_turn_plus.pop(origin_index)
-                patterns_turn_plus.append(patterns_turn[i])
-
-    patterns = list(zip(patterns_left_plus, patterns_right_plus))
-    patterns_main, patterns_property, patterns_composition = {}, {}, {}
-    for i in range(len(patterns_left_plus)):
-        patterns_main[i] = [patterns_left_plus[i], patterns_right_plus[i][0]]
-        patterns_property[i] = patterns_right_plus[i]
-        patterns_composition[i] = patterns_turn_plus[i]
-    return patterns, patterns_main, patterns_property, patterns_composition
-
-
-
-def patterns_show(patterns_composition):
-    com = {}
-    k = list(L.values())
-    count = 0
-    for key in patterns_composition:
-        detach = {0: []}
-        composition = patterns_composition[key]
-        length = 0
-        stage = 0
-        for i in composition:   
-            length += k[i]
+#     elif Re_stage == n and Re_end_of_the_stage == 0:
+#         Re_accumulator[pointer] += 1
+#         patterns_left.append(Re_accumulator)
+#         patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
+#         Re_turn_accumulator.append(pointer)
+#         patterns_turn.append(Re_turn_accumulator)
+#         return
+#     elif Re_stage == n:
+#         return
+#     else:
+#         decomposition1(l, L, n, count - L_values[pointer], cut, paste, Re_accumulator, Re_turn_accumulator, pointer + 1)
+#         traverse = bool(Re_end_of_the_stage)
+#         cut += traverse
+#         paste += (Re_stage - stage + traverse - 1) * (Re_stage - stage)
+#         Re_accumulator[pointer] += 1
+#         Re_turn_accumulator.append(pointer)
             
-            if length <= l:
-                a = detach[stage]
-                a.append(k[i])
-                detach[stage] = a
+#         if Re_end_of_the_stage <= losses1:
+#             patterns_left.append(Re_accumulator)
+#             patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
+#             patterns_turn.append(Re_turn_accumulator)
+#             pointer = 0
+#             decomposition1(l, L, n, count, cut, paste, Re_accumulator, Re_turn_accumulator, pointer)
+#         else:
+#             decomposition1(l, L, n, count, cut, paste, Re_accumulator, Re_turn_accumulator, pointer)
+# decomposition1(l, L, radius, count, cut, paste, accumulator, turn_accumulator, pointer)
+# def patterns_simplify(patterns_left, patterns_right, patterns_turn):
+#     patterns_left_plus, patterns_right_plus = [], []
+#     patterns_turn_plus = []
+#     k = len(patterns_left)
+#     for i in range(k):
+#         patl = patterns_left[i]
+#         if patl not in patterns_left_plus:
+#             patterns_left_plus.append(patl)
+#             patterns_right_plus.append(patterns_right[i])
+#             patterns_turn_plus.append(patterns_turn[i])
+#         else:
+#             origin_index = patterns_left_plus.index(patl)
+#             cut = patterns_right_plus[origin_index][2]
+#             if patterns_right[i][2] < cut:
+#                 patterns_left_plus.pop(origin_index)
+#                 patterns_right_plus.pop(origin_index)
+#                 patterns_left_plus.append(patl)
+#                 patterns_right_plus.append(patterns_right[i])
+#                 patterns_turn_plus.pop(origin_index)
+#                 patterns_turn_plus.append(patterns_turn[i])
 
-            else:
-                length = length - l
-                a = detach[stage]
-                a.append(k[i] - length)
-                detach[stage] = a
-                stage += 1
-                detach[stage] = [length]
+#     patterns = list(zip(patterns_left_plus, patterns_right_plus))
+#     patterns_main, patterns_property, patterns_composition = {}, {}, {}
+#     for i in range(len(patterns_left_plus)):
+#         patterns_main[i] = [patterns_left_plus[i], patterns_right_plus[i][0]]
+#         patterns_property[i] = patterns_right_plus[i]
+#         patterns_composition[i] = patterns_turn_plus[i]
+#     return patterns, patterns_main, patterns_property, patterns_composition
 
-        if length < l:
-            a = detach[stage]
-            a.append(l - length)
-            detach[stage] = a
 
-        com[count] = detach
-        count += 1
-    return com
-patterns, patterns_main, patterns_property, patterns_composition = patterns_simplify(patterns_left, patterns_right, patterns_turn)
-com = patterns_show(patterns_composition)
-print(patterns_composition)
-for i, content in enumerate(patterns):
-    print(i, content)
-# print('patterns:', patterns)
-for key in com:
-    print(key, com[key])
-p1 = patterns[0]
-c1 = com[0]
 
-print('explaination:')
-print(f'patterns[0]:{p1}')
-print(f'the number of L1, L2, L3 is: {p1[0][0]}, {p1[0][1]}, {p1[0][2]}')
-print(f'the left of pattern[0] is: {p1[1][0]}')
-print(f'the number of l is {p1[1][1]}')
-print(f'need to cut {p1[1][2]} times')
-print(f'need to paste {p1[1][3]} times')
-print(f'the composition of pattern[0] is: \n {c1}')
+# def patterns_show(patterns_composition):
+#     com = {}
+#     k = list(L.values())
+#     count = 0
+#     for key in patterns_composition:
+#         detach = {0: []}
+#         composition = patterns_composition[key]
+#         length = 0
+#         stage = 0
+#         for i in composition:   
+#             length += k[i]
+            
+#             if length <= l:
+#                 a = detach[stage]
+#                 a.append(k[i])
+#                 detach[stage] = a
+
+#             else:
+#                 length = length - l
+#                 a = detach[stage]
+#                 a.append(k[i] - length)
+#                 detach[stage] = a
+#                 stage += 1
+#                 detach[stage] = [length]
+
+#         if length < l:
+#             a = detach[stage]
+#             a.append(l - length)
+#             detach[stage] = a
+
+#         com[count] = detach
+#         count += 1
+#     return com
+# patterns, patterns_main, patterns_property, patterns_composition = patterns_simplify(patterns_left, patterns_right, patterns_turn)
+# com = patterns_show(patterns_composition)
+# print(patterns_composition)
+# for i, content in enumerate(patterns):
+#     print(i, content)
+# # print('patterns:', patterns)
+# for key in com:
+#     print(key, com[key])
+
+# for i in [10]:
+#     p1 = patterns[i]
+#     c1 = com[i]
+#     print('explaination:')
+#     print(f'patterns[{i}]:{p1}')
+#     print(f'the number of L1, L2, L3 is: {p1[0][0]}, {p1[0][1]}, {p1[0][2]}')
+#     print(f'the left of pattern[{i}] is: {p1[1][0]}')
+#     print(f'the number of l is {p1[1][1]}')
+#     print(f'need to cut {p1[1][2]} times')
+#     print(f'need to paste {p1[1][3]} times')
+#     print(f'the composition of pattern[{i}] is: \n {c1}')
 
 
 
@@ -274,5 +281,212 @@ print(f'the composition of pattern[0] is: \n {c1}')
         
         
         
+            ########################################################################
+#%%
+import numpy as np
+import copy
+
+
+# l = 12000
+# n = 3
+# L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
+# radius = 5
+# losses1 = 0
+
+def decomposition1(l, L, n, count, cut, paste, accumulator, pointer):
+    L_values = list(L.values())
+    stage = count // l
+    count += L_values[pointer]
+    Re_stage, Re_end_of_the_stage = count // l, count % l
+    Re_end_of_the_stage = l * (Re_stage + bool(Re_end_of_the_stage)) - count
+    Re_accumulator = copy.deepcopy(accumulator)
+    if pointer == len(L_values) - 1:
+        if Re_stage == n and Re_end_of_the_stage == 0:
+            Re_accumulator[pointer] += 1
+            patterns_left.append(Re_accumulator)
+            patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
+            return
+        elif Re_stage == n:
+            return
+        else:
+            traverse = bool(Re_end_of_the_stage)
+            cut += traverse
+            paste += (Re_stage - stage + traverse - 1) * (Re_stage - stage)
+            Re_accumulator[pointer] += 1
             
-        
+            if Re_end_of_the_stage <= losses1:
+                patterns_left.append(Re_accumulator)
+                patterns_right.append([Re_end_of_the_stage, Re_stage + traverse, cut, paste])
+                pointer = 0
+                decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
+            else:
+                decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
+
+            
+    elif Re_stage == n and Re_end_of_the_stage == 0:
+        Re_accumulator[pointer] += 1
+        patterns_left.append(Re_accumulator)
+        patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
+        return
+    elif Re_stage == n:
+        return
+    else:
+        decomposition1(l, L, n, count - L_values[pointer], cut, paste, Re_accumulator, pointer + 1)
+        traverse = bool(Re_end_of_the_stage)
+        cut += traverse
+        paste += (Re_stage - stage + traverse - 1) * (Re_stage - stage)
+        Re_accumulator[pointer] += 1
+            
+        if Re_end_of_the_stage <= losses1:
+            patterns_left.append(Re_accumulator)
+            patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
+            pointer = 0
+            decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
+        else:
+            decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
+
+
+
+
+def patterns_decomposition(pattern, l, L, joint, length, count, pointer, stage):
+        p_length = len(pattern)
+        L_length = list(L.values())
+        Re_pattern = copy.deepcopy(pattern)
+        Re_count = copy.deepcopy(count)
+
+        if Re_pattern[pointer] == 0:
+            pointer = (pointer + 1) % p_length
+        else:
+            length += L_length[pointer]
+            
+
+            if length > l:
+                length -= l
+                a = Re_count[stage]
+
+                left = L_length[pointer] - length
+                if left < joint or length < joint:
+                    return
+                
+                a.append(left)
+                Re_count[stage] = a
+                stage += 1
+                Re_count[stage] = [length]
+                Re_pattern[pointer] = Re_pattern[pointer] - 1
+
+                if not any(Re_pattern):
+                    if l == length:
+                        Re_count.pop(stage)
+                        accumulator.append(Re_count)
+                        return
+                    else:
+                        left = l - length
+                        a = Re_count[stage]
+                        a.append(left)
+                        Re_count[stage] = a
+                        accumulator.append(Re_count)
+                        return
+
+                if Re_pattern[pointer] == 0:
+                    for step in range(1, p_length):
+                        Re_pointer = (pointer + step) % p_length
+                        if Re_pattern[Re_pointer] != 0:
+                            patterns_decomposition(Re_pattern, l, L, joint, length, Re_count, Re_pointer, stage)
+                                     
+                else:
+                    for step in range(p_length):
+                        Re_pointer = (pointer + step) % p_length
+                        if Re_pattern[Re_pointer] != 0:
+                            patterns_decomposition(Re_pattern, l, L, joint, length, Re_count, Re_pointer, stage)
+
+            elif length == l:
+                length = 0
+                a = Re_count[stage]
+                a.append(L_length[pointer])
+                Re_count[stage] = a
+                stage += 1
+                Re_count[stage] = []
+                Re_pattern[pointer] = Re_pattern[pointer] - 1
+
+                if not any(Re_pattern):
+                    Re_count.pop(stage)
+                    accumulator.append(Re_count)
+                    return
+                    
+                elif Re_pattern[pointer] == 0:
+                    for step in range(1, p_length):
+                        Re_pointer = (pointer + step) % p_length
+                        if Re_pattern[Re_pointer] != 0:
+                            patterns_decomposition(Re_pattern, l, L, joint, length, Re_count, Re_pointer, stage)
+                else:
+                    for step in range(p_length):
+                        Re_pointer = (pointer + step) % p_length
+                        if Re_pattern[Re_pointer] != 0:
+                            patterns_decomposition(Re_pattern, l, L, joint, length, Re_count, Re_pointer, stage)
+
+            else:
+                a = Re_count[stage]
+                a.append(L_length[pointer])
+                Re_count[stage] = a
+                Re_pattern[pointer] = Re_pattern[pointer] - 1
+
+                if not any(Re_pattern):
+                    left = l - length
+                    a = Re_count[stage]
+                    a.append(left)
+                    Re_count[stage] = a
+                    accumulator.append(Re_count)
+                    return
+                    
+                elif Re_pattern[pointer] == 0:
+                    for step in range(1, p_length):
+                        Re_pointer = (pointer + step) % p_length
+                        if Re_pattern[Re_pointer] != 0:
+                            patterns_decomposition(Re_pattern, l, L, joint, length, Re_count, Re_pointer, stage)
+                else:
+                    for step in range(p_length):
+                        Re_pointer = (pointer + step) % p_length
+                        if Re_pattern[Re_pointer] != 0:
+                            patterns_decomposition(Re_pattern, l, L, joint, length, Re_count, Re_pointer, stage)
+def patterns_decomposition_summon(pattern, l, L, joint):
+    p_length = len(pattern)
+    for i in range(p_length):
+        if pattern[i] != 0:
+            patterns_decomposition(pattern, l, L, joint, 0, {0: []}, i, 0)
+    return
+
+l = int(input('raw material length: '))
+n = int(input('the number of objects: '))
+L = {}
+for i in range(n):
+    L[i] = int(input(f'object L{i + 1}: '))
+radius = int(input('radius of the number of raw materials: '))
+losses1 = int(input('max left of patterns: '))
+
+patterns_left = []
+patterns_right = []
+
+cut = 0
+paste = 0
+count = 0
+accumulator = [0 for _ in L.keys()]
+pointer = 0
+decomposition1(l, L, radius, count, cut, paste, accumulator, pointer)
+patterns_integrate = list(zip(patterns_left, patterns_right))
+for i, pattern in enumerate(patterns_integrate):
+    print(i, pattern)
+
+accumulator = []
+while True:
+    check = input('Check the composition of patterns? press enter to keep in / press anything to cancel ').strip().lower()
+    if len(check) != 0:
+        break
+    joint = int(input('min length of joint:(recommended: <20:1000; >20:1500) '))
+    patterns_number = len(patterns_left)
+    pattern_index = int(input(f'choose a pattern for its composition: (range:[{0} ~ {patterns_number - 1}]) '))
+    pattern = patterns_left[pattern_index]
+    patterns_decomposition_summon(pattern, l, L, joint)
+    for i, a in enumerate(accumulator):
+        print(i, a)
+    if not any(accumulator):
+        print('No composition found')
