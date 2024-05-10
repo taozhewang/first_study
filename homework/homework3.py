@@ -21,7 +21,7 @@ def find_root(f, err):
         range_of_root = range_of_root / 2
     print(middle_value)
     return None
-# find_root(lambda x : 3 * pow(x, 3) + 2 * pow(x, 2) + x + 1, 0.001)
+find_root(lambda x : 3 * pow(x, 3) + 2 * pow(x, 2) + x + 1, 0.001)
 
 # Q2
 def find_min(X, Y):
@@ -37,10 +37,10 @@ def find_min(X, Y):
     solution = np.linalg.solve(coefficient_matrix, vector)
     print(f'beta0 is: {solution[0]}; beta1 is: {solution[1]}')
     return None
-# X = np.random.random(10)
-# Y = np.random.random(10)
-# print(X, Y, sep = '\n')
-# find_min(X, Y)
+X = np.random.random(10)
+Y = np.random.random(10)
+print(X, Y, sep = '\n')
+find_min(X, Y)
 
 # Q3
 import plotly.graph_objects as go
@@ -64,9 +64,9 @@ def initial_value_problem(f, y_0, dt):
                       yaxis_title = 'y Axis', 
                       title = 'y(t)')
     fig.show()
-# def f(y, t):
-#     return y + t
-# initial_value_problem(f, 1, 0.1)
+def f(y, t):
+    return y + t
+initial_value_problem(f, 1, 0.1)
     
 # Q4
 from scipy.optimize import minimize
@@ -93,13 +93,13 @@ def MC_integral(f, left_bound, right_bound, n = 1000):
 
 def f(x):
     return np.sin(x)
-# left_bound = 0
-# right_bound = (3 / 2) * np.pi
-# n = 100000
-# integral(f, left_bound, right_bound, n)
-# MC_integral(f, left_bound, right_bound, n)
-# print(timeit.timeit(f'integral(f, {left_bound}, {right_bound}, {n})', number = 0, globals = globals()),
-#        timeit.timeit(f'MC_integral(f, {left_bound}, {right_bound}, {n})', number = 0, globals = globals()))
+left_bound = 0
+right_bound = (3 / 2) * np.pi
+n = 100000
+integral(f, left_bound, right_bound, n)
+MC_integral(f, left_bound, right_bound, n)
+print(timeit.timeit(f'integral(f, {left_bound}, {right_bound}, {n})', number = 0, globals = globals()),
+       timeit.timeit(f'MC_integral(f, {left_bound}, {right_bound}, {n})', number = 0, globals = globals()))
 
 # Q5
 def Kth_number(X, k):
@@ -108,9 +108,9 @@ def Kth_number(X, k):
     print(Y)
     print(Y[len(X) - k])
     return None
-# X = np.random.randint(20, size = 10)
-# np.random.shuffle(X)
-# Kth_number(X, 5)
+X = np.random.randint(20, size = 10)
+np.random.shuffle(X)
+Kth_number(X, 5)
 
 # Q6
 def remove_average(X, k):
@@ -120,9 +120,9 @@ def remove_average(X, k):
     Y = np.delete(Y, [k - 1, len(X) - k])
     print(Y)
     return None
-# X = np.random.randint(20, size = 10)
-# np.random.shuffle(X)
-# remove_average(X, 3)
+X = np.random.randint(20, size = 10)
+np.random.shuffle(X)
+remove_average(X, 3)
 
 # Q7
 def gate():
@@ -145,7 +145,7 @@ def gate():
         print('shifting is better')
     else:
         print('not shifting is better')
-# gate()
+gate()
 
 # Q8
 def move(loc):
@@ -169,7 +169,7 @@ def MC_loc():
         loc_statistics[multiple_move(steps) - 1] += 1
     print(loc_statistics)
     return None
-# MC_loc()
+MC_loc()
 
 # Q9
 def clt(n):
@@ -189,5 +189,5 @@ def plot_clt():
                       yaxis_title = 'y Axis', 
                       title = 'Central Limit Theorem')
     fig.show()
-# plot_clt()
+plot_clt()
 

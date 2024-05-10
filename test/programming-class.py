@@ -12,41 +12,22 @@ pd.options.plotting.backend = 'plotly'
 #               name = 'My_serie',)
 # print(s)
 
-# r = 25
-# board = np.zeros((r, r))
-# cor = np.where(board == 0)
-# cordinate = list(zip(cor[0], cor[1]))
-# row = np.arange(r)
-# # print(row)
-# # print(cordinate)
-# board_data = pd.DataFrame(index = row, columns = row, data = board)
-# print(board_data)
-
-###################################
-r = 2
-board = np.zeros((r, r))
-cor = np.where(board == 0)
-cordinate = list(zip(cor[0], cor[1]))
-board_brand = np.zeros(r ** 2, dtype = np.uint32)
-# board_brand = [0] * (r ** 2)
-board_type = [0] * (r ** 2)
-board_HP = [0] * (r ** 2)
-board_creators = [0] * (r ** 2)
-
-board_data = pd.DataFrame(columns = cordinate, index = ['brand', 'id', 'HP', 'creators'], 
-                          data = [board_brand, board_type, board_HP, board_creators])
-print(board_data.loc['id'])
-print(board_data.loc[['id', 'HP']])
-print(board_data.at['id', (1, 0)])
-board_data.at['id', (1, 0)] = 1
-print(board_data)
-def block_manage():
-    block_id = np.arange(6)
-    block_name = ['air', 'water', 'dirt', 'wood', 'stone', 'steel']
-    block_maxHP = [0, 0, 10, 20, 30, 40]
-    block_capacity = [5, 2, 3, 5, 6, 7]
-    block_DF = [0, 0, 0, 1, 3, 5]
-    block_data = pd.DataFrame(columns = block_id, index = ['name', 'max_HP', 'capacity', 'DF'],
-                               data = [block_name, block_maxHP,  block_capacity, block_DF])
-    print((block_data))
-block_manage()
+def action_move(board, source, player):
+    
+    forward = input('请选择你的方向:w/a/s/d')
+    
+    '''location: (10, 14)'''
+def av_action_move(board, source, player):
+    row_bound = np.size(board, 0)
+    column_bound = np.size(board, 1)
+    location = player[location]
+    up = np.maximum(location[0], 0)
+    down = np.minimum(location[0], row_bound - 1)
+    left = np.maximum(location[1], 0)
+    right = np.minimum(location[1], column_bound - 1)
+    boardplace_rock = np.where(board[up: down, left: right] == 2)
+    boardplace_water = np.where(board[up: down, left: right] == 1)
+    boardplace_air = np.where(board[up: down, left: right] == 0)
+    source_empty = np.where(source[up: down, left: right] <= 1)
+    source_bridge = np.where(source[up: down, left: right] == 10) #bridge ID
+    air_place = 
