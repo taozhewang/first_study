@@ -2,17 +2,17 @@
 import numpy as np
 import random
 
-from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_completion_lenghts
+from core import pattern_oringin, calc_cost_by_unmatched, calc_completion_lenghts
 
 '''
 用模拟退火算法求解钢筋切割问题
 
-目标: [552 658 462] 已完成: [540 216 432] 还差: [ 12 442  30]
-已有成本: 3240.0 已有损失: 0 已有接头: 324
-还需成本: 141611.37600000002 还需损失: 11100 还需接头: 135
+目标: [552 658 462] 已完成: [548 654 454] 还差: [4 4 8]
+已有成本: 137179.68 已有损失: 10500 已有接头: 450
+还需成本: 7621.696 还需损失: 600 还需接头: 4
 总损失: 11100
-总接头: 459
-总成本: 144851.37600000002
+总接头: 454
+总成本: 144801.376
 '''
 
 # 原始钢筋长度
@@ -27,20 +27,16 @@ L_values = np.array(list(L.values()))
 # 目标钢筋的数量
 need = np.array([552, 658, 462],dtype=int)
 
-# 初始化单个组合的最大数量
-max_num = 3
 # 最大的组合长度
-radius = 13
-# 组合的采样数量
-sampling_count = 5000
+radius = 14
 # 最小变异个数
-min_variation_count = 3
+variation_count = 2
 
 # 模拟退火参数
 # 最大循环次数
 max_iterations = 1000000
 # 最大温度
-max_temperature = 100000
+max_temperature = 100
 # 退火速率
 cooling_rate = 0.99
 # 最大停滞次数
@@ -49,8 +45,8 @@ max_stagnation = 10000
 # 初始化解
 # patterns_length 组合的长度
 # max_num 最大的组合数量
-def init_solution(patterns_length, max_num):
-    return np.random.randint(0, max_num+1, patterns_length)   
+def init_solution(patterns_length):
+    return np.zeros(patterns_length,dtype=int)
 
 # 评估函数
 def evaluate(solution, need, patterns):
@@ -67,31 +63,31 @@ def evaluate(solution, need, patterns):
     return cost
 
 # 求各种组合的列表
-patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
+patterns = pattern_oringin(l, L, radius)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
 print(f"patterns length: {patterns_length}")
+patterns_costs = np.array([patterns[i][3] for i in range(patterns_length)])
+# 按成本的倒数计算组合的概率
+patterns_p = 1/patterns_costs
+patterns_p = patterns_p/np.sum(patterns_p)
 
 # 邻域操作
 def get_neighbor(solution, patterns_length, variation_count):
     neighbor = np.copy(solution)
-    ids = np.random.choice(patterns_length, variation_count, replace=False)
-    # 为了加快收敛，变异方向固定
-    v = 1 if random.random()<0.5 else -1
+    ids = np.random.choice(patterns_length, variation_count, replace=False, p=patterns_p)
     for idx in ids:
-        # 如果只剩下2个变异位置，则变异方向随机
-        if variation_count==min_variation_count: v = 1 if random.random()<0.5 else -1
-        neighbor[idx] += v
+        neighbor[idx] += 1 if random.random()<0.5 else -1
         if neighbor[idx] < 0: neighbor[idx]= 0
     return neighbor
 
 # 模拟退火算法
-def simulated_annealing(max_iterations, max_temperature, cooling_rate):
+def simulated_annealing(max_iterations, max_temperature, cooling_rate, variation_count):
     # 当前温度
     temperature = max_temperature
     # 当前解
-    current_solution = init_solution(patterns_length, max_num)
+    current_solution = init_solution(patterns_length)
     # 计算当前解的评估值
     current_waste = evaluate(current_solution, need, patterns)
     # 最佳解
@@ -102,17 +98,12 @@ def simulated_annealing(max_iterations, max_temperature, cooling_rate):
     nochange_count = 0
 
     # 动态调整异动个数
-    variation_count = patterns_length//8    
     for i in range(max_iterations):
 
         if i%100 == 0:
             best_used = calc_completion_lenghts(best_solution, need, patterns)
-            # 动态调整异动个数
-            variation_count = np.sum(np.abs(best_used-need))//20
-            if variation_count>patterns_length//2: variation_count=patterns_length//2
-            if variation_count<min_variation_count: variation_count=min_variation_count
 
-            print(f"{i}: 当前成本={current_waste} 最佳成本={best_waste} 最佳完成度: {best_used} 目标: {need} 异动个数: {variation_count} 温度: {temperature} 停滞次数: {nochange_count}/{max_stagnation}")
+            print(f"{i}: 当前成本={current_waste} 最佳成本={best_waste} 最佳完成度: {best_used} 目标: {need} 温度: {temperature} 停滞次数: {nochange_count}/{max_stagnation}")
             # 如果达到最大停滞次数没有改进，则退出循环
             if  nochange_count>max_stagnation:
                 print("已达到目标，退出循环")
@@ -148,7 +139,7 @@ def simulated_annealing(max_iterations, max_temperature, cooling_rate):
 
     return best_solution, best_waste
 
-best_solution, best_waste = simulated_annealing(max_iterations, max_temperature, cooling_rate)
+best_solution, best_waste = simulated_annealing(max_iterations, max_temperature, cooling_rate, variation_count)
 
 # 打印最佳解决方案
 bar_lengths = np.zeros(len(need),dtype=int)

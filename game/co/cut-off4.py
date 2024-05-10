@@ -2,7 +2,7 @@
 import numpy as np
 import random
 
-from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_completion_lenghts
+from core import pattern_oringin, calc_cost_by_unmatched, calc_completion_lenghts
 
 '''
 用禁忌搜索算法求解钢筋切割问题
@@ -27,12 +27,8 @@ L_values = np.array(list(L.values()))
 # 目标钢筋的数量
 need = np.array([552, 658, 462],dtype=int)
 
-# 初始化单个组合的最大数量
-max_num = 1
 # 最大的组合长度
 radius = 14
-# 组合的采样数量
-sampling_count = -1
 
 # 禁忌搜索参数
 # 最大循环次数
@@ -47,7 +43,7 @@ max_stagnation = 500
 # 初始化解
 # patterns_length 组合的长度
 # max_num 最大的组合数量
-def init_solution(patterns_length, max_num):
+def init_solution(patterns_length):
     return np.zeros(patterns_length, dtype=int)
 
 # 评估函数
@@ -62,7 +58,7 @@ def evaluate(solutions, need, patterns_lengths, patterns_costs):
     return cost
 
 # 求各种组合的列表
-patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
+patterns = pattern_oringin(l, L, radius)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
@@ -90,9 +86,9 @@ def check_tabu(tabu_list, neighbor):
     return False
 
 # 禁忌搜索算法
-def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num, variation_count, patterns_p):
+def tabu_search(max_iterations, tabu_tenure, patterns_length, variation_count, patterns_p):
     # 采用随机初始解
-    tabu_list = np.array([init_solution(patterns_length, max_num) for i in range(tabu_tenure)])
+    tabu_list = np.array([init_solution(patterns_length) for i in range(tabu_tenure)])
     tabu_waste_list = evaluate(tabu_list, need, patterns_lengths, patterns_costs)
 
     # 记录最佳解
@@ -144,7 +140,7 @@ def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num, variation
 
     return best_solution, best_waste
 
-best_solution, best_waste = tabu_search(max_iterations, tabu_tenure, patterns_length, max_num, variation_count, patterns_p)
+best_solution, best_waste = tabu_search(max_iterations, tabu_tenure, patterns_length, variation_count, patterns_p)
 
 # 打印最佳解决方案
 bar_lengths = np.zeros(len(need),dtype=int)

@@ -2,17 +2,17 @@
 import numpy as np
 import random
 
-from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_completion_lenghts
+from core import pattern_oringin, calc_cost_by_unmatched, calc_completion_lenghts
 
 '''
 用粒子群算法求解钢筋切割问题
 
-目标: [552 658 462] 已完成: [552 477 454] 还差: [  0 181   8]
-已有成本: 105751.088 已有损失: 8050 已有接头: 403
-还需成本: 39050.28799999999 还需损失: 3050 还需接头: 51
+目标: [552 658 462] 已完成: [365 655 457] 还差: [187   3   5]
+已有成本: 134714.256 已有损失: 10350 已有接头: 393
+还需成本: 10107.119999999999 还需损失: 750 还需接头: 63
 总损失: 11100
-总接头: 454
-总成本: 144801.376
+总接头: 456
+总成本: 144821.376
 '''
 
 # 原始钢筋长度
@@ -27,14 +27,10 @@ L_values = np.array(list(L.values()))
 # 目标钢筋的数量
 need = np.array([552, 658, 462], dtype=int)
 
-# 初始化单个组合的最大数量
-max_num = 1
 # 最大的组合长度
 radius = 14
-# 组合的采样数量
-sampling_count = 10000
 # 最大停滞次数
-max_stagnation = 20
+max_stagnation = 100
 
 # 粒子群算法参数
 population_size = 500  # 粒子数量
@@ -58,15 +54,20 @@ def fitness(solution, patterns):
     return cost
 
 # 求各种组合的列表
-patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
+patterns = pattern_oringin(l, L, radius)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
 print(f"patterns length: {patterns_length}")
+patterns_costs = np.array([patterns[i][3] for i in range(patterns_length)])
+# 按成本的倒数计算组合的概率
+patterns_p = 1/patterns_costs
+patterns_p = patterns_p/np.sum(patterns_p)
 
 # 初始化种群
-population = np.random.randint(0, max_num+1, size=(population_size, patterns_length))
+population = np.zeros((population_size, patterns_length), dtype=int)
 velocities = np.zeros((population_size, patterns_length))
+
 pbest = population.copy()
 gbest = np.zeros(patterns_length)
 
@@ -79,17 +80,13 @@ nochange_count = 0
 # 迭代优化
 for i in range(max_iter):
     for j in range(population_size):
-        # 更新速度和位置
-        velocities[j] = velocities[j] + c1 * random.random() * (pbest[j] - population[j]) + \
-                        c2 * random.random() * (gbest - population[j])
-                
-        velocities[j] = np.clip(velocities[j], -1, 1)  # 限制速度范围
-        if np.all(velocities[j] == 0):  # 随机初始化速度
-            velocities[j] = np.random.rand(patterns_length)
-        
-        population[j][velocities[j]<-0.1] -= 1   # 如果速度小于0，则减少1
+        # 更新速度和位置velocities[j]
+        velocities[j] = velocities[j] + c1 * random.random() * (pbest[j] - population[j] + patterns_p) + \
+                        c2 * random.random() * (gbest - population[j] + patterns_p)  
 
-        population[j][velocities[j]>0.1] += 1   # 如果速度大于0，则增加1
+        velocities[j] = np.clip(velocities[j], -1, 1)  # 限制速度范围
+        population[j][velocities[j]<0] -= 1   # 如果速度小于0，则减少1
+        population[j][velocities[j]>0] += 1   # 如果速度大于0，则增加1
 
         population[population<0] = 0  # 限制钢筋数量范围
 

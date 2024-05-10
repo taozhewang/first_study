@@ -133,11 +133,10 @@ def get_min_cost_combination(combination, l, l_min=200, l_size=32, max_iteration
 # cost： 废料+接头的成本
 # err: 能效比 cost/sum(counter)
 # list: 组合列表["L1","L1","L3",....]
-def pattern_oringin_by_sampling(l, L, sampling_count=-1, max_len=10, l_min=200, l_size=32):
+def pattern_oringin(l, L, max_len=10, l_min=200, l_size=32):
     '''
     l: 原始钢筋定长
     L: 目标钢筋长度
-    sampling_count: 采样的数量
     max_len: 最大组合数
     l_min: 最小接头数量
     l_size: 接头大小
@@ -146,7 +145,7 @@ def pattern_oringin_by_sampling(l, L, sampling_count=-1, max_len=10, l_min=200, 
     
     # 查看cache文件是否存在，如果有直接返回
     k = "_".join([str(L[key]) for key in L])
-    fname = f"{l}_{k}_{sampling_count}_{max_len}_{l_min}_{l_size}.pkl"    
+    fname = f"{l}_{k}_{max_len}_{l_min}_{l_size}.pkl"    
     script_dir = os.path.dirname(os.path.realpath(__file__))
     fname = os.path.join(script_dir, fname)
     if os.path.exists(fname):
@@ -193,18 +192,8 @@ def pattern_oringin_by_sampling(l, L, sampling_count=-1, max_len=10, l_min=200, 
 
     patterns_list_len = len(patterns_list)
     print("组合数：", patterns_list_len)
-    
-    # 采样数
+        
     patterns_list = sorted(patterns_list, key=lambda x:x[3])
-    if sampling_count>0:
-        part_len = sampling_count-patterns_list_len
-        if part_len>0:     # 如果当前记录不足，按 cost成本的倒数的平方为权重 重采样
-            p = np.array([float(1/i[3]) for i in patterns_list])
-            p = p/p.sum()
-            patterns_list = random.choices(patterns_list, k=sampling_count, weights=p)
-        elif part_len<0:   # 如果超过了，截断 
-            # 按成本排序                                                                        
-            patterns_list = patterns_list[:sampling_count]     
 
     # 转换成dict
     for i, pattern in enumerate(patterns_list):

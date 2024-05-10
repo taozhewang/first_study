@@ -2,17 +2,17 @@
 import numpy as np
 import random
 
-from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_completion_lenghts
+from core import pattern_oringin, calc_cost_by_unmatched, calc_completion_lenghts
 
 '''
 用蚁群算法求解钢筋切割问题
 
-目标: [552 658 462] 已完成: [550 220 440] 还差: [  2 438  22]
-已有成本: 3300.0 已有损失: 0 已有接头: 330
-还需成本: 141571.37600000002 还需损失: 11100 还需接头: 131
+目标: [552 658 462] 已完成: [552 306 460] 还差: [  0 352   2]
+已有成本: 50333.792 已有损失: 3700 已有接头: 358
+还需成本: 94467.584 还需损失: 7400 还需接头: 96
 总损失: 11100
-总接头: 461
-总成本: 144871.37600000002
+总接头: 454
+总成本: 144801.376
 '''
 
 # 原始钢筋长度
@@ -27,12 +27,8 @@ L_values = np.array(list(L.values()))
 # 目标钢筋的数量
 need = np.array([552, 658, 462], dtype=int)
 
-# 初始化单个组合的最大数量
-max_num = 3
 # 最大的组合长度
-radius = 13
-# 组合的采样数量
-sampling_count = -1
+radius = 14
 # 最大停滞次数
 max_stagnation = 20
 
@@ -40,7 +36,7 @@ max_stagnation = 20
 # 最大循环次数
 max_iterations = 1000000
 # 蚂蚁数量
-ant_count = 200  
+ant_count = 500  
 # 信息素持久因子
 rho = 0.5  
 # 信息素重要程度因子
@@ -106,20 +102,24 @@ class Ant:
         self.cost = evaluate(solution, self.need, self.patterns)
 
 # 求各种组合的列表
-patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
+patterns = pattern_oringin(l, L, radius)
 patterns_length = len(patterns)
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
 print(f"patterns length: {patterns_length}")
 patterns_lengths = np.array([patterns[i][0] for i in range(patterns_length)])
 max_pattern_length = np.max(patterns_lengths)
+patterns_costs = np.array([patterns[i][3] for i in range(patterns_length)])
+# 按成本的倒数计算组合的概率
+patterns_p = 1/patterns_costs
+patterns_p = patterns_p/np.sum(patterns_p)
 
 # 路径的长度，也就是状态的数量，这里不允许超量切割，所以是钢筋的剩余状态hash数量 
 rod_length = np.sum([max_pattern_length * (10**i) for i in range(len(need))])
 # 初始化信息素矩阵 从一个状态到另外一个状态的概率
 pheromone = np.ones((rod_length+1, patterns_length))
 
-# 初始化启发式信息，这个是个常数，不用更新，表示的是路径之间的相关度
-heuristic = (np.ones(patterns_length)/patterns_length)**beta
+# 初始化启发式信息，这个是个常数，不用更新，表示的是从一个状态到另一个状态的概率
+heuristic = patterns_p 
 
 # 主循环
 nochange_count = 0

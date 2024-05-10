@@ -1,6 +1,6 @@
 #%%
 import numpy as np
-from core import pattern_oringin_by_sampling, get_min_cost_combination, calc_loss_joint
+from core import pattern_oringin, get_min_cost_combination, calc_loss_joint
 import copy
 
 '''
@@ -39,7 +39,7 @@ def decom(l, L):
     
     # 求各种组合的列表
     print(f"create patterns (size: {radius})...")
-    patterns = pattern_oringin_by_sampling(l, L, -1, radius)
+    patterns = pattern_oringin(l, L, radius)
     '''patterns: { 0: [[0,1,0], 0, 0, 0, 0,  ["L2"]],
                    1: [[1,0,1], 50,3,400,100,["L1","L3"]]} '''
     patterns_length = len(patterns)
