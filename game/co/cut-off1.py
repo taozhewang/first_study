@@ -1,30 +1,33 @@
 #%%
 import numpy as np
-from core import pattern_oringin_by_loss
+from core import pattern_oringin_by_sampling, get_min_cost_combination, calc_loss_joint
 import copy
 
 '''
 用相似度去扣减钢筋，使得总长度接近目标长度
 
-废料长度: 443100
-接头数量: 382
-总成本: 5602902.495999997
+100 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
+50 * ['L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L3']
+1 * ['L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3', 'L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
+
+废料长度: 11100
+接头数量: 456
+总成本: 144821.376
 '''
 
 # 原始钢筋长度
 l = 12000
 # 钢筋的规格
 l_size = 32
+# 钢筋最小尺寸
+l_min = 200
 # 目标钢筋长度
 L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
 # 目标钢筋的数量
 need = np.array([552, 658, 462])
-
 # 最大的组合数
-radius = 10
+radius = 14
 
-# 组合数最小余料
-losses1 = 50
 
 '''
 按最小余料，找出最长 radius 的组合，并计算其余料
@@ -35,39 +38,27 @@ patterns:{idx: [pattern, loss, joint, cost, eer]}
 def decom(l, L):
     
     # 求各种组合的列表
-    patterns, patterns_tail = pattern_oringin_by_loss(l, L, losses1, radius)
+    print(f"create patterns (size: {radius})...")
+    patterns = pattern_oringin_by_sampling(l, L, -1, radius)
     '''patterns: { 0: [[0,1,0], 0, 0, 0, 0,  ["L2"]],
                    1: [[1,0,1], 50,3,400,100,["L1","L3"]]} '''
     patterns_length = len(patterns)
-<<<<<<< HEAD
-    print(f"patterns[1]:", patterns[0])
-=======
-    patterns_tail_length = len(patterns_tail)
 
     print(f"patterns[0]:", patterns[0])
->>>>>>> 6eed19af90c78bcd8e2e4c105e6208e1c9ac193e
-    print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
+    print(f"patterns[{patterns_length-1}]:", patterns[patterns_length-1])
     print(f"patterns length: {patterns_length}")
-
-    print(f"patterns_tail[0]:", patterns_tail[0])
-    print(f"patterns_tail[{patterns_tail_length}]:", patterns[patterns_tail_length-1])
-    print(f"patterns_tail length: {patterns_tail_length}")
 
     # 求组合的的使用情况
     def accum2(patterns):
         # for calculating how many patterns are used
         op = []
         # fake_op用于统计在逼近need时所用的pattern的种类及个数
-        fake_op = {}
-        for key in patterns:
-            fake_op[key] = 0
-        
-        print('fake_op:', fake_op)
-
+        fake_op = np.zeros(len(patterns), dtype=np.int16)
+               
         # op id 转换为 pattern id
         op_2_pattern = []
-        # 计算50%能效比分位数
-        eer_percentile  = np.percentile([patterns[key][4] for key in patterns],50)
+        # 计算 0.01% 分位数
+        eer_percentile  = np.percentile([patterns[key][3] for key in patterns], 0.01)
         for key in patterns:
             counter, loss, joint, cost, eer, combin = patterns[key]   
 
@@ -76,7 +67,7 @@ def decom(l, L):
                 op.append(counter)
                 op_2_pattern.append(key)
         '''
-            fake_op: {0: 0, 1: 0, 2: 0} 
+            fake_op: [0,1,0,2,......] 
             op: [array([5, 2, 4]), array([5, 8, 1])]
             convert: {0: 1, 1: 4, 2: 5, 3: 8}
         '''
@@ -122,7 +113,7 @@ def decom(l, L):
             # 按 组合比例 和 剩余目标比例 的相似度 求 采样概率
             r = ratio(op, curr_need)
             
-            # 随机选择一个pattern进行叠加
+            # 按概率选择一个pattern进行叠加
             choose = np.random.choice(op_idxs, p = r)
             
             # 对当前的need进行削减
@@ -135,113 +126,46 @@ def decom(l, L):
             # 如果没有到截止条件，则计入选中的pattern
             curr_need = temp_curr_need
             fake_op[op_2_pattern[choose]] += 1
-    
+     
     # 剩余匹配量，当前patterns的使用量            
     left, acc = accum2(patterns)
+    
     '''left: [2 0 1], 
-    acc: {0: 0, 1: 22, 2: 0, 3: 0, 4: 29, 5: 0, 6: 0, 7: 2, 8: 0, 9: 1, 
-          10: 0, 11: 29, 12: 0, 13: 0, 14: 19, 15: 0, 16: 0, 17: 0, 18: 0}'''
+    acc: [0,1,3,0,....]'''
 
     print("第一次匹配：")
-    loss= np.sum([patterns[key][1]*value for key, value in acc.items() if value > 0])
-    joint = np.sum([patterns[key][2]*value for key, value in acc.items() if value > 0])
-    cost = np.sum([patterns[key][3]*value for key, value in acc.items() if value > 0])    
-    print(f"废料：{loss} 接头: {joint} 总成本: {cost}")
+    loss  = np.sum([num*patterns[i][1] for i,num in enumerate(acc)])
+    joint = np.sum([num*patterns[i][2] for i,num in enumerate(acc)])
+    cost  = np.sum([num*patterns[i][3] for i,num in enumerate(acc)])
+    print(f"废料：{loss} 接头: {joint} 成本: {cost}")
     print(f"剩余：{left}")
     
-
-    # 第二次匹配，用剩余的 left 来组合
-    # 此处用尾料没那么少的pattern来组合
-    # 在need降低到足够小的时候，使用遍历找出满足need的组合
-    # (还有一种方法，直接将need剩余的项从原料中取，而不依靠pattern)
-    # 组合的方法集合ways
-    ways = {}    
-    def accum3(patterns, left):
-        '''
-        patterns: 组合种类 
-        left: 剩余情况
-        '''
-        accumulator={}  # 使用方案
-        pointer=0       # 当前组合id
-        count=0         # 输出组合计数id
-        stack = [(left, accumulator, pointer, count)]
-        i = 0
-        while stack:
-            left, accumulator, pointer, count = stack.pop()   
-
-            i += 1
-            if i % 100000 == 0:
-                print(f"stack length: {len(stack)}  ways length: {len(ways)}  left: {left}")
-
-            # 当剩余数量全部数量全部都为0时才返回组合
-            if np.all(left == 0):
-                # 将当前使用方案储存进ways里面，返回
-                ways[count] = accumulator
-                # 限制一下ways的长度，防止太长时间运行
-                if len(ways)>5: break
-                continue
-
-            # 如果pointer已经指向最后一个pattern，则跳过
-            if pointer >= len(patterns):
-                continue
-
-            # 取得当前 pointer 指向的 counter
-            counter, loss, joint, cost, eer, combin = patterns[pointer]        
-            pattern_values = counter
-
-            # 扣减数量
-            l = left - pattern_values
-            # 如果有负数，则跳过
-            if not np.any(l < 0): 
-                ac = copy.deepcopy(accumulator)
-                if pointer in ac:
-                    ac[pointer] += 1
-                else:
-                    ac[pointer] = 1
-                stack.append((l, ac, 0, count+1))
-
-            stack.append((left, accumulator, pointer+1, count))  
-
+ 
     print("第二次匹配：")
-    accum3(patterns_tail, left)
-    print(f"找到 {len(ways)} 种尾料处理办法：")
-    print(ways)
-
-    # 合并第一次和第二次的结果，并将其用料和尾料显示出来
-    def find_min1(acc, ways, patterns, patterns_tail):
-        # 统计所有第二次匹配的成本，并找出最小的
-        cost_ways = {}
-        for way_id in ways:
-            cost = np.sum([patterns_tail[key][3]*value for key, value in ways[way_id].items()])
-            cost_ways[way_id]=cost
-        best_way_id = min(cost_ways.items(), key=lambda x: x[1])[0]
-        print(f"最佳尾料处理方案为：{best_way_id} 成本：{cost_ways[best_way_id]}")
-
-        statistics = {"patterns":[], "loss":0, "joint":0, "cost":0}
-        # 第一次匹配的结果
-        for acc_id in acc:
-            if acc[acc_id] > 0:
-                statistics["patterns"].append([acc[acc_id], patterns[acc_id][-1]])
-                statistics["loss"] += patterns[acc_id][1] * acc[acc_id]
-                statistics["joint"] += patterns[acc_id][2] * acc[acc_id]
-                statistics["cost"] += patterns[acc_id][3] * acc[acc_id]
-
-        # 合并第二次匹配的结果
-        for key, value in ways[best_way_id].items():
-            statistics["patterns"].append([value, patterns_tail[key][-1]])
-            statistics["loss"]  += patterns_tail[key][1] * value
-            statistics["joint"] += patterns_tail[key][2] * value
-            statistics["cost"]  += patterns_tail[key][3] * value
-
-        return statistics
+    left_combination = []
+    for i,key in enumerate(L):
+        if left[i]>0:
+            left_combination += [L[key]] * left[i]
+    cost2, combination2 = get_min_cost_combination(left_combination, l, l_min, l_size)
+    loss2, joint2 = calc_loss_joint(combination2, l, l_min)
+    print(f"废料：{loss2} 接头: {joint2} 成本: {cost2}")
     
-    statistics = find_min1(acc, ways, patterns, patterns_tail)
-    print("最佳方案为：")
+    print()
+    print("合并数据，依次按如下组合和数量截取：")
+    print()   
     # 将最佳方案的组合输出
-    for value, pattern in statistics["patterns"]:
-        print(value, '*', pattern)
-    print("废料长度:", statistics["loss"])
-    print("接头数量:", statistics["joint"])
-    print("总成本:", statistics["cost"])
+    # 第一阶段
+    for i, num in enumerate(acc):
+        if num > 0:
+            print(num, '*', patterns[i][-1])
+            
+    # 第二阶段
+    L_keys = list(L.keys())
+    L_Values = list(L.values())
+    print(1,'*', [L_keys[L_Values.index(num)] for num in combination2])     
+    print()   
+    print(f"废料长度: {loss+loss2}")
+    print(f"接头数量: {joint+joint2}")
+    print(f"总成本: {cost+cost2}")
         
 decom(l, L)

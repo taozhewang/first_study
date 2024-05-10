@@ -7,9 +7,12 @@ from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_compl
 '''
 用粒子群算法求解钢筋切割问题
 
-废料长度: 227100
-接头数量: 418
-总成本: 2873851.936
+目标: [552 658 462] 已完成: [552 477 454] 还差: [  0 181   8]
+已有成本: 105751.088 已有损失: 8050 已有接头: 403
+还需成本: 39050.28799999999 还需损失: 3050 还需接头: 51
+总损失: 11100
+总接头: 454
+总成本: 144801.376
 '''
 
 # 原始钢筋长度
@@ -27,12 +30,14 @@ need = np.array([552, 658, 462], dtype=int)
 # 初始化单个组合的最大数量
 max_num = 1
 # 最大的组合长度
-radius = 10
+radius = 14
 # 组合的采样数量
-sampling_count = 5000
+sampling_count = 10000
+# 最大停滞次数
+max_stagnation = 20
 
 # 粒子群算法参数
-population_size = 200  # 粒子数量
+population_size = 500  # 粒子数量
 max_iter = 10000  # 最大迭代次数
 c1 = 2  # 个体学习因子
 c2 = 2  # 社会学习因子
@@ -48,7 +53,7 @@ def fitness(solution, patterns):
     # 如果组合的长度不足以切割目标钢筋，这里多匹配和少匹配都算到里面
     bar_lengths = need - hascut_lengths
     # 计算尾料的成本
-    cost += calc_cost_by_unmatched(bar_lengths, l, L_values, l_size)
+    cost += calc_cost_by_unmatched(bar_lengths, l, L_values, l_size)[0]
     # 返回成本 
     return cost
 
@@ -57,10 +62,10 @@ patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
-print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合，因为需要处理尾料
+print(f"patterns length: {patterns_length}")
 
 # 初始化种群
-population = np.random.randint(0, 3, size=(population_size, patterns_length))
+population = np.random.randint(0, max_num+1, size=(population_size, patterns_length))
 velocities = np.zeros((population_size, patterns_length))
 pbest = population.copy()
 gbest = np.zeros(patterns_length)
@@ -81,9 +86,11 @@ for i in range(max_iter):
         velocities[j] = np.clip(velocities[j], -1, 1)  # 限制速度范围
         if np.all(velocities[j] == 0):  # 随机初始化速度
             velocities[j] = np.random.rand(patterns_length)
+        
+        population[j][velocities[j]<-0.1] -= 1   # 如果速度小于0，则减少1
 
-        population[j][velocities[j]<0] -= 1   # 如果速度小于0，则减少1
-        population[j][velocities[j]>0] += 1   # 如果速度大于0，则增加1
+        population[j][velocities[j]>0.1] += 1   # 如果速度大于0，则增加1
+
         population[population<0] = 0  # 限制钢筋数量范围
 
         # 更新个体最优
@@ -99,11 +106,11 @@ for i in range(max_iter):
             nochange_count = 0
 
     best_used = calc_completion_lenghts(gbest, need, patterns)        
-    print(f"第{i+1}次迭代，局部平均成本: {np.mean(pbest_fitness)}, 最佳成本: {gbest_fitness}, 最佳完成度: {best_used} 目标: {need} 停滞次数: {nochange_count}")
+    print(f"{i}: 平均成本: {np.mean(pbest_fitness)}, 最佳成本: {gbest_fitness}, 最佳完成度: {best_used} 目标: {need} 停滞次数: {nochange_count}/{max_stagnation}")
 
     nochange_count += 1
-    # 如果数量匹配，且连续100次没有改进，则退出循环
-    if np.array_equal(best_used, need) and nochange_count>20:
+    # 如果达到最大停滞次数没有改进，则退出循环
+    if nochange_count>max_stagnation:
         print("已达到目标，退出循环")
         break          
 
@@ -121,8 +128,12 @@ print("最佳方案为：")
 for i,num in enumerate(gbest):
     if num > 0:
         print(num, '*', patterns[i][-1])
-        
-print("最后结果:", bar_lengths, "目标:", need)
-print("废料长度:", loss)
-print("接头数量:", joint)
-print("总成本:", cost)
+
+diff = need - bar_lengths
+diff_cost, diff_loss, diff_joint = calc_cost_by_unmatched(diff, l, L_values, l_size,l_min)
+print(f"目标: {need} 已完成: {bar_lengths} 还差: {diff}")
+print(f"已有成本: {cost} 已有损失: {loss} 已有接头: {joint}")
+print(f"还需成本: {diff_cost} 还需损失: {diff_loss} 还需接头: {diff_joint}")
+print(f"总损失: {loss+diff_loss}")
+print(f"总接头: {joint+diff_joint}")
+print(f"总成本: {cost+diff_cost}")

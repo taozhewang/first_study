@@ -7,9 +7,12 @@ from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_compl
 '''
 用蚁群算法求解钢筋切割问题
 
-废料长度: 227100
-接头数量: 418
-总成本: 2873851.936
+目标: [552 658 462] 已完成: [550 220 440] 还差: [  2 438  22]
+已有成本: 3300.0 已有损失: 0 已有接头: 330
+还需成本: 141571.37600000002 还需损失: 11100 还需接头: 131
+总损失: 11100
+总接头: 461
+总成本: 144871.37600000002
 '''
 
 # 原始钢筋长度
@@ -25,11 +28,13 @@ L_values = np.array(list(L.values()))
 need = np.array([552, 658, 462], dtype=int)
 
 # 初始化单个组合的最大数量
-max_num = 1
+max_num = 3
 # 最大的组合长度
-radius = 10
+radius = 13
 # 组合的采样数量
-sampling_count = 5000
+sampling_count = -1
+# 最大停滞次数
+max_stagnation = 20
 
 # 蚁群算法参数
 # 最大循环次数
@@ -54,7 +59,7 @@ def evaluate(solution, need, patterns):
     # 如果组合的长度不足以切割目标钢筋，这里多匹配和少匹配都算到里面
     bar_lengths = need - hascut_lengths
     # 计算尾料的成本
-    cost += calc_cost_by_unmatched(bar_lengths, l, L_values, l_size)
+    cost += calc_cost_by_unmatched(bar_lengths, l, L_values, l_size)[0]
     return cost
 
 # 定义蚂蚁类
@@ -104,7 +109,7 @@ class Ant:
 patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
 patterns_length = len(patterns)
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
-print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合，因为需要处理尾料
+print(f"patterns length: {patterns_length}")
 patterns_lengths = np.array([patterns[i][0] for i in range(patterns_length)])
 max_pattern_length = np.max(patterns_lengths)
 
@@ -155,12 +160,12 @@ for iteration in range(10000):
             pheromone[rod_length][choice] += avg_cost / ant.cost
     pheromone *= rho
 
-    # 如果数量匹配，且连续100次没有改进，则退出循环
-    if np.array_equal(best_used, need) and nochange_count>20:
+    # 如果达到最大停滞次数没有改进，则退出循环
+    if nochange_count>max_stagnation:
         print("已达到目标，退出循环")
         break   
 
-    print(f"{iteration}: 最佳成本: {best_cost} 当前平均成本: {curr_avg_cost} 最佳路径: {best_used} 目标: {need} 停滞次数: {nochange_count}")
+    print(f"{iteration}: 当前平均成本: {curr_avg_cost} 最佳成本: {best_cost} 最佳路径: {best_used} 目标: {need} 停滞次数: {nochange_count}/{max_stagnation}")
 
 # 打印最佳解决方案
 bar_lengths = np.zeros(len(need),dtype=int)
@@ -176,8 +181,12 @@ print("最佳方案为：")
 for i,num in enumerate(best_solution):
     if num > 0:
         print(num, '*', patterns[i][-1])
-        
-print("最后结果:", bar_lengths, "目标:", need)
-print("废料长度:", loss)
-print("接头数量:", joint)
-print("总成本:", cost)
+
+diff = need - bar_lengths
+diff_cost, diff_loss, diff_joint = calc_cost_by_unmatched(diff, l, L_values, l_size,l_min)
+print(f"目标: {need} 已完成: {bar_lengths} 还差: {diff}")
+print(f"已有成本: {cost} 已有损失: {loss} 已有接头: {joint}")
+print(f"还需成本: {diff_cost} 还需损失: {diff_loss} 还需接头: {diff_joint}")
+print(f"总损失: {loss+diff_loss}")
+print(f"总接头: {joint+diff_joint}")
+print(f"总成本: {cost+diff_cost}")

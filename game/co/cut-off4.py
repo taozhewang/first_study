@@ -7,9 +7,12 @@ from core import pattern_oringin_by_sampling, calc_cost_by_unmatched, calc_compl
 '''
 用禁忌搜索算法求解钢筋切割问题
 
-废料长度: 227100
-接头数量: 418
-总成本: 2873851.936
+目标: [552 658 462] 已完成: [552 402 460] 还差: [  0 256   2]
+已有成本: 80920.576 已有损失: 6100 已有接头: 384
+还需成本: 63880.8 还需损失: 5000 还需接头: 70
+总损失: 11100
+总接头: 454
+总成本: 144801.376
 '''
 
 # 原始钢筋长度
@@ -27,24 +30,27 @@ need = np.array([552, 658, 462],dtype=int)
 # 初始化单个组合的最大数量
 max_num = 1
 # 最大的组合长度
-radius = 10
+radius = 14
 # 组合的采样数量
-sampling_count = 5000
+sampling_count = 10000
 
 
 # 禁忌搜索参数
 # 最大循环次数
 max_iterations = 1000000
 # 禁忌表大小
-tabu_tenure = 200
+tabu_tenure = 500
 # 最小变异个数
-min_variation_count = 3
+min_variation_count = 4
+# 最大停滞次数
+max_stagnation = 1000
 
 # 初始化解
 # patterns_length 组合的长度
 # max_num 最大的组合数量
 def init_solution(patterns_length, max_num):
-    return np.random.randint(0, max_num+1, patterns_length)   
+    return np.zeros(patterns_length, dtype=int)
+    # return np.random.randint(0, max_num+1, patterns_length)   
 
 # 评估函数
 def evaluate(solutions, need, patterns_lengths, patterns_costs):
@@ -57,7 +63,7 @@ def evaluate(solutions, need, patterns_lengths, patterns_costs):
         # 如果组合的长度不足以切割目标钢筋，这里多匹配和少匹配都算到里面
         bar_lengths = need - hascut_lengths[i]
         # 计算尾料的成本
-        cost[i] += calc_cost_by_unmatched(bar_lengths, l, L_values, l_size)    
+        cost[i] += calc_cost_by_unmatched(bar_lengths, l, L_values, l_size)[0]    
     return cost
 
 # 求各种组合的列表
@@ -65,7 +71,7 @@ patterns = pattern_oringin_by_sampling(l, L, sampling_count, radius)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
-print(f"patterns length: {patterns_length}")# 产生patterns，最低1个组合，因为需要处理尾料
+print(f"patterns length: {patterns_length}")
 patterns_lengths = np.array([patterns[i][0] for i in range(patterns_length)])
 patterns_costs = np.array([patterns[i][3] for i in range(patterns_length)])
 
@@ -75,17 +81,17 @@ def get_neighbor(solution, patterns_length, variation_count):
     ids = np.random.choice(patterns_length, variation_count, replace=False)
     if variation_count==min_variation_count:
         for idx in ids:
-            neighbor[idx] += 1 if random.random()<0.5 else -1
+            neighbor[idx] = 1 if random.random()<0.5 else 0
     else:
         v = 1 if random.random()<0.5 else -1
         # 随机选择10%不同方向
         values = np.array([v for i in range(variation_count)])
-        indices = np.random.choice(variation_count, size=int(0.1*variation_count), replace=False)
-        values[indices] = -values[indices]
-        for i,idx in enumerate(ids):
-            neighbor[idx] += values[i]
+        # indices = np.random.choice(variation_count, size=int(0.1*variation_count), replace=False)
+        # values[indices] = -values[indices]
+        for i,idx in enumerate(ids):            
+            neighbor[idx] = 1 if values[i]==1 else 0
 
-    neighbor[neighbor<0] = 0
+    # neighbor[neighbor<0] = 0
     return neighbor
 
 # 禁忌搜索,检查邻域解是否在禁忌表中
@@ -130,8 +136,10 @@ def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num):
 
         # 如果邻域解比当前解好，且邻域解不在禁忌表中，则更新禁忌组
         update_count = 0
+        avg_waste = sum(tabu_waste_list)/len(tabu_waste_list)
         for idx, waste in enumerate(neighbors_waste):
-            if waste < tabu_waste_list[idx] and not check_tabu(tabu_list, neighbors[idx]):
+            if waste < avg_waste and not check_tabu(tabu_list, neighbors[idx]):
+            # if waste < tabu_waste_list[idx] and not check_tabu(tabu_list, neighbors[idx]):
                 # 记录最佳解
                 update_count += 1
                 worst_idx = np.argmax(tabu_waste_list)
@@ -139,18 +147,17 @@ def tabu_search(max_iterations, tabu_tenure, patterns_length, max_num):
                 tabu_waste_list[worst_idx]=waste
 
         if i % 10 == 0:
-            avg_waste = sum(tabu_waste_list)/len(tabu_waste_list)
             best_used = calc_completion_lenghts(best_solution, need, patterns)
 
             # 动态调整异动个数
-            variation_count = np.sum(np.abs(best_used-need))//50
+            variation_count = np.sum(np.abs(best_used-need))//100
             if variation_count>patterns_length//2: variation_count=patterns_length//2
             if variation_count<min_variation_count: variation_count=min_variation_count
 
-            print(f"{i}: 禁忌组平均成本:{avg_waste}, 更新个数:{update_count}, 最佳成本:{best_waste}, 最佳完成度: {best_used} 目标: {need} 异动个数: {variation_count} 停滞次数: {nochange_count}")
+            print(f"{i}: 禁忌组平均成本:{avg_waste}, 更新个数:{update_count}, 最佳成本:{best_waste}, 最佳完成度: {best_used} 目标: {need} 异动个数: {variation_count} 停滞次数: {nochange_count}/{max_stagnation}")
 
-            # 如果数量匹配，且连续1000次没有改进，则退出循环
-            if np.array_equal(best_used, need) and nochange_count>1000:
+            # 如果达到最大停滞次数没有改进，则退出循环
+            if  nochange_count>max_stagnation:
                 print("已达到目标，退出循环")
                 break            
 
@@ -171,9 +178,13 @@ print("最佳方案为：")
 # 将最佳方案的组合输出
 for i,num in enumerate(best_solution):
     if num > 0:
-        print(num, '*', patterns[i][-1], patterns[i][3])
-        
-print("最后结果:", bar_lengths, "目标:", need)
-print("废料长度:", loss)
-print("接头数量:", joint)
-print("总成本:", cost)
+        print(num, '*', patterns[i][-1])
+
+diff = need - bar_lengths
+diff_cost, diff_loss, diff_joint = calc_cost_by_unmatched(diff, l, L_values, l_size,l_min)
+print(f"目标: {need} 已完成: {bar_lengths} 还差: {diff}")
+print(f"已有成本: {cost} 已有损失: {loss} 已有接头: {joint}")
+print(f"还需成本: {diff_cost} 还需损失: {diff_loss} 还需接头: {diff_joint}")
+print(f"总损失: {loss+diff_loss}")
+print(f"总接头: {joint+diff_joint}")
+print(f"总成本: {cost+diff_cost}")
