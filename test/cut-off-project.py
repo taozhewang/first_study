@@ -293,58 +293,137 @@ import copy
 # radius = 5
 # losses1 = 0
 
-def decomposition1(l, L, n, count, cut, paste, accumulator, pointer):
-    L_values = list(L.values())
-    stage = count // l
-    count += L_values[pointer]
-    Re_stage, Re_end_of_the_stage = count // l, count % l
-    Re_end_of_the_stage = l * (Re_stage + bool(Re_end_of_the_stage)) - count
-    Re_accumulator = copy.deepcopy(accumulator)
-    if pointer == len(L_values) - 1:
-        if Re_stage == n and Re_end_of_the_stage == 0:
-            Re_accumulator[pointer] += 1
-            patterns_left.append(Re_accumulator)
-            patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
-            return
-        elif Re_stage == n:
-            return
-        else:
-            # traverse：是否跨越了一个原料长度
-            traverse = bool(Re_end_of_the_stage)
-            cut += traverse
-            paste += (Re_stage - stage + traverse - 1) * (Re_stage - stage)
-            Re_accumulator[pointer] += 1
+# def decomposition1(l, L, n, count, cut, paste, accumulator, pointer):
+#     L_values = list(L.values())
+#     stage = count // l
+#     count += L_values[pointer]
+#     Re_stage, Re_end_of_the_stage = count // l, count % l
+#     Re_end_of_the_stage = l * (Re_stage + bool(Re_end_of_the_stage)) - count
+#     Re_accumulator = copy.deepcopy(accumulator)
+#     if pointer == len(L_values) - 1:
+#         if Re_stage == n and Re_end_of_the_stage == 0:
+#             Re_accumulator[pointer] += 1
+#             patterns_left.append(Re_accumulator)
+#             patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
+#             return
+#         elif Re_stage == n:
+#             return
+#         else:
+#             # traverse：是否跨越了一个原料长度
+#             traverse = bool(Re_end_of_the_stage)
+#             cut += traverse
+#             paste += (Re_stage - stage + traverse - 1) * (Re_stage - stage)
+#             Re_accumulator[pointer] += 1
             
-            if Re_end_of_the_stage <= losses1:
-                patterns_left.append(Re_accumulator)
-                patterns_right.append([Re_end_of_the_stage, Re_stage + traverse, cut, paste])
-                pointer = 0
-                decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
-            else:
-                decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
+#             if Re_end_of_the_stage <= losses1:
+#                 patterns_left.append(Re_accumulator)
+#                 patterns_right.append([Re_end_of_the_stage, Re_stage + traverse, cut, paste])
+#                 pointer = 0
+#                 decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
+#             else:
+#                 decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
 
-    elif Re_stage == n and Re_end_of_the_stage == 0:
-        Re_accumulator[pointer] += 1
-        patterns_left.append(Re_accumulator)
-        patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
-        return
-    elif Re_stage == n:
-        return
-    else:
-        decomposition1(l, L, n, count - L_values[pointer], cut, paste, Re_accumulator, pointer + 1)
-        traverse = bool(Re_end_of_the_stage)
-        cut += traverse
-        paste += (Re_stage - stage + traverse - 1) * (Re_stage - stage)
-        Re_accumulator[pointer] += 1
+#     elif Re_stage == n and Re_end_of_the_stage == 0:
+#         Re_accumulator[pointer] += 1
+#         patterns_left.append(Re_accumulator)
+#         patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
+#         return
+#     elif Re_stage == n:
+#         return
+#     else:
+#         decomposition1(l, L, n, count - L_values[pointer], cut, paste, Re_accumulator, pointer + 1)
+#         traverse = bool(Re_end_of_the_stage)
+#         cut += traverse
+#         paste += (Re_stage - stage + traverse - 1) * (Re_stage - stage)
+#         Re_accumulator[pointer] += 1
             
-        if Re_end_of_the_stage <= losses1:
+#         if Re_end_of_the_stage <= losses1:
+#             patterns_left.append(Re_accumulator)
+#             patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
+#             pointer = 0
+#             decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
+#         else:
+#             decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
+
+# 不适合L中带有特别大的Li的情况（Li几乎等于原料）
+def decomposition2(l, L, n, length, cut, paste, accumulator, path_accumulator, pointer, stage):
+    L_length = list(L.values())
+    if pointer == len(L_length) - 1:
+        if stage == n:
+            if len(path_accumulator) >= 2:
+                for pattern in path_accumulator[1:]:
+                    if pattern not in patterns_path:
+                        patterns_path.append(pattern)
+            return
+        Re_accumulator = copy.deepcopy(accumulator)
+        Re_path_accumulator = copy.deepcopy(path_accumulator)
+        
+        length += L_length[pointer]
+        Re_accumulator[pointer] += 1
+        if length > l:
+            length = length - l
+            stage += 1
+            cut += 1
+            paste += 1
+            decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, pointer, stage)
+        elif length == l:
+            length = 0
             patterns_left.append(Re_accumulator)
-            patterns_right.append([Re_end_of_the_stage, Re_stage, cut, paste])
+            patterns_right.append([0, stage + 1, cut, paste])
+            Re_path_accumulator.append(Re_accumulator)
+            stage += 1
             pointer = 0
-            decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
+            decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, pointer, stage)
         else:
-            decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
+            cut += 1
+            left = l - length
+            if left <= losses1:
+                patterns_left.append(Re_accumulator)
+                patterns_right.append([left, stage + 1, cut, paste])
+                Re_path_accumulator.append(Re_accumulator)
+                decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, pointer, stage)
+            else:
+                decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, pointer, stage)
+    else:
+        if stage == n:
+            if len(path_accumulator) >= 2:
+                for pattern in path_accumulator[1:]:
+                    if pattern not in patterns_path:
+                        patterns_path.append(pattern)
+            return
+        Re_accumulator = copy.deepcopy(accumulator)
+        Re_path_accumulator = copy.deepcopy(path_accumulator)
+        decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, pointer + 1, stage)
 
+        length += L_length[pointer]
+        Re_accumulator[pointer] += 1
+        if length > l:
+            length = length - l
+            stage += 1
+            cut += 1
+            paste += 1
+            decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, pointer, stage)
+        elif length == l:
+            length = 0
+            patterns_left.append(Re_accumulator)
+            patterns_right.append([0, stage + 1, cut, paste])
+            Re_path_accumulator.append(Re_accumulator)
+            stage += 1
+            pointer = 0
+            decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, pointer, stage)
+        else:
+            cut += 1
+            left = l - length
+            if left <= losses1:
+                patterns_left.append(Re_accumulator)
+                patterns_right.append([left, stage + 1, cut, paste])
+                Re_path_accumulator.append(Re_accumulator)
+                decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, pointer, stage)
+            else:
+                decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, pointer, stage)
+
+
+        
 def patterns_simplify(patterns_left, patterns_right):
     # 用来缩减重复pattern的数量，同时去除同样的pattern但cut，paste更多的pattern
     patterns_left_plus, patterns_right_plus = [], []
@@ -365,9 +444,20 @@ def patterns_simplify(patterns_left, patterns_right):
     patterns = list(zip(patterns_left_plus, patterns_right_plus))
     patterns_main, patterns_property = {}, {}
     for i in range(len(patterns_left_plus)):
-        patterns_main[i] = [patterns_left_plus[i], patterns_right_plus[i][0]]
+        # patterns_main[i] = [patterns_left_plus[i], patterns_right_plus[i][0]]
+        patterns_main[i] = patterns_left_plus[i]
         patterns_property[i] = patterns_right_plus[i]
     return patterns, patterns_main, patterns_property
+
+def patterns_repeated(patterns, patterns_path):
+    p = []
+    for i in patterns:
+        p.append(i[0])
+    for paths in patterns_path:
+        loc = p.index(paths)
+        patterns.pop(loc)
+        p.pop(loc)
+    return patterns
 
 def patterns_decomposition(pattern, l, L, joint, length, count, pointer, stage):
 # 通过遍历寻找pattern的不同组成方法
@@ -464,24 +554,42 @@ def patterns_decomposition_summon(pattern, l, L, joint):
             patterns_decomposition(pattern, l, L, joint, 0, {0: []}, i, 0)
     return
 
-l = int(input('raw material length: '))
-n = int(input('the number of objects: '))
-L = {}
-for i in range(n):
-    L[i] = int(input(f'object L{i + 1}: '))
-radius = int(input('radius of the number of raw materials: '))
-losses1 = int(input('max left of patterns: '))
+fill = input('fill in data or by default: press 0 or 1: ')
+if fill == '0':
+    l = int(input('raw material length: '))
+    n = int(input('the number of objects: '))
+    L = {}
+    for i in range(n):
+        L[i] = int(input(f'object L{i + 1}: '))
+    radius = int(input('radius of the number of raw materials: '))
+    losses1 = int(input('max left of patterns: '))
+else:
+    l = 12000
+    L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
+    radius = 9
+    losses1 = 0
 
 patterns_left = []
 patterns_right = []
-
+patterns_path = []
+# cut = 0
+# paste = 0
+# count = 0
+# accumulator = [0 for _ in L.keys()]
+# pointer = 0
+# decomposition1(l, L, radius, count, cut, paste, accumulator, pointer)
 cut = 0
 paste = 0
-count = 0
 accumulator = [0 for _ in L.keys()]
 pointer = 0
-decomposition1(l, L, radius, count, cut, paste, accumulator, pointer)
+stage = 0
+length = 0
+path_accumulator = []
+decomposition2(l, L, radius, length, cut, paste, accumulator, path_accumulator, pointer, stage)
+print(patterns_path)
+
 patterns, patterns_main, patterns_property = patterns_simplify(patterns_left, patterns_right)
+patterns = patterns_repeated(patterns, patterns_path)
 # 会出现pattern1+pattern2=pattern3的情况，虽然说在后续合成过程中不会影响结果，但是会使运算上升一个维度
 # 但目前没有很好的处理这样的pattern3的方法
 
