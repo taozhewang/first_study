@@ -566,7 +566,7 @@ if fill == '0':
 else:
     l = 12000
     L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
-    radius = 9
+    radius = 10
     losses1 = 0
 
 patterns_left = []
