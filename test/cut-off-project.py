@@ -346,25 +346,26 @@ import copy
 #             decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
 
 # 不适合L中带有特别大的Li的情况（Li几乎等于原料）
+
 def decomposition2(l, L, n, length, cut, paste, accumulator, path_accumulator, pointer, stage):
     L_length = list(L.values())
-    if pointer == len(L_length) - 1:
-        if stage == n:
-            if len(path_accumulator) >= 2:
-                for pattern in path_accumulator[1:]:
-                    if pattern not in patterns_path:
+    if pointer == len(L_length) - 1: # 如果当前pointer已经指向了最后一种L，那么不再移动pointer
+        if stage == n:               # 如果pattern总长度已经超过了n（也就是radius）倍的原长，则停止计算
+            if len(path_accumulator) >= 2:              # 在这里统计同一个路径上产生的大pattern的种类
+                for pattern in path_accumulator[1:]:    # path_accumulator里的第一个元素有可能是小pattern
+                    if pattern not in patterns_path:    # 对于是大pattern的情况，会有另外的path_accumulator统计到
                         patterns_path.append(pattern)
             return
-        Re_accumulator = copy.deepcopy(accumulator)
+        Re_accumulator = copy.deepcopy(accumulator)    
         Re_path_accumulator = copy.deepcopy(path_accumulator)
         
         length += L_length[pointer]
         Re_accumulator[pointer] += 1
-        if length > l:
-            length = length - l
-            stage += 1
-            cut += 1
-            paste += 1
+        if length > l:          # 采用的是首尾相接的办法
+            length = length - l # 将length限制在0<=length<l间
+            stage += 1          # 用stage表示已经用完的l数目
+            cut += 1            # 只有在length正好到0的时候才不会让cut增加
+            paste += 1          # paste同上
             decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, pointer, stage)
         elif length == l:
             length = 0
@@ -372,12 +373,20 @@ def decomposition2(l, L, n, length, cut, paste, accumulator, path_accumulator, p
             patterns_right.append([0, stage + 1, cut, paste])
             Re_path_accumulator.append(Re_accumulator)
             stage += 1
-            pointer = 0
+            pointer = 0 # 在left为0的情况下将pointer重置到0是为了在原有pattern上产生新的pattern
+                        # 在后面需要排除可以被两个独立pattern组成的大pattern的情况
+                        # 为了做到这一点需要统计可以被拆成两个独立pattern的大pattern
+                        # 所以统计在每一个pattern产生过程中是否有小pattern产生
+                        # 如果不重置pointer，大的pattern的产生路径中可能不会产生小pattern
+                        # 因为排序的不同会影响大pattern能否被拆出小pattern
             decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, pointer, stage)
         else:
+            # 只有在pattern总长正好抵达l的整数倍时，才能节省一次断料cut
             cut += 1
             left = l - length
             if left <= losses1:
+                # 在当前合成长度与原料截断处的距离left小于losses1时，
+                # 记录下当前的pattern组成、原料个数stage、断料次数cut、接头用量paste
                 patterns_left.append(Re_accumulator)
                 patterns_right.append([left, stage + 1, cut, paste])
                 Re_path_accumulator.append(Re_accumulator)
@@ -426,6 +435,7 @@ def decomposition2(l, L, n, length, cut, paste, accumulator, path_accumulator, p
         
 def patterns_simplify(patterns_left, patterns_right):
     # 用来缩减重复pattern的数量，同时去除同样的pattern但cut，paste更多的pattern
+    # 同时将产生的排序不同但组成相同的pattern简化到一种作为代表
     patterns_left_plus, patterns_right_plus = [], []
     k = len(patterns_left)
     for i in range(k):
@@ -436,7 +446,8 @@ def patterns_simplify(patterns_left, patterns_right):
         else:
             origin_index = patterns_left_plus.index(patl)
             cut = patterns_right_plus[origin_index][2]
-            if patterns_right[i][2] < cut:
+
+            if patterns_right[i][2] < cut:  # 通过cut多少筛选pattern
                 patterns_left_plus.pop(origin_index)
                 patterns_right_plus.pop(origin_index)
                 patterns_left_plus.append(patl)
