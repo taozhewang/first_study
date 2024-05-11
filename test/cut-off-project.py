@@ -309,6 +309,7 @@ def decomposition1(l, L, n, count, cut, paste, accumulator, pointer):
         elif Re_stage == n:
             return
         else:
+            # traverse：是否跨越了一个原料长度
             traverse = bool(Re_end_of_the_stage)
             cut += traverse
             paste += (Re_stage - stage + traverse - 1) * (Re_stage - stage)
@@ -322,7 +323,6 @@ def decomposition1(l, L, n, count, cut, paste, accumulator, pointer):
             else:
                 decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
 
-            
     elif Re_stage == n and Re_end_of_the_stage == 0:
         Re_accumulator[pointer] += 1
         patterns_left.append(Re_accumulator)
@@ -345,10 +345,34 @@ def decomposition1(l, L, n, count, cut, paste, accumulator, pointer):
         else:
             decomposition1(l, L, n, count, cut, paste, Re_accumulator, pointer)
 
-
-
+def patterns_simplify(patterns_left, patterns_right):
+    # 用来缩减重复pattern的数量，同时去除同样的pattern但cut，paste更多的pattern
+    patterns_left_plus, patterns_right_plus = [], []
+    k = len(patterns_left)
+    for i in range(k):
+        patl = patterns_left[i]
+        if patl not in patterns_left_plus:
+            patterns_left_plus.append(patl)
+            patterns_right_plus.append(patterns_right[i])
+        else:
+            origin_index = patterns_left_plus.index(patl)
+            cut = patterns_right_plus[origin_index][2]
+            if patterns_right[i][2] < cut:
+                patterns_left_plus.pop(origin_index)
+                patterns_right_plus.pop(origin_index)
+                patterns_left_plus.append(patl)
+                patterns_right_plus.append(patterns_right[i])
+    patterns = list(zip(patterns_left_plus, patterns_right_plus))
+    patterns_main, patterns_property = {}, {}
+    for i in range(len(patterns_left_plus)):
+        patterns_main[i] = [patterns_left_plus[i], patterns_right_plus[i][0]]
+        patterns_property[i] = patterns_right_plus[i]
+    return patterns, patterns_main, patterns_property
 
 def patterns_decomposition(pattern, l, L, joint, length, count, pointer, stage):
+# 通过遍历寻找pattern的不同组成方法
+# 加入了joint来约束余料长度，顺便剪枝
+
         p_length = len(pattern)
         L_length = list(L.values())
         Re_pattern = copy.deepcopy(pattern)
@@ -387,15 +411,10 @@ def patterns_decomposition(pattern, l, L, joint, length, count, pointer, stage):
                         accumulator.append(Re_count)
                         return
 
-                if Re_pattern[pointer] == 0:
-                    for step in range(1, p_length):
-                        Re_pointer = (pointer + step) % p_length
-                        if Re_pattern[Re_pointer] != 0:
-                            patterns_decomposition(Re_pattern, l, L, joint, length, Re_count, Re_pointer, stage)
                                      
                 else:
                     for step in range(p_length):
-                        Re_pointer = (pointer + step) % p_length
+                        Re_pointer = step
                         if Re_pattern[Re_pointer] != 0:
                             patterns_decomposition(Re_pattern, l, L, joint, length, Re_count, Re_pointer, stage)
 
@@ -413,14 +432,9 @@ def patterns_decomposition(pattern, l, L, joint, length, count, pointer, stage):
                     accumulator.append(Re_count)
                     return
                     
-                elif Re_pattern[pointer] == 0:
-                    for step in range(1, p_length):
-                        Re_pointer = (pointer + step) % p_length
-                        if Re_pattern[Re_pointer] != 0:
-                            patterns_decomposition(Re_pattern, l, L, joint, length, Re_count, Re_pointer, stage)
                 else:
                     for step in range(p_length):
-                        Re_pointer = (pointer + step) % p_length
+                        Re_pointer = step
                         if Re_pattern[Re_pointer] != 0:
                             patterns_decomposition(Re_pattern, l, L, joint, length, Re_count, Re_pointer, stage)
 
@@ -437,15 +451,10 @@ def patterns_decomposition(pattern, l, L, joint, length, count, pointer, stage):
                     Re_count[stage] = a
                     accumulator.append(Re_count)
                     return
-                    
-                elif Re_pattern[pointer] == 0:
-                    for step in range(1, p_length):
-                        Re_pointer = (pointer + step) % p_length
-                        if Re_pattern[Re_pointer] != 0:
-                            patterns_decomposition(Re_pattern, l, L, joint, length, Re_count, Re_pointer, stage)
+            
                 else:
                     for step in range(p_length):
-                        Re_pointer = (pointer + step) % p_length
+                        Re_pointer = step
                         if Re_pattern[Re_pointer] != 0:
                             patterns_decomposition(Re_pattern, l, L, joint, length, Re_count, Re_pointer, stage)
 def patterns_decomposition_summon(pattern, l, L, joint):
@@ -472,21 +481,44 @@ count = 0
 accumulator = [0 for _ in L.keys()]
 pointer = 0
 decomposition1(l, L, radius, count, cut, paste, accumulator, pointer)
-patterns_integrate = list(zip(patterns_left, patterns_right))
-for i, pattern in enumerate(patterns_integrate):
+patterns, patterns_main, patterns_property = patterns_simplify(patterns_left, patterns_right)
+# 会出现pattern1+pattern2=pattern3的情况，虽然说在后续合成过程中不会影响结果，但是会使运算上升一个维度
+# 但目前没有很好的处理这样的pattern3的方法
+
+for i, pattern in enumerate(patterns):
     print(i, pattern)
 
-accumulator = []
+
 while True:
     check = input('Check the composition of patterns? press enter to keep in / press anything to cancel ').strip().lower()
     if len(check) != 0:
         break
     joint = int(input('min length of joint:(recommended: <20:1000; >20:1500) '))
-    patterns_number = len(patterns_left)
+    patterns_number = len(patterns)
     pattern_index = int(input(f'choose a pattern for its composition: (range:[{0} ~ {patterns_number - 1}]) '))
-    pattern = patterns_left[pattern_index]
+    pattern = patterns[pattern_index][0]
+    accumulator = []
     patterns_decomposition_summon(pattern, l, L, joint)
-    for i, a in enumerate(accumulator):
-        print(i, a)
+# 在所有组成的遍历当中，仍然存在问题：对于可以由另外两个pattern1、pattern2组成的pattern3，其分解方式的不同会导致cut和paste的改变
+    # for i, a in enumerate(accumulator):
+    #     print(i, a)
     if not any(accumulator):
         print('No composition found')
+# 计划用sort处理几乎相同的pattern组成（元素交换顺序但不改变余料长度）
+# 没办法用set，因为可能出现(1, 2, 2, 3, 3, 4),(1, 1, 2, 3, 4, 4)的情况
+# *已解决
+    sorted_accumulator = []
+    good_list = []
+    for i, pattern_sort in enumerate(accumulator):
+        new_pattern = {tuple(sorted(pattern_sort[key])) for key in pattern_sort}
+
+        new_pattern_set = new_pattern
+        if new_pattern_set not in sorted_accumulator:
+            sorted_accumulator.append(new_pattern_set)
+            good_list.append(i)
+
+    smaller_accumulator = []
+    for i in good_list:
+        smaller_accumulator.append(accumulator[i])
+    for i, pattern in enumerate(smaller_accumulator):
+        print(i, pattern)    
