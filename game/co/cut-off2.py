@@ -7,12 +7,12 @@ from core import pattern_oringin, calc_cost_by_unmatched
 '''
 用遗传算法求解钢筋切割问题
 
-目标: [552 658 462] 已完成: [461 249 454] 还差: [ 91 409   8]
-已有成本: 65688.99200000001 已有损失: 4950 已有接头: 314
-还需成本: 79142.384 还需损失: 6150 还需接头: 143
+目标: [552 658 462] 已完成: [548 314 461] 还差: [  4 344   1]
+已有成本: 61716.33600000001 已有损失: 4600 已有接头: 359
+还需成本: 83085.04 还需损失: 6500 还需接头: 95
 总损失: 11100
-总接头: 457
-总成本: 144831.37600000002
+总接头: 454
+总成本: 144801.376
 '''
 
 # 原始钢筋长度
@@ -34,6 +34,7 @@ variation_count = 1
 
 # 遗传算法参数
 pop_size = 1000  # 种群大小
+dna_size = 1000  # DNA长度
 gen_max = 1000  # 进化次数
 mut_rate = 0.9  # 变异率
 
@@ -42,8 +43,9 @@ mut_rate = 0.9  # 变异率
 # patterns: 所有组合的列表，每个元素为 [counter, loss, joint, cost, eer, combin]
 def calc_hascut_lenghts(individual, patterns):
     hascut_lengths = np.zeros_like(need)
-    for i in patterns:
-        hascut_lengths += patterns[i][0]*individual[i]
+    for i in range(len(individual)):
+        if individual[i]<0: continue
+        hascut_lengths += patterns[individual[i]][0]
     return hascut_lengths
 
 # 适应度函数，这里按成本来计算, 越低越好
@@ -52,9 +54,10 @@ def calc_hascut_lenghts(individual, patterns):
 def fitness(individual, patterns):
     hascut_lengths = np.zeros_like(need)
     cost = 0
-    for i in patterns:
-        hascut_lengths += patterns[i][0]*individual[i]
-        cost += patterns[i][3]*individual[i]
+    for i in range(len(individual)):
+        if individual[i]<0: continue
+        hascut_lengths += patterns[individual[i]][0]
+        cost += patterns[individual[i]][3]
 
     # 如果组合的长度不足以切割目标钢筋，这里多匹配和少匹配都算到里面
     bar_lengths = need - hascut_lengths
@@ -75,7 +78,8 @@ patterns_p = 1/patterns_costs
 patterns_p = patterns_p/np.sum(patterns_p)
 
 # 初始化种群 
-population = np.zeros((pop_size, patterns_length),dtype=int)  
+# dna 保存 patterns 编号， -1 表示未使用
+population = -np.ones((pop_size, dna_size),dtype=int)
 
 # 记录最佳适应度个体
 best_individual=None
@@ -83,7 +87,7 @@ best_individual=None
 best_fitnesses=np.inf
 
 # 最大停滞次数
-max_stagnation = 500
+max_stagnation = 100
 # 进化停顿次数
 nochange_count = 0
 
@@ -120,11 +124,10 @@ for gen in range(gen_max):
     # 变异 按概率变异
     for i in range(len(offspring)):
         if random.random() < mut_rate:
-            ids = np.random.choice(patterns_length, variation_count, replace=False, p=patterns_p)
-            for idx in ids:
-                v = 1 if random.random()<0.5 else -1
-                offspring[i][idx] += v
-                if offspring[i][idx] < 0: offspring[i][idx] = 0
+            vs = np.random.choice(patterns_length, variation_count, replace=False, p=patterns_p)
+            ids = np.random.choice(dna_size, variation_count, replace=False)
+            for j, idx in enumerate(ids):
+                offspring[i][idx] = -1 if random.random()<0.5 else vs[j]
 
     # 替换为新种群
     population = np.array(offspring)
@@ -139,18 +142,25 @@ for gen in range(gen_max):
 
 # 打印最佳解决方案
 bar_lengths = np.zeros(len(need),dtype=int)
-for i, key in enumerate(patterns):
-    bar_lengths += patterns[key][0]*best_individual[i]
+for i in best_individual:
+    if i>=0: bar_lengths += patterns[i][0]
         
-loss  = np.sum([num*patterns[i][1] for i,num in enumerate(best_individual)])
-joint = np.sum([num*patterns[i][2] for i,num in enumerate(best_individual)])
-cost  = np.sum([num*patterns[i][3] for i,num in enumerate(best_individual)])
+loss  = np.sum([patterns[i][1] for i in best_individual if i>=0])
+joint = np.sum([patterns[i][2] for i in best_individual if i>=0])
+cost  = np.sum([patterns[i][3] for i in best_individual if i>=0])
 
 print("最佳方案为：")
-# 将最佳方案的组合输出
-for i,num in enumerate(best_individual):
-    if num > 0:
-        print(num, '*', patterns[i][-1])
+# 将最佳方案的组合汇总输出
+best_solution={}
+for i in best_individual:
+    if i>=0:
+        if i in best_solution:
+            best_solution[i]+=1
+        else:
+            best_solution[i]=1
+            
+for key,num in best_solution.items():
+    print(num, '*', patterns[key][-1])
 
 diff = need - bar_lengths
 diff_cost, diff_loss, diff_joint = calc_cost_by_unmatched(diff, l, L_values, l_size,l_min)
