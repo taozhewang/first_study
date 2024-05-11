@@ -157,7 +157,7 @@ def pattern_oringin(l, L, max_len=10, l_min=200, l_size=32):
     patterns_list = []
     # 如果有重复类别，只保留余料最小的的组合 {count:cost}
     patterns_saved = {}
-    for i in range(1, max_len):
+    for i in range(1, max_len+1):
         # 按组合数产生组合
         combinations = itertools.product(L, repeat=i)
         for combination in combinations:   
