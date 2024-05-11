@@ -468,6 +468,9 @@ def patterns_decomposition(pattern, l, L, joint, length, count, pointer, stage):
         Re_pattern = copy.deepcopy(pattern)
         Re_count = copy.deepcopy(count)
 
+        # if len(accumulator) > max_way:
+        #     return
+
         if Re_pattern[pointer] == 0:
             pointer = (pointer + 1) % p_length
         else:
@@ -499,6 +502,9 @@ def patterns_decomposition(pattern, l, L, joint, length, count, pointer, stage):
                         a.append(left)
                         Re_count[stage] = a
                         accumulator.append(Re_count)
+
+                        # print(Re_count)
+
                         return
 
                                      
@@ -520,6 +526,9 @@ def patterns_decomposition(pattern, l, L, joint, length, count, pointer, stage):
                 if not any(Re_pattern):
                     Re_count.pop(stage)
                     accumulator.append(Re_count)
+
+                    # print(Re_count)
+
                     return
                     
                 else:
@@ -540,6 +549,9 @@ def patterns_decomposition(pattern, l, L, joint, length, count, pointer, stage):
                     a.append(left)
                     Re_count[stage] = a
                     accumulator.append(Re_count)
+
+                    # print(Re_count)
+
                     return
             
                 else:
@@ -592,7 +604,7 @@ patterns, patterns_main, patterns_property = patterns_simplify(patterns_left, pa
 patterns = patterns_repeated(patterns, patterns_path)
 # 会出现pattern1+pattern2=pattern3的情况，虽然说在后续合成过程中不会影响结果，但是会使运算上升一个维度
 # 但目前没有很好的处理这样的pattern3的方法
-
+# 已处理
 for i, pattern in enumerate(patterns):
     print(i, pattern)
 
@@ -601,15 +613,18 @@ while True:
     check = input('Check the composition of patterns? press enter to keep in / press anything to cancel ').strip().lower()
     if len(check) != 0:
         break
-    joint = int(input('min length of joint:(recommended: <20:1000; >20:1500) '))
+    
     patterns_number = len(patterns)
     pattern_index = int(input(f'choose a pattern for its composition: (range:[{0} ~ {patterns_number - 1}]) '))
+    joint = int(input('min length of joint:(recommended: <20:1000; >20:1500) '))
     pattern = patterns[pattern_index][0]
     accumulator = []
+    # max_way = 500000
     patterns_decomposition_summon(pattern, l, L, joint)
 # 在所有组成的遍历当中，仍然存在问题：对于可以由另外两个pattern1、pattern2组成的pattern3，其分解方式的不同会导致cut和paste的改变
     # for i, a in enumerate(accumulator):
     #     print(i, a)
+
     if not any(accumulator):
         print('No composition found')
 # 计划用sort处理几乎相同的pattern组成（元素交换顺序但不改变余料长度）
@@ -626,7 +641,13 @@ while True:
             good_list.append(i)
 
     smaller_accumulator = []
-    for i in good_list:
-        smaller_accumulator.append(accumulator[i])
-    for i, pattern in enumerate(smaller_accumulator):
-        print(i, pattern)    
+    for i, count in enumerate(good_list):
+        # smaller_accumulator.append(accumulator[count])
+        print(i, accumulator[count])
+
+    # for i, pattern in enumerate(smaller_accumulator):
+    #     print(i, pattern)    
+        
+    # if len(accumulator) >= max_way:
+    #     print('too many ways!')
+    print(len(accumulator))
