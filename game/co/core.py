@@ -11,7 +11,7 @@ def calc_cost(loss, joint, l_size):
     joint: 接头数量
     l_size: 钢筋直径
     '''
-    return l_size**2*loss/1000*0.00617*2000 + joint*10
+    return round(l_size**2*loss/1000*0.00617*2000 + joint*10,3)
 
 # 由剩余未匹配的钢筋数量计算成本
 # 这里直接最大化成本
@@ -180,14 +180,14 @@ def pattern_oringin(l, L, max_len=10, l_min=200, l_size=32):
                 else:
                     counter[i] = 0
 
-            counter_str = "_".join([str(i) for i in counter])      
+            counter_str = "_".join([str(v) for v in counter])      
             # 清除高余料的组合
-            if counter_str in patterns_saved and cost>=patterns_saved[counter_str]:
-                continue
-            patterns_saved[counter_str]=cost
-            
-            # 记录pattern和loss，返回dict {idx: [pattern, loss]}
-            # 如果有0的count，则保留在patterns_list_loss中，否则保留在patterns_list中  
+            if counter_str in patterns_saved:
+                if cost>=patterns_saved[counter_str][0]: continue
+                # 如果新的比旧的成本低，删除旧的
+                del patterns_list[patterns_saved[counter_str][1]]
+            # 记录下当前成本和位置
+            patterns_saved[counter_str]=(cost, len(patterns_list))
             patterns_list.append([counter, loss, joint, cost, eer, combination])
 
     patterns_list_len = len(patterns_list)
