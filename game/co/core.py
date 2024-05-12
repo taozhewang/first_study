@@ -225,12 +225,12 @@ def get_min_cost_combination(combination, l, l_min=200, l_size=32, max_iteration
 #     return patterns   
 
 
-def pattern_oringin(l, L, max_len=10, l_min=200, l_size=32):
+def pattern_oringin(l, L, radius, l_min=200, l_size=32):
     L_length = np.array(list(L.values()))
     patterns = {}
     patterns_list=[]                            # 存放切割方案的切割情况
     accumulator = np.zeros(len(L),dtype=int)    # 存放当前切割方案的切割情况
-    def _recurse(l, L, radius, length, cut, paste, accumulator, patterns_path,  pointer, stage):
+    def _recurse(accumulator, patterns_path, length, cut, paste, pointer, stage):
 
         # 达到最多切割原料根数，结束递归返回
         if stage == radius:
@@ -240,7 +240,7 @@ def pattern_oringin(l, L, max_len=10, l_min=200, l_size=32):
         Re_patterns_path = copy.deepcopy(patterns_path)             # 递归时需要复制一份patterns_path
 
         if pointer < len(L_length) - 1:         # 还可以递归，继续开新的切割递归
-            _recurse(l, L, radius, length, cut, paste, Re_accumulator, Re_patterns_path, pointer + 1, stage)
+            _recurse(Re_accumulator, Re_patterns_path, length, cut, paste, pointer + 1, stage)
             
         length += L_length[pointer]         # 尾料长度+当前选择的目标的长度
         Re_accumulator[pointer] += 1        # 记录增加当前目标的组合次数
@@ -263,9 +263,9 @@ def pattern_oringin(l, L, max_len=10, l_min=200, l_size=32):
                 cost = calc_cost(left, paste, l_size)
                 patterns_list.append([Re_accumulator, left, paste, cost, stage + 1, Re_patterns_path])                # 记录切割方案
 
-        _recurse(l, L, radius, length, cut, paste, Re_accumulator, Re_patterns_path, pointer, stage)    # 递归
+        _recurse(Re_accumulator, Re_patterns_path, length, cut, paste, pointer, stage)    # 递归
        
-    _recurse(l, L, max_len, 0, 0, 0, accumulator, [], 0, 0)
+    _recurse(accumulator, [], 0, 0, 0, 0, 0)
 
     patterns_list_len = len(patterns_list)
     print("组合数：", patterns_list_len)
@@ -287,10 +287,10 @@ if __name__ == "__main__":
     l = 12000       # 原始钢筋长度
     l_size = 32     # 钢筋的规格
     l_limit_len = 200   # 钢筋的最小可利用长度
-    l_max_count = 6   # 最大组合数
+    radius = 6   # 最大组合数
     L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}     # 目标钢筋长度
     need = np.array([552, 658, 462])    # 目标钢筋的数量
-    patterns = pattern_oringin(l, L, l_max_count, l_limit_len, l_size)
+    patterns = pattern_oringin(l, L, radius, l_limit_len, l_size)
     
     for i in patterns:
         print(f"方案{i}: {patterns[i][-1]} 计数: {patterns[i][0]} 余料: {patterns[i][1]} 接头: {patterns[i][2]} 成本: {patterns[i][3]} 原料: {patterns[i][4]}")
