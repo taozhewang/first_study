@@ -627,7 +627,7 @@ patterns, patterns_main, patterns_property = patterns_simplify(patterns_left, pa
 patterns = patterns_repeated(patterns, patterns_path)
 # 会出现pattern1+pattern2=pattern3的情况，虽然说在后续合成过程中不会影响结果，但是会使运算上升一个维度
 # 但目前没有很好的处理这样的pattern3的方法
-# 已处理
+# 已处理：方法如decompostion2()显示
 for i, pattern in enumerate(patterns):
     print(i, pattern)
 
@@ -652,7 +652,7 @@ while True:
         print('No composition found')
 # 计划用sort处理几乎相同的pattern组成（元素交换顺序但不改变余料长度）
 # 没办法用set，因为可能出现(1, 2, 2, 3, 3, 4),(1, 1, 2, 3, 4, 4)的情况
-# *已解决
+# 已解决： 通过对每个pattern包含的拆分进行比较来排除，拆分使用升序排列
     sorted_accumulator = []
     good_list = []
     for i, pattern_sort in enumerate(accumulator):
