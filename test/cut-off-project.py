@@ -352,7 +352,7 @@ def decomposition2(l, L, n, length, cut, paste, accumulator, path_accumulator, p
     if pointer == len(L_length) - 1: # 如果当前pointer已经指向了最后一种L，那么不再移动pointer
         if stage == n:               # 如果pattern总长度已经超过了n（也就是radius）倍的原长，则停止计算
             if len(path_accumulator) >= 2:   
-                # print(path_accumulator)           # 在这里统计同一个路径上产生的大pattern的种类
+                print(path_accumulator)           # 在这里统计同一个路径上产生的大pattern的种类
                 for pattern in path_accumulator[1:]:    # path_accumulator里的第一个元素有可能是小pattern
                     if pattern not in patterns_path:    # 对于是大pattern的情况，会有另外的path_accumulator统计到
                         patterns_path.append(pattern)
@@ -373,8 +373,9 @@ def decomposition2(l, L, n, length, cut, paste, accumulator, path_accumulator, p
             length = 0
             patterns_left.append(Re_accumulator)
             patterns_right.append([0, stage + 1, cut, paste])
-            if not any(Re_path_left):
+            if 0 in Re_path_left:
                 Re_path_accumulator.append(Re_accumulator)
+            Re_path_left.append(0)
             stage += 1
             pointer = 0 # 在left为0的情况下将pointer重置到0是为了在原有pattern上产生新的pattern
                         # 在后面需要排除可以被两个独立pattern组成的大pattern的情况
@@ -402,6 +403,7 @@ def decomposition2(l, L, n, length, cut, paste, accumulator, path_accumulator, p
     else:
         if stage == n:
             if len(path_accumulator) >= 2:
+                print(path_accumulator)
                 for pattern in path_accumulator[1:]:
                     if pattern not in patterns_path:
                         patterns_path.append(pattern)
@@ -423,8 +425,9 @@ def decomposition2(l, L, n, length, cut, paste, accumulator, path_accumulator, p
             length = 0
             patterns_left.append(Re_accumulator)
             patterns_right.append([0, stage + 1, cut, paste])
-            if not any(Re_path_left):
+            if 0 in Re_path_left:
                 Re_path_accumulator.append(Re_accumulator)
+            Re_path_left.append(0)
             stage += 1
             pointer = 0
             decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, Re_path_left, pointer, stage)
