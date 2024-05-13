@@ -28,7 +28,7 @@ L_values = np.array(list(L.values()))
 need = np.array([552, 658, 462],dtype=int)
 
 # 最大的组合长度
-radius = 14
+radius = 500
 
 # 禁忌搜索参数
 # 最大循环次数
@@ -155,7 +155,7 @@ print("最佳方案为：")
 # 将最佳方案的组合输出
 for i,num in enumerate(best_solution):
     if num > 0:
-        print(num, '*', patterns[i][-1])
+        print(num, '*', patterns[i][-1], patterns[i][1], patterns[i][2])
 
 diff = need - bar_lengths
 diff_cost, diff_loss, diff_joint = calc_cost_by_unmatched(diff, l, L_values, l_size,l_min)
