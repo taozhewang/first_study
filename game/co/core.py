@@ -182,10 +182,14 @@ if __name__ == "__main__":
     radius = 200   # 最大组合数
     L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}     # 目标钢筋长度
     need = np.array([552, 658, 462])    # 目标钢筋的数量
+    
     patterns = pattern_oringin(l, L, radius, l_limit_len, l_size)
     print(f"共找到{len(patterns)}种组合方案")
+    loss_zero_patterns = [i for i in patterns if patterns[i][1]==0]
+    print(f"共找到{len(loss_zero_patterns)}种零余料方案")
+
     for i in patterns:
-        if patterns[i][1]==0 and i<20:
+        if i<20:
             print(f"{i}: {patterns[i][0]} 余料: {patterns[i][1]} 接头: {patterns[i][2]} 成本: {patterns[i][3]} 原料: {patterns[i][4]} 路径: {patterns[i][5]}")
 
     # combination = []
