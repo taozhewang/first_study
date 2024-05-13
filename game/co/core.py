@@ -3,6 +3,7 @@ from collections import Counter
 import itertools
 import random
 import pickle,os
+import copy
 
 # 计算成本
 def calc_cost(loss, joint, l_size):
@@ -69,7 +70,7 @@ def calc_loss_joint(combination, l, l_min):
     joint = 0
     _l = l
     for length in combination: 
-        if _l<length: 
+        while _l<length: 
             if _l<l_min:    # 剩余长度小于最小接头数量
                 loss += _l
                 _l = l
@@ -133,62 +134,138 @@ def get_min_cost_combination(combination, l, l_min=200, l_size=32, max_iteration
 # cost： 废料+接头的成本
 # err: 能效比 cost/sum(counter)
 # list: 组合列表["L1","L1","L3",....]
-def pattern_oringin(l, L, max_len=10, l_min=200, l_size=32):
-    '''
-    l: 原始钢筋定长
-    L: 目标钢筋长度
-    max_len: 最大组合数
-    l_min: 最小接头数量
-    l_size: 接头大小
-    include_less: 是否包含长度小于L的组合
-    '''
+# def pattern_oringin(l, L, max_len=10, l_min=200, l_size=32):
+#     '''
+#     l: 原始钢筋定长
+#     L: 目标钢筋长度
+#     max_len: 最大组合数
+#     l_min: 最小接头数量
+#     l_size: 接头大小
+#     include_less: 是否包含长度小于L的组合
+#     '''
     
-    # 查看cache文件是否存在，如果有直接返回
-    k = "_".join([str(L[key]) for key in L])
-    fname = f"{l}_{k}_{max_len}_{l_min}_{l_size}.pkl"    
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    fname = os.path.join(script_dir, fname)
-    if os.path.exists(fname):
-        with open(fname,'rb') as f:
-            return pickle.load(f)
+#     # 查看cache文件是否存在，如果有直接返回
+#     k = "_".join([str(L[key]) for key in L])
+#     fname = f"{l}_{k}_{max_len}_{l_min}_{l_size}.pkl"    
+#     script_dir = os.path.dirname(os.path.realpath(__file__))
+#     fname = os.path.join(script_dir, fname)
+#     if os.path.exists(fname):
+#         with open(fname,'rb') as f:
+#             return pickle.load(f)
         
+#     patterns = {}
+#     # 完整组合
+#     patterns_list = []
+#     # 如果有重复类别，只保留余料最小的的组合 {count:cost}
+#     patterns_saved = {}
+#     for i in range(1, max_len+1):
+#         # 按组合数产生组合
+#         combinations = itertools.product(L, repeat=i)
+#         for combination in combinations:   
+#             combination = list(combination)
+#             combination_values=[L[key] for key in combination]
+
+#             # 计算接头数量和余料
+#             loss, joint = calc_loss_joint(combination_values, l, l_min)
+#             # 计算成本
+#             cost = calc_cost(loss, joint, l_size)
+#             # 计算能效比
+#             eer = cost/len(combination)
+
+#             # 这里的key需要和L的key对应，如果不在组合中，则count为0
+#             combination_counter = Counter(combination)                    
+#             counter=np.zeros(len(L), dtype=int)
+#             for i, key in enumerate(L):
+#                 if key in combination_counter:
+#                     counter[i] = combination_counter[key]
+#                 else:
+#                     counter[i] = 0
+
+#             counter_str = "_".join([str(v) for v in counter])      
+#             # 清除高余料的组合
+#             if counter_str in patterns_saved:
+#                 if loss<l_min and cost!=patterns_saved[counter_str][0] and patterns_saved[counter_str][-2]<l_min:
+#                     if joint>patterns_saved[counter_str][-1]:
+#                         combination_str = '_'.join([str(v) for v in patterns_saved[counter_str][-3]])
+#                     else:
+#                         combination_str = '_'.join([str(v) for v in combination])
+#                     find = False
+#                     for x in patterns_saved:
+#                         combination1_str = '_'.join([str(v) for v in patterns_saved[x][-3]])
+#                         if  combination_str.find(combination1_str)>=0 and len(combination1_str)<len(combination_str):
+#                             print(combination_str, combination1_str, patterns_saved[x][-2], patterns_saved[x][-1])
+#                             find=True
+#                             break   
+#                     if not find:
+#                         print(patterns_saved["1_4_0"])
+#                         print(counter,"L:",L,"l:",l,"loss:",l_min)
+#                         print(combination, loss, joint )
+#                         print(patterns_saved[counter_str][-3],patterns_saved[counter_str][-2],patterns_saved[counter_str][-1])
+#                         input()
+#                 if cost>=patterns_saved[counter_str][0]: continue
+#                 # 如果新的比旧的成本低，删除旧的
+#                 del patterns_list[patterns_saved[counter_str][1]]
+#             # 记录下当前成本和位置
+#             patterns_saved[counter_str]=(cost, len(patterns_list), combination, loss, joint)
+#             patterns_list.append([counter, loss, joint, cost, eer, combination])
+
+#     patterns_list_len = len(patterns_list)
+#     print("组合数：", patterns_list_len)
+        
+#     patterns_list = sorted(patterns_list, key=lambda x:x[3])
+
+#     # 转换成dict
+#     for i, pattern in enumerate(patterns_list):
+#         patterns[i] = pattern
+
+#     # 保存数据到cache文件
+#     # with open(fname,'wb') as f:
+#     #     pickle.dump(patterns, f)
+
+#     return patterns   
+
+
+def pattern_oringin(l, L, radius, l_min=200, l_size=32):
+    L_length = np.array(list(L.values()))
     patterns = {}
-    # 完整组合
-    patterns_list = []
-    # 如果有重复类别，只保留余料最小的的组合 {count:cost}
-    patterns_saved = {}
-    for i in range(1, max_len+1):
-        # 按组合数产生组合
-        combinations = itertools.product(L, repeat=i)
-        for combination in combinations:   
-            combination = list(combination)
-            combination_values=[L[key] for key in combination]
+    patterns_list=[]                            # 存放切割方案的切割情况
+    accumulator = np.zeros(len(L),dtype=int)    # 存放当前切割方案的切割情况
+    def _recurse(accumulator, patterns_path, length, cut, paste, pointer, stage):
 
-            # 计算接头数量和余料
-            loss, joint = calc_loss_joint(combination_values, l, l_min)
-            # 计算成本
-            cost = calc_cost(loss, joint, l_size)
-            # 计算能效比
-            eer = cost/len(combination)
+        # 达到最多切割原料根数，结束递归返回
+        if stage == radius:
+            return
+        
+        Re_accumulator = copy.deepcopy(accumulator)             # 递归时需要复制一份accumulator
+        Re_patterns_path = copy.deepcopy(patterns_path)             # 递归时需要复制一份patterns_path
 
-            # 这里的key需要和L的key对应，如果不在组合中，则count为0
-            combination_counter = Counter(combination)                    
-            counter=np.zeros(len(L), dtype=int)
-            for i, key in enumerate(L):
-                if key in combination_counter:
-                    counter[i] = combination_counter[key]
-                else:
-                    counter[i] = 0
+        if pointer < len(L_length) - 1:         # 还可以递归，继续开新的切割递归
+            _recurse(Re_accumulator, Re_patterns_path, length, cut, paste, pointer + 1, stage)
+            
+        length += L_length[pointer]         # 尾料长度+当前选择的目标的长度
+        Re_accumulator[pointer] += 1        # 记录增加当前目标的组合次数
+        Re_patterns_path.append(pointer)    # 记录当前方案
+        if length > l:                      # 当前现有大于原料长度，需要补1根原料进行切割
+            length = length - l             # 减去原料的长度，得到尾料的长度
+            stage += 1                      # 使用原料次数+1
+            cut += 1                        # 增加切割次数
+            paste += 1                      # 增加拼接次数  
+        elif length == l:                   # 刚好达到原料长度，记录并继续递归
+            length = 0                      # 切割完后，尾料长度清零
+            cost = calc_cost(cut, paste, l_size)
+            patterns_list.append([Re_accumulator, 0, paste, cost, stage + 1, Re_patterns_path])                # 记录切割方案
+            stage += 1                       # 使用原料次数+1
+            pointer = 0                      # 切割完后，指针回到开头，继续递归
+        else:                               # 剩余长度小于原料长度，继续递归
+            cut += 1                        # 增加切割次数
+            left = l - length               # 剩余长度
+            if left <= l_min:             # 剩余长度小于等于最低损耗，不用补原料
+                cost = calc_cost(left, paste, l_size)
+                patterns_list.append([Re_accumulator, left, paste, cost, stage + 1, Re_patterns_path])                # 记录切割方案
 
-            counter_str = "_".join([str(v) for v in counter])      
-            # 清除高余料的组合
-            if counter_str in patterns_saved:
-                if cost>=patterns_saved[counter_str][0]: continue
-                # 如果新的比旧的成本低，删除旧的
-                del patterns_list[patterns_saved[counter_str][1]]
-            # 记录下当前成本和位置
-            patterns_saved[counter_str]=(cost, len(patterns_list))
-            patterns_list.append([counter, loss, joint, cost, eer, combination])
+        _recurse(Re_accumulator, Re_patterns_path, length, cut, paste, pointer, stage)    # 递归
+       
+    _recurse(accumulator, [], 0, 0, 0, 0, 0)
 
     patterns_list_len = len(patterns_list)
     print("组合数：", patterns_list_len)
@@ -199,27 +276,33 @@ def pattern_oringin(l, L, max_len=10, l_min=200, l_size=32):
     for i, pattern in enumerate(patterns_list):
         patterns[i] = pattern
 
-    # 保存数据到cache文件
-    with open(fname,'wb') as f:
-        pickle.dump(patterns, f)
-
-    return patterns   
+    return patterns
 
 
 if __name__ == "__main__":    
+    # for l in range(13,50):
+    #     print(l)
+    #     pattern_oringin(l, {'L1' : 9, 'L2' : 8, 'L3' : 12,}, max_len=10, l_min=2, l_size=32)
+
     l = 12000       # 原始钢筋长度
     l_size = 32     # 钢筋的规格
     l_limit_len = 200   # 钢筋的最小可利用长度
+    radius = 6   # 最大组合数
     L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}     # 目标钢筋长度
     need = np.array([552, 658, 462])    # 目标钢筋的数量
-    combination = []
-    for i,key in enumerate(L):
-        combination += [L[key]] * need[i]
+    patterns = pattern_oringin(l, L, radius, l_limit_len, l_size)
     
-    # 随机打散组合
-    random.shuffle(combination)
+    for i in patterns:
+        print(f"方案{i}: {patterns[i][-1]} 计数: {patterns[i][0]} 余料: {patterns[i][1]} 接头: {patterns[i][2]} 成本: {patterns[i][3]} 原料: {patterns[i][4]}")
+
+    # combination = []
+    # for i,key in enumerate(L):
+    #     combination += [L[key]] * need[i]
     
-    loss, joint = calc_loss_joint(combination, l, l_limit_len)
-    reward = calc_cost(loss, joint, l_size)
-    print(f"钢筋总根数：", len(combination))        
-    print(f"成本: {reward} \t接头: {joint} \t剩余: {loss}")
+    # # 随机打散组合
+    # random.shuffle(combination)
+    # loss, joint = calc_loss_joint(combination, l, l_limit_len)
+
+    # reward = calc_cost(loss, joint, l_size)
+    # print(f"钢筋总根数：", len(combination))        
+    # print(f"成本: {reward} \t接头: {joint} \t剩余: {loss}")
