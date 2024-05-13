@@ -127,7 +127,7 @@ def get_min_cost_combination(combination, l, l_min=200, l_size=32, max_iteration
 
 # 产生组合：l 原料长度 L 目标类型 radius 最大耗用原料数 l_min 最大可以拼接长度 l_size 原料直径
 # patterns: 所有组合的辞典，key为索引 每个元素为 [counter, loss, joint, cost, stage, combin]
-def pattern_oringin3(l, L, radius, l_min=200, l_size=32):
+def pattern_oringin(l, L, radius, l_min=200, l_size=32):
     L_keys = list(L.keys())
     L_values = list(L.values())
     L_length = len(L)
@@ -179,13 +179,14 @@ if __name__ == "__main__":
     l = 12000       # 原始钢筋长度
     l_size = 32     # 钢筋的规格
     l_limit_len = 200   # 钢筋的最小可利用长度
-    radius = 9   # 最大组合数
+    radius = 200   # 最大组合数
     L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}     # 目标钢筋长度
     need = np.array([552, 658, 462])    # 目标钢筋的数量
-    patterns = pattern_oringin3(l, L, radius, l_limit_len, l_size)
-    
+    patterns = pattern_oringin(l, L, radius, l_limit_len, l_size)
+    print(f"共找到{len(patterns)}种组合方案")
     for i in patterns:
-        print(f"{i}: {patterns[i][0]} 余料: {patterns[i][1]} 接头: {patterns[i][2]} 成本: {patterns[i][3]} 原料: {patterns[i][4]} 路径: {patterns[i][5]}")
+        if patterns[i][1]==0 and i<20:
+            print(f"{i}: {patterns[i][0]} 余料: {patterns[i][1]} 接头: {patterns[i][2]} 成本: {patterns[i][3]} 原料: {patterns[i][4]} 路径: {patterns[i][5]}")
 
     # combination = []
     # for i,key in enumerate(L):
