@@ -72,7 +72,8 @@ patterns_p = patterns_p/np.sum(patterns_p)
 # 邻域操作
 def get_neighbor(solution, patterns_length, variation_count, patterns_p):
     neighbor = np.copy(solution)
-    ids = np.random.choice(patterns_length, variation_count, replace=False, p=patterns_p)
+    # ids = np.random.choice(patterns_length, variation_count, replace=False, p=patterns_p)
+    ids = np.random.choice(patterns_length, variation_count, replace=False)
     for idx in ids:
         neighbor[idx] += 1 if random.random()<0.5 else -1
     neighbor[neighbor<0] = 0

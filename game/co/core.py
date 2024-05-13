@@ -127,7 +127,7 @@ def get_min_cost_combination(combination, l, l_min=200, l_size=32, max_iteration
 
 # 产生组合：l 原料长度 L 目标类型 radius 最大耗用原料数 l_min 最大可以拼接长度 l_size 原料直径
 # patterns: 所有组合的辞典，key为索引 每个元素为 [counter, loss, joint, cost, stage, combin]
-def pattern_oringin(l, L, radius, l_min=200, l_size=32):
+def pattern_oringin(l, L, radius, l_min=200, l_size=32, only_loss_zero=True):
     L_keys = list(L.keys())
     L_values = list(L.values())
     L_length = len(L)
@@ -170,6 +170,8 @@ def pattern_oringin(l, L, radius, l_min=200, l_size=32):
     for perm in itertools.permutations(range(L_length)): 
         _recurse(perm, accumulator, [], 0, l, 0, 1)   # 调用递归找组合，初始化从一根原料开始 
 
+    if only_loss_zero:   # 只保留0余料的方案
+        patterns_list = [i for i in patterns_list if i[1]==0]         
     patterns_list = sorted(patterns_list, key=lambda x:x[3])      # 按成本排序
     for i, pattern in enumerate(patterns_list): # 转换成dict
         patterns[i] = pattern
@@ -183,7 +185,7 @@ if __name__ == "__main__":
     L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}     # 目标钢筋长度
     need = np.array([552, 658, 462])    # 目标钢筋的数量
     
-    patterns = pattern_oringin(l, L, radius, l_limit_len, l_size)
+    patterns = pattern_oringin(l, L, radius, l_limit_len, l_size, only_loss_zero=False)
     print(f"共找到{len(patterns)}种组合方案")
     loss_zero_patterns = [i for i in patterns if patterns[i][1]==0]
     print(f"共找到{len(loss_zero_patterns)}种零余料方案")
