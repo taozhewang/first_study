@@ -56,14 +56,4 @@ import numpy as np
 # mytime = datetime.fromtimestamp(3000000000)
 # print(mytime)
 
-#%%
-list1 = [1, 2, 3, 4, 5]
-list2 = [5, 4, 3, 2, 1]
-
-set1 = set(list1)
-set2 = set(list2)
-
-if set1 == set2:
-    print("两个列表的元素相同")
-else:
-    print("两个列表的元素不同")
+# #%%
