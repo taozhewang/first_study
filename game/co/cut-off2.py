@@ -28,15 +28,15 @@ L_values = np.array(list(L.values()))
 need = np.array([552, 658, 462],dtype=int)
 
 # 最大的组合长度
-radius = 14
+radius = 200
 # 变异个数为1
 variation_count = 1
 
 # 遗传算法参数
 pop_size = 1000  # 种群大小
-dna_size = 1000  # DNA长度
+dna_size = 2000  # DNA长度
 gen_max = 1000  # 进化次数
-mut_rate = 0.9  # 变异率
+mut_rate = 1  # 变异率
 
 # 计算当前组合最终完成的长度
 # individual: [0,...,] 表示选择该种组合的选择数量,长度为patterns的长度
@@ -87,7 +87,7 @@ best_individual=None
 best_fitnesses=np.inf
 
 # 最大停滞次数
-max_stagnation = 100
+max_stagnation = 1000
 # 进化停顿次数
 nochange_count = 0
 
