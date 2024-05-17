@@ -28,9 +28,9 @@ need = np.array([552, 658, 462],dtype=int)
 # 最大循环次数
 max_iterations = 1000000
 # 禁忌表大小
-tabu_tenure = 100
+tabu_tenure = 50
 # 最大停滞次数
-max_stagnation = 500
+max_stagnation = 1000
 
 # 初始化解
 # patterns_length 组合的长度
@@ -39,13 +39,13 @@ def init_solution(combination):
     return np.random.permutation(combination) 
 
 # 评估函数
-# 这里由于是按顺序切割，所以余料固定，成本只和接头数量相关
 def evaluate(combinations, l, l_min):
-    cost = []
+    costs = []
     for combination in combinations:
-        joints = get_joints(combination, l, l_min)
-        cost.append(joints)
-    return cost
+        loss, joints = calc_loss_joint(combination, l, l_min)
+        cost = calc_cost(loss, joints, l_size)
+        costs.append(cost)
+    return costs
 
 # 计算小组的个数
 def evaluate_groups_count(tabu_list, l, l_min):
