@@ -351,9 +351,11 @@ def decomposition2(l, L, n, length, cut, paste, accumulator, path_accumulator, p
     L_length = list(L.values())
     if pointer == len(L_length) - 1: # 如果当前pointer已经指向了最后一种L，那么不再移动pointer
         if stage == n:               # 如果pattern总长度已经超过了n（也就是radius）倍的原长，则停止计算
-            if len(path_accumulator) >= 2:   
-                # print(path_accumulator)           # 在这里统计同一个路径上产生的大pattern的种类
-                for pattern in path_accumulator[1:]:    # path_accumulator里的第一个元素有可能是小pattern
+            if len(path_accumulator):   
+
+                print(path_accumulator)           # 在这里统计同一个路径上产生的大pattern的种类
+
+                for pattern in path_accumulator:    # path_accumulator里的第一个元素有可能是小pattern
                     if pattern not in patterns_path:    # 对于是大pattern的情况，会有另外的path_accumulator统计到
                         patterns_path.append(pattern)
             return
@@ -402,9 +404,11 @@ def decomposition2(l, L, n, length, cut, paste, accumulator, path_accumulator, p
                 decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, Re_path_left, pointer, stage)
     else:
         if stage == n:
-            if len(path_accumulator) >= 2:
-                # print(path_accumulator)
-                for pattern in path_accumulator[1:]:
+            if len(path_accumulator):
+
+                print(path_accumulator)
+
+                for pattern in path_accumulator:
                     if pattern not in patterns_path:
                         patterns_path.append(pattern)
             return
@@ -624,7 +628,7 @@ length = 0
 path_accumulator = []
 path_left= []
 decomposition2(l, L, radius, length, cut, paste, accumulator, path_accumulator, path_left, pointer, stage)
-# print(patterns_path)
+print(patterns_path)
 
 patterns, patterns_main, patterns_property = patterns_simplify(patterns_left, patterns_right)
 patterns = patterns_repeated(patterns, patterns_path)
