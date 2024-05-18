@@ -128,7 +128,7 @@ def tabu_search(max_iterations, tabu_size):
         avg_waste = np.average(tabu_cost)
         avg_groups_count=np.average(tabu_group_count)
         for idx, waste in enumerate(neighbors_cost):
-            if (neighbors_group_count[idx]>avg_groups_count and waste==tabu_cost[idx]) or (waste < avg_waste):
+            if (neighbors_group_count[idx]>avg_groups_count) or (waste < avg_waste):
                 update_count += 1
                 tabu_list[idx]=neighbors[idx]                
                 tabu_cost[idx]=waste
