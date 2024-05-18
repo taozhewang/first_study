@@ -1,6 +1,5 @@
 #%%
 import numpy as np
-from core import  calc_loss_joint, calc_cost
 
 '''
 用禁忌搜索算法求解钢筋切割问题,不依赖前期的求组合
@@ -144,22 +143,18 @@ def tabu_search(max_iterations, tabu_size):
                 print("已达到目标，退出循环")
                 break            
 
-    return best_solution, best_cost
+    return best_solution, best_cost, best_loss, best_joints
 
-best_solution, best_cost = tabu_search(max_iterations, tabu_size)
-
-# 打印最佳解决方案
-loss, joints = calc_loss_joint(best_solution, l, l_min)
-cost = calc_cost(loss, joints, l_size)     
+best_solution, best_cost, best_loss, best_joints = tabu_search(max_iterations, tabu_size)
 
 out=[0,0,0]
 L_values = [L[key] for key in L]
 for num in best_solution:
     out[L_values.index(num)] +=1 
-print(out)
+print("验算结果:", out, "实际需求:", need)
 
 print("最佳方案为：")
 print(best_solution)
-print("废料长度:", loss)
-print("接头数量:", joints)
-print("总成本:", cost)
+print("废料长度:", best_loss)
+print("接头数量:", best_joints)
+print("总成本:", best_cost)
