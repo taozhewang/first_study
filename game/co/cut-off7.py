@@ -28,15 +28,9 @@ need = np.array([552, 658, 462],dtype=int)
 # 最大循环次数
 max_iterations = 1000000
 # 禁忌表大小
-tabu_tenure = 50
+tabu_size = 50
 # 最大停滞次数
 max_stagnation = 1000
-
-# 初始化解
-# patterns_length 组合的长度
-# max_num 最大的组合数量
-def init_solution(combination):
-    return np.random.permutation(combination) 
 
 # 评估函数
 def evaluate(combinations, l, l_min):
@@ -53,12 +47,6 @@ def evaluate_groups_count(tabu_list, l, l_min):
     for combination in tabu_list:
         left_list.append(get_groups_count(combination, l, l_min)[0])
     return left_list
-
-base_combination = []
-for i,key in enumerate(L):
-    base_combination += [L[key]] * need[i]
-patterns_length = len(base_combination)
-print(f"初始化目标数量矩阵, 总数为: {patterns_length}")
 
 # 获取小组的个数和最后一组的位置      
 def get_groups_count(solution, l, l_min):
@@ -101,25 +89,32 @@ def get_joints(solution, l, l_min):
 
 # 邻域操作
 def get_neighbor(solution):
+    solution_length = len(solution)
     neighbor = np.copy(solution)  
     _, endpos = get_groups_count(neighbor,l,l_min) 
     fidx = get_first_group_idx(neighbor,l,l_min)        
-    if endpos >= patterns_length-1:
+    if endpos >= solution_length-1:
         neighbor = np.concatenate((neighbor[fidx:], np.random.permutation(neighbor[:fidx])))
     else:
         neighbor = np.concatenate((neighbor[fidx:endpos], np.random.permutation(neighbor[:fidx]), np.random.permutation(neighbor[endpos:])))
     return  neighbor         
 
 # 禁忌搜索算法
-def tabu_search(max_iterations, tabu_tenure):
+def tabu_search(max_iterations, tabu_size):
+
+    base_combination = []
+    for i,key in enumerate(L):
+        base_combination += [L[key]] * need[i]    
+
     # 采用随机初始解
-    tabu_list = [init_solution(base_combination) for i in range(tabu_tenure)]
-    tabu_waste_list = evaluate(tabu_list, l, l_min)
+    tabu_list = [np.random.permutation(base_combination) for _ in range(tabu_size)]
+
+    tabu_cost_list = evaluate(tabu_list, l, l_min)
     tabu_groups_count_list = evaluate_groups_count(tabu_list, l, l_min)
     # 记录最佳解
     best_solution = None
     # 记录最佳解的评估
-    best_waste = np.inf
+    best_cost = np.inf
     best_loss = 0
     best_joints = 0
     # 记录连续没有改进的次数
@@ -129,33 +124,32 @@ def tabu_search(max_iterations, tabu_tenure):
         # 从禁忌表中获得一组邻域解
         neighbors=[get_neighbor(solution) for solution in tabu_list]
         # 计算邻域解的评估
-        neighbors_waste_list = evaluate(neighbors, l, l_min)
+        neighbors_cost_list = evaluate(neighbors, l, l_min)
         neighbors_groups_count_list = evaluate_groups_count(neighbors, l, l_min)
         
         # 选择最佳邻域解
-        best_idx = np.argmin(neighbors_waste_list)
-        best_neighbor, best_neighbor_waste = neighbors[best_idx], neighbors_waste_list[best_idx] 
+        best_idx = np.argmin(neighbors_cost_list)
+        best_neighbor, best_neighbor_cost = neighbors[best_idx], neighbors_cost_list[best_idx] 
                       
         # 禁忌搜索
         # 如果邻域解比最佳解好，更新最佳解
-        if best_neighbor_waste < best_waste:
+        if best_neighbor_cost < best_cost:
             best_solution = np.copy(best_neighbor)
-            best_waste = best_neighbor_waste
+            best_cost = best_neighbor_cost
             nochange_count = 0
             best_loss, best_joints = calc_loss_joint(best_solution, l, l_min)
-            best_cost = calc_cost(best_loss, best_joints, l_size)
                         
         nochange_count += 1
 
         # 如果邻域解比当前解好，则更新禁忌组
         update_count = 0
-        avg_waste = np.average(tabu_waste_list)
+        avg_waste = np.average(tabu_cost_list)
         avg_groups_count=np.average(tabu_groups_count_list)
-        for idx, waste in enumerate(neighbors_waste_list):
-            if (neighbors_groups_count_list[idx]>avg_groups_count and waste==tabu_waste_list[idx]) or (waste < avg_waste):
+        for idx, waste in enumerate(neighbors_cost_list):
+            if (neighbors_groups_count_list[idx]>avg_groups_count and waste==tabu_cost_list[idx]) or (waste < avg_waste):
                 update_count += 1
                 tabu_list[idx]=neighbors[idx]                
-                tabu_waste_list[idx]=waste
+                tabu_cost_list[idx]=waste
                 tabu_groups_count_list[idx] = neighbors_groups_count_list[idx]       
 
         if i % 100 == 0:
@@ -169,7 +163,7 @@ def tabu_search(max_iterations, tabu_tenure):
 
     return best_solution, best_waste
 
-best_solution, best_waste = tabu_search(max_iterations, tabu_tenure)
+best_solution, best_waste = tabu_search(max_iterations, tabu_size)
 
 # 打印最佳解决方案
 loss, joints = calc_loss_joint(best_solution, l, l_min)
@@ -177,7 +171,7 @@ cost = calc_cost(loss, joints, l_size)
 
 out=[0,0,0]
 L_values = [L[key] for key in L]
-for num in base_combination:
+for num in best_solution:
     out[L_values.index(num)] +=1 
 print(out)
 
