@@ -1,5 +1,7 @@
 #%%
 import numpy as np
+import matplotlib.pyplot as plt
+import time
 
 '''
 用禁忌搜索算法求解钢筋切割问题,不依赖前期的求组合
@@ -30,7 +32,10 @@ tabu_size = 100
 # 最大停滞次数
 max_stagnation = 1000
 
+gen_values = []  # 记录每代的最低适应度
+gen_times = []   # 记录每代的时间
 
+start_time = time.time()
 # 计算组合的损失、接头、成本、小组个数、最后一组的位置
 def evaluate(combinations, l, l_min, l_size):
     combinations_size = len(combinations)                           # 禁忌表大小
@@ -121,6 +126,9 @@ def tabu_search(max_iterations, tabu_size):
             best_loss = neighbors_loss[best_idx]
             best_joints = neighbors_joint[best_idx]
                         
+        gen_values.append(best_cost)
+        gen_times.append(time.time()-start_time)
+
         nochange_count += 1
 
         # 如果邻域解比当前解好，则更新禁忌组
@@ -158,3 +166,12 @@ print(best_solution)
 print("废料长度:", best_loss)
 print("接头数量:", best_joints)
 print("总成本:", best_cost)
+
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 设置中文字体为黑体
+plt.plot(gen_times, gen_values, marker='o', label='最低成本')
+plt.xlabel('时间(s)')
+plt.ylabel('目标函数值')
+plt.title('禁忌搜索算法收敛速度图')
+plt.grid(True)
+plt.legend()
+plt.show()

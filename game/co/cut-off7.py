@@ -1,14 +1,18 @@
 #%%
 import numpy as np
-from core import  calc_loss_joint, calc_cost
+import random
+from collections import Counter
+import matplotlib.pyplot as plt
+import time
+
 
 '''
-用禁忌搜索算法求解钢筋切割问题,不依赖前期的求组合
+用遗传算法求解钢筋切割问题
 
-[552, 658, 462]
-最佳方案为：
-废料长度: 11100
-接头数量: 454
+[4700 4100 4350 ... 4100 4350 4350]
+[552 658 462] Counter({4350: 658, 4100: 552, 4700: 462})
+总损失: 11100
+总接头: 454
 总成本: 144801.376
 '''
 
@@ -24,158 +28,170 @@ L_values = np.array(list(L.values()))
 # 目标钢筋的数量
 need = np.array([552, 658, 462],dtype=int)
 
-# 禁忌搜索参数
-# 最大循环次数
-max_iterations = 1000000
-# 禁忌表大小
-tabu_size = 50
+
+# 遗传算法参数
+pop_size = 100  # 种群大小
+gen_max = 100000  # 进化次数
+dna_length = np.sum(need)   # 基因长度
+
+# 计算适应度
+def fitness(population, l, l_min, l_size):
+    combinations_size = len(population)                           # 禁忌表大小
+    _l = np.ones(combinations_size)*l                               # 剩余长度
+    group_count = np.zeros(combinations_size,dtype=int)             # 小组个数
+    group_firstpos = np.zeros(combinations_size,dtype=int)          # 第一个小组的位置
+    group_endpos = np.zeros(combinations_size,dtype=int)            # 最后一个小组的位置
+    loss = np.zeros(combinations_size,dtype=float)                  # 余料
+    joint = np.zeros(combinations_size,dtype=int)                   # 接头
+    cost = np.zeros(combinations_size,dtype=float)                  # 成本
+
+    for i in range(len(population[0])): 
+        while True:
+            idxs=np.where(_l<population[:,i])[0]
+            if len(idxs)==0: break
+            _l[idxs] += l
+            joint[idxs] += 1
+        _l -= population[:,i]
+
+        # 确定第一个小组的最后一个位置,如果第一个位置为0且有废料，则将其作为第一个位置
+        fidx = np.where((group_firstpos==0) & (_l<l_min))[0]
+        if len(fidx)>0:
+            group_firstpos[fidx]= i+1
+
+        idxs=np.where(_l<l_min)[0]
+        if len(idxs)>0:
+            loss[idxs] += _l[idxs]
+            group_count[idxs] += 1
+            group_endpos[idxs] = i+1
+            _l[idxs] = l
+
+    loss += _l
+
+    cost_param = 0.00617*2000*(l_size**2)/1000
+    cost = loss*cost_param + joint*10
+    return loss, joint, cost, group_count, group_firstpos, group_endpos
+
+# 找到最长匹配的段
+def find_longest_matching_segment(list1, list2, need, keys):    
+    to = np.ones(len(keys),dtype=int)
+    for i,n in enumerate(need):
+        to[i]=n
+    for i in range(len(list1)//2,1,-1):
+        counter1 = Counter(list1[:i])
+        counter2 = Counter(list2[:i])
+        c1 = np.zeros(len(keys),dtype=int)
+        c2 = np.zeros(len(keys),dtype=int)
+        for j, k in enumerate(keys):
+            if k in counter1:
+                c1[j] = counter1[k]
+            if k in counter2:
+                c2[j] = counter2[k]
+        if np.array_equal(c1,c2):
+            return i, 1
+        if np.array_equal(c1,to-c2):
+            return i, -1
+    return -1, -1
+
+# 初始化种群 
+# dna 保存各个钢筋的长度
+_population = []
+for i, num in enumerate(need):
+    if num>0:
+        _population += [L_values[i]]*num
+population = np.ones((pop_size, dna_length), dtype=int)
+for i in range(pop_size):
+    population[i] = np.random.permutation(_population)
+
+# 记录最佳适应度个体
+best_individual=None
+# 记录最佳适应度
+best_fitnesses=np.inf
+best_loss=0
+best_joint=0
+
 # 最大停滞次数
-max_stagnation = 1000
+max_stagnation = 200
+# 进化停顿次数
+nochange_count = 0
 
-# 评估函数
-def evaluate(combinations, l, l_min):
-    costs = []
-    for combination in combinations:
-        loss, joints = calc_loss_joint(combination, l, l_min)
-        cost = calc_cost(loss, joints, l_size)
-        costs.append(cost)
-    return costs
 
-# 计算小组的个数
-def evaluate_groups_count(tabu_list, l, l_min):
-    left_list = []
-    for combination in tabu_list:
-        left_list.append(get_groups_count(combination, l, l_min)[0])
-    return left_list
+gen_values = []  # 记录每代的最低适应度
+gen_times = []   # 记录每代的时间
 
-# 获取小组的个数和最后一组的位置      
-def get_groups_count(solution, l, l_min):
-    _l = l
-    count = 0
-    endpos = 0
-    for i,v in enumerate(solution): 
-        while _l < v:
-            _l += l
-        _l -= v
-        if _l < l_min:
-            _l = l
-            count += 1
-            endpos = i+1
-    return count, endpos
+start_time = time.time()
+# 进化循环
+for gen in range(gen_max):
+    # 评估适应度
 
-# 获得第一个小组的坐标
-def get_first_group_idx(solution, l, l_min):
-    _l = l
-    for i,v in enumerate(solution): 
-        while _l < v:
-            _l += l
-        _l -= v
-        if _l<l_min:                            
-            return i+1
-    return -1
+    loss, joint, cost, group_count, group_firstpos, group_endpos = fitness(population, l, l_min, l_size)
 
-# 获得接头的个数
-def get_joints(solution, l, l_min):
-    joints=0
-    _l = l
-    for i,v in enumerate(solution): 
-        while _l < v:
-            _l += l
-            joints+=1
-        _l -= v
-        if _l<l_min:                            
-            _l=l
-    return joints
+    # 记录最佳适应度个体
+    best_idx = np.argmin(cost)
+    best_population_fitnesses = cost[best_idx] 
+    if best_population_fitnesses < best_fitnesses:
+        best_individual = np.copy(population[best_idx])
+        best_fitnesses = best_population_fitnesses
+        nochange_count = 0
+        best_loss = loss[best_idx]
+        best_joint = joint[best_idx]
+        nochange_count = 0
+            
+    gen_values.append(best_fitnesses)
+    gen_times.append(time.time()-start_time)
+    
+    nochange_count += 1
+    
+    # 选择一半最小适应度的个体作为父代
+    argsort_cost = np.argsort(cost+1./group_count)
+    parents = np.array([population[i] for i in argsort_cost[:pop_size//2]])  
 
-# 邻域操作
-def get_neighbor(solution):
-    solution_length = len(solution)
-    neighbor = np.copy(solution)  
-    _, endpos = get_groups_count(neighbor,l,l_min) 
-    fidx = get_first_group_idx(neighbor,l,l_min)        
-    if endpos >= solution_length-1:
-        neighbor = np.concatenate((neighbor[fidx:], np.random.permutation(neighbor[:fidx])))
-    else:
-        neighbor = np.concatenate((neighbor[fidx:endpos], np.random.permutation(neighbor[:fidx]), np.random.permutation(neighbor[endpos:])))
-    return  neighbor         
+    # 变异
+    for i in range(len(parents)):
+        first_pos, end_pos = group_firstpos[argsort_cost[i]], group_endpos[argsort_cost[i]]
+        if end_pos < dna_length-1:   
+            parents[i] = np.concatenate((parents[i][first_pos:end_pos], np.random.permutation(parents[i][:first_pos]), np.random.permutation(parents[i][end_pos:])))
+        else:
+            parents[i] = np.concatenate((parents[i][first_pos:], np.random.permutation(parents[i][:first_pos])))
 
-# 禁忌搜索算法
-def tabu_search(max_iterations, tabu_size):
+    # 交叉
+    offspring = []
+    for i in range(pop_size//2):    
+        while True:
+            parent1, parent2 = random.sample(list(parents), 2) # 随机抽取父类    
+            crossover_point, flag = find_longest_matching_segment(parent1, parent2, need, L_values) 
+            if crossover_point>0: # 找到匹配的点，如果没有，则重新抽取
+                if flag==1:
+                    offspring.append(np.concatenate((parent1[:crossover_point], parent2[crossover_point:])))
+                    offspring.append(np.concatenate((parent2[:crossover_point], parent1[crossover_point:])))
+                else:
+                    offspring.append(np.concatenate((parent1[:crossover_point], parent2[:crossover_point])))
+                    offspring.append(np.concatenate((parent2[crossover_point:], parent1[crossover_point:])))
+                break
+            
+  
+    # 替换为新种群
+    population = np.array(offspring)
 
-    base_combination = []
-    for i,key in enumerate(L):
-        base_combination += [L[key]] * need[i]    
-
-    # 采用随机初始解
-    tabu_list = [np.random.permutation(base_combination) for _ in range(tabu_size)]
-
-    tabu_cost_list = evaluate(tabu_list, l, l_min)
-    tabu_groups_count_list = evaluate_groups_count(tabu_list, l, l_min)
-    # 记录最佳解
-    best_solution = None
-    # 记录最佳解的评估
-    best_cost = np.inf
-    best_loss = 0
-    best_joints = 0
-    # 记录连续没有改进的次数
-    nochange_count = 0
-
-    for i in range(max_iterations):
-        # 从禁忌表中获得一组邻域解
-        neighbors=[get_neighbor(solution) for solution in tabu_list]
-        # 计算邻域解的评估
-        neighbors_cost_list = evaluate(neighbors, l, l_min)
-        neighbors_groups_count_list = evaluate_groups_count(neighbors, l, l_min)
-        
-        # 选择最佳邻域解
-        best_idx = np.argmin(neighbors_cost_list)
-        best_neighbor, best_neighbor_cost = neighbors[best_idx], neighbors_cost_list[best_idx] 
-                      
-        # 禁忌搜索
-        # 如果邻域解比最佳解好，更新最佳解
-        if best_neighbor_cost < best_cost:
-            best_solution = np.copy(best_neighbor)
-            best_cost = best_neighbor_cost
-            nochange_count = 0
-            best_loss, best_joints = calc_loss_joint(best_solution, l, l_min)
-                        
-        nochange_count += 1
-
-        # 如果邻域解比当前解好，则更新禁忌组
-        update_count = 0
-        avg_waste = np.average(tabu_cost_list)
-        avg_groups_count=np.average(tabu_groups_count_list)
-        for idx, waste in enumerate(neighbors_cost_list):
-            if (neighbors_groups_count_list[idx]>avg_groups_count and waste==tabu_cost_list[idx]) or (waste < avg_waste):
-                update_count += 1
-                tabu_list[idx]=neighbors[idx]                
-                tabu_cost_list[idx]=waste
-                tabu_groups_count_list[idx] = neighbors_groups_count_list[idx]       
-
-        if i % 100 == 0:
-            groups_copunt=np.average(tabu_groups_count_list)
-            print(f"{i}: 禁忌组平均组个数:{groups_copunt}, 最佳成本:{best_cost}, 余料: {best_loss} 接头: {best_joints} 停滞次数: {nochange_count}/{max_stagnation}")
-
-            # 如果连续 max_stagnation 次没有改进，则退出循环
-            if nochange_count>max_stagnation:
-                print("已达到目标，退出循环")
-                break            
-
-    return best_solution, best_waste
-
-best_solution, best_waste = tabu_search(max_iterations, tabu_size)
+    print(f"{gen}: 平均成本：{np.mean(cost)} 最低成本：{best_fitnesses} 余料: {best_loss} 接头: {best_joint}  目标: {need} 停滞次数: {nochange_count}/{max_stagnation}")
+    
+    # 如果达到最大停滞次数没有改进，则退出循环
+    if nochange_count>max_stagnation:
+        print("已完成目标，停止进化")
+        break
 
 # 打印最佳解决方案
-loss, joints = calc_loss_joint(best_solution, l, l_min)
-cost = calc_cost(loss, joints, l_size)     
+print(best_individual)
+           
+print(need, Counter(best_individual))
+print(f"总损失: {best_loss}")
+print(f"总接头: {best_joint}")
+print(f"总成本: {best_fitnesses}")
 
-out=[0,0,0]
-L_values = [L[key] for key in L]
-for num in best_solution:
-    out[L_values.index(num)] +=1 
-print(out)
-
-print("最佳方案为：")
-print("废料长度:", loss)
-print("接头数量:", joints)
-print("总成本:", cost)
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 设置中文字体为黑体
+plt.plot(gen_times, gen_values, marker='o', label='最低成本')
+plt.xlabel('时间(s)')
+plt.ylabel('目标函数值')
+plt.title('遗传搜索算法收敛速度图')
+plt.grid(True)
+plt.legend()
+plt.show()
