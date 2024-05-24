@@ -30,8 +30,6 @@ epsilon = rng.normal(0, sigma, size = N)                # size N
 X = np.append(np.ones((N, 1)), X, axis = 1)             # append Nx1 to Nx2 -> Nx3
 # Generate Y
 Y = X.dot(b) + epsilon                                  # size N
-# print(X)
-# print(Y)
 #%%
 #Q1
 def plotyx():
@@ -39,12 +37,12 @@ def plotyx():
     fig.add_scatter(x = X[:, 1], y = Y, mode = 'markers', name = 'Y and X_1')
     fig.add_scatter(x = X[:, 2], y = Y, mode = 'markers', name = 'Y and X_2')
     fig.show()
-# plotyx()
+plotyx()
 def plotxx():
     fig = go.Figure()
     fig.add_scatter(x = X[:, 1], y = X[:, 2], mode = 'markers', name = 'X_1 and X_2')
     fig.show()
-# plotxx()
+plotxx()
 def bn_and_err():
     inver = np.linalg.inv((X.T).dot(X))
     matrixx = inver.dot(X.T)
@@ -58,7 +56,7 @@ def bn_and_err():
     fig.add_bar(x = np.arange(len(err)), y = err)
     fig.show()
     return
-# bn_and_err()
+bn_and_err()
 #%%
 #Q2
 
@@ -107,19 +105,19 @@ def f(N, M):
     fig = go.Figure()
     fig.add_bar(x = np.arange(M), y = np.std(E, axis = 0), text = 'standard diviation')
     fig.show()
-# f(10, 100)
-# f(100, 100)
-# f(1000, 100)
+f(10, 100)
+f(100, 100)
+f(1000, 100)
 
 #%%
 # Linear Regression Real Data
 df = pd.read_csv('./homework/data/winequality.csv')
 
-# print('head \n', df.head(), '\n')
-# print('index \n', df.index, '\n')
-# print('columns \n', df.columns, '\n')
-# print('infos \n', df.info(), '\n')
-# print('describe \n', df.describe(), '\n')
+print('head \n', df.head(), '\n')
+print('index \n', df.index, '\n')
+print('columns \n', df.columns, '\n')
+print('infos \n', df.info(), '\n')
+print('describe \n', df.describe(), '\n')
 
 df = df.dropna().copy()
 
@@ -129,11 +127,11 @@ df = df.dropna().copy()
 redtype = df[df['type'] == 'red']
 whitetype = df[df['type'] == 'white']
 
-# print(redtype)
-# print(whitetype)
+print(redtype)
+print(whitetype)
 
-# print(np.min(df['quality']))
-# print(np.max(df['quality']))
+print(np.min(df['quality']))
+print(np.max(df['quality']))
 def plot_relations():
     for t in [redtype, whitetype]:
         for n in ['fixed acidity', 'volatile acidity', 'citric acid', 'residual sugar', 'chlorides', 
@@ -150,21 +148,21 @@ def plot_relations():
                 fig.add_scatter(x = kinds, y = y, mode = 'lines+markers', name = f'{n} -> quality{i}')
                 fig.update_layout(yaxis_title = 'number', xaxis_title = f'{n}')
             fig.show()
-# plot_relations()
+plot_relations()
 
-# r_input = redtype[['fixed acidity', 'volatile acidity', 'citric acid', 'residual sugar', 'chlorides', 
-#                    'free sulfur dioxide', 'total sulfur dioxide', 'density', 'pH', 'sulphates', 'alcohol']]
-# r_input = sm.add_constant(r_input)
-# model1 = sm.OLS(redtype['quality'], r_input)
-# model1 = model1.fit()
-# print(model1.summary())
+r_input = redtype[['fixed acidity', 'volatile acidity', 'citric acid', 'residual sugar', 'chlorides', 
+                   'free sulfur dioxide', 'total sulfur dioxide', 'density', 'pH', 'sulphates', 'alcohol']]
+r_input = sm.add_constant(r_input)
+model1 = sm.OLS(redtype['quality'], r_input)
+model1 = model1.fit()
+print(model1.summary())
 
-# w_input = whitetype[['fixed acidity', 'volatile acidity', 'citric acid', 'residual sugar', 'chlorides', 
-#                    'free sulfur dioxide', 'total sulfur dioxide', 'density', 'pH', 'sulphates', 'alcohol']]
-# w_input = sm.add_constant(w_input)
-# model2 = sm.OLS(whitetype['quality'], w_input)
-# model2 = model2.fit()
-# print(model2.summary())
+w_input = whitetype[['fixed acidity', 'volatile acidity', 'citric acid', 'residual sugar', 'chlorides', 
+                   'free sulfur dioxide', 'total sulfur dioxide', 'density', 'pH', 'sulphates', 'alcohol']]
+w_input = sm.add_constant(w_input)
+model2 = sm.OLS(whitetype['quality'], w_input)
+model2 = model2.fit()
+print(model2.summary())
 #%%
 #Q2
 def find_feature():
@@ -196,7 +194,7 @@ def find_feature():
         secondlargest_r_feature = feature[loc2]
 
         print(f'the largest:{largest_r_feature},\nthe second largest:{secondlargest_r_feature}')
-# find_feature()
+find_feature()
 
 #%%
 #Clusters
@@ -230,7 +228,7 @@ def aver(X):
     print('leftside: ', leftside)
     print('rightside:', rightside)
 
-# aver(X)
+aver(X)
 #%%
 #Q2
 k = 10
@@ -243,7 +241,7 @@ for ind in range(k):
     mu_k = np.mean(X_k, axis = 0)
     M = np.append(M, mu_k)
 M = M.reshape((k, d))
-# print('initialize:', M, '\n')
+print('initialize:', M, '\n')
 times = 0
 def recur(X, M, times):
     
@@ -265,27 +263,23 @@ def recur(X, M, times):
         family[father] = master
     mumufamily = np.array([])
     member = 0
-    # print(family)
     for key in family:
         if family[key] != []: # maybe one of the mu's didn't get points
             newmumu = np.mean(X[family[key]], axis = 0)
             mumufamily = np.append(mumufamily, newmumu)
             member += 1
-    # print(mumufamily)
     mumufamily = mumufamily.reshape(member, d)
     times += 1
     print(f'trial: {times}, distance: {distances}, \nmu: \n{mumufamily}')
     if np.array_equal(M, mumufamily):
         print('\n\ntotal trials:', times)
-        # print(mumufamily)
-        # print(family)
         for key in family:
             print(f'cluster{key}: \n{X[family[key]]}')
             print(f'mu: \n{mumufamily[key]}\n')
         return
     else:
         recur(X, mumufamily, times)
-# recur(X, M, times)
+recur(X, M, times)
 
 #%%
 #Q3
@@ -307,7 +301,6 @@ print(df)
 OMP_NUM_THREADS=1
 N = 20
 d = 5
-# X = np.random.random_sample((n, d))
 X = df
 result = KMeans(n_clusters = 4).fit(X)
 cluster = result.labels_
