@@ -165,7 +165,7 @@ def onlooker_bee_phase(colony, trials, fitness):
         new_solution = permutative_solution(colony[i], l, l_min)
         new_fitness = calculate_fitness(new_solution)
         
-        if new_fitness < fitness[i]:
+        if new_fitness <= fitness[i]:
             colony[i] = new_solution
             fitness[i] = new_fitness
             trials[i] = 0
@@ -173,7 +173,7 @@ def onlooker_bee_phase(colony, trials, fitness):
             trials[i] += 1       
 
 # 侦查蜂阶段
-def scout_bee_phase(colony, trials, limit, fitness):
+def scout_bee_phase(colony, trials, limit):
     for i in range(len(colony)):
         if trials[i] >= limit:
             colony[i] = np.random.permutation(colony[i])
@@ -198,7 +198,7 @@ def abc_algorithm(colony_size, max_iterations, l, need):
         # 跟随蜂阶段
         onlooker_bee_phase(colony, trials, fitness)
         # 侦查蜂阶段
-        scout_bee_phase(colony, trials, limit, fitness)
+        scout_bee_phase(colony, trials, limit)
         
         fitness = [calculate_fitness(solution) for solution in colony]
 

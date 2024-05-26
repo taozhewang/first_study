@@ -192,8 +192,7 @@ for gen in range(gen_max):
                     offspring.append(np.concatenate((parent1[:crossover_point], parent2[:crossover_point])))
                     offspring.append(np.concatenate((parent2[crossover_point:], parent1[crossover_point:])))
                 break
-            
-  
+              
     # 替换为新种群
     population = np.array(offspring)
 
@@ -211,6 +210,7 @@ print(need, Counter(best_individual))
 print(f"总损失: {best_loss}")
 print(f"总接头: {best_joint}")
 print(f"总成本: {best_fitnesses}")
+print(f"用时: {time.time() - start_time} 秒")
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 设置中文字体为黑体
 plt.plot(gen_times, gen_values, marker='o', label='最低成本')

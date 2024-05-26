@@ -191,6 +191,7 @@ print(best_solution)
 print("废料长度:", best_loss)
 print("接头数量:", best_joints)
 print("总成本:", best_cost)
+print(f"用时: {time.time() - start_time} 秒")
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 设置中文字体为黑体
 plt.plot(gen_times, gen_values, marker='o', label='最低成本')
