@@ -163,3 +163,99 @@
 #         return (num - start) / num
 # print(bi_decomposition(sqrt(2) - 1))
 
+
+# # Hamiton
+# import numpy as np
+# import copy
+# '''
+# distance: matrix
+# ------A--B--C--D--E
+#     A 0  3  2  2  3
+#     B 3  0  2  3  3  
+#     C 2  2  0  2  3
+#     D 2  3  3  0  2
+#     E 3  3  3  2  0
+# '''
+# distance = np.array([[0, 3, 4, 5, 6, 5, 4],
+#                      [3, 0, 9, 8, 7, 4, 3],
+#                      [4, 9, 0, 1, 1, 3, 2],
+#                      [5, 8, 1, 0, 2, 2, 1],
+#                      [6, 7, 1, 2, 0, 1, 2],
+#                      [5, 4, 3, 2, 1, 0, 9],
+#                      [4, 3, 2, 1, 2, 9, 0]])
+
+# def d(name1, name2):
+#     indices = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6}
+#     x, y = indices[name1], indices[name2]
+#     return distance[x, y]
+
+# def path_d(path):
+#     distance = 0
+#     for i in range(len(path) - 1):
+#         m, n = path[i], path[i + 1]
+#         distance += d(m, n)
+#     return distance
+
+# def swap_path(path, i, j):
+#     newpath = copy.deepcopy(path)
+#     newpath[i], newpath[j] = path[j], path[i]
+#     return newpath
+
+# def forbidsol(p0):
+#     forbid_length = 4
+#     forbid_group = []
+#     total_d = np.sum(distance)
+#     # print(total_d)
+
+#     path = p0
+#     depth = 10
+#     while True:
+#         print('current depth:', depth)
+#         print('current path:', path)
+        
+#         depth -= 1
+#         curr_d = path_d(path)
+#         paths = []
+#         ds = []
+#         swaps = []
+
+#         for i in range(1, len(path) - 2):
+#             for j in range(i + 1, len(path) - 1):
+#                 print('/', end = '')
+#                 newpath = swap_path(path, i, j)
+                
+#                 new_d = path_d(newpath)
+                
+#                 # print(forbid_group)
+
+#                 if [i, j] not in forbid_group or new_d < total_d:
+
+#                     print('new path:', newpath)
+#                     print('new distance:', new_d)
+
+#                     paths.append(newpath)
+#                     ds.append(new_d)
+#                     swaps.append([i, j])
+#         min_d = min(ds)
+#         loc = ds.index(min_d)
+#         min_path = paths[loc]
+        
+#         forbid_group.append(swaps[loc])
+#         if len(forbid_group) == forbid_length:
+#             forbid_group.pop(0)
+        
+#         if min_d < total_d:
+#             total_d = min_d
+#             total_path = min_path
+        
+#         if depth == 0:
+#             return total_path, total_d
+        
+#         path = min_path
+#         # print()
+#         # print(paths)
+#         # print(total_path, total_d)
+# p0 = np.array(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'A'])
+# psolution, dsolution = forbidsol(p0)
+# print()
+# print('solution:', psolution, dsolution)
