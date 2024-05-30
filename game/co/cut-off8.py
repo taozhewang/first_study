@@ -74,6 +74,30 @@ def evaluate(combinations, l, l_min, l_size):
     cost = loss*cost_param + joint*10
     return loss, joint, cost, group_count, group_firstpos, group_endpos
 
+# 比较两个group，返回接头数量选择较小的group
+def get_best_solution_group(group1, group2, l, l_min):
+    joint1 = joint2 = 0
+
+    _l = l
+    for length in group1:
+        while _l < length:
+            _l += l
+            joint1 += 1
+        _l -= length
+        if _l < l_min:
+            _l = l
+
+    _l = l
+    for length in group2:
+        while _l < length:
+            _l += l
+            joint2 += 1
+        _l -= length
+        if _l < l_min:
+            _l = l
+
+    return group1 if joint1 < joint2 else group2
+
 # 获得邻域解
 # 选择第一组，打乱顺序加入到最后一组后面，期望找到小的接头数组合；同时打乱最后一组剩下的长度的顺序，期望可以发现新的组合
 def get_neighbor(combinations, group_firstpos, group_endpos):
@@ -81,8 +105,9 @@ def get_neighbor(combinations, group_firstpos, group_endpos):
     combinations_length = len(combinations[0])
     for i in range(combinations_size):
         combination, firstpos, endpos = combinations[i], group_firstpos[i], group_endpos[i]
-        if endpos < combinations_length-1:   
-            combinations[i] = np.concatenate((combination[firstpos:endpos], np.random.permutation(combination[:firstpos]), np.random.permutation(combination[endpos:])))
+        if endpos < combinations_length-1:  
+            first_group = get_best_solution_group(combination[:firstpos], np.random.permutation(combination[:firstpos]), l, l_min)
+            combinations[i] = np.concatenate((combination[firstpos:endpos], first_group, np.random.permutation(combination[endpos:])))
         else:                                  # 最后一组的位置刚好在最后
             combinations[i] = np.concatenate((combination[firstpos:], np.random.permutation(combination[:firstpos])))
     return combinations
@@ -166,6 +191,7 @@ print(best_solution)
 print("废料长度:", best_loss)
 print("接头数量:", best_joints)
 print("总成本:", best_cost)
+print(f"用时: {time.time() - start_time} 秒")
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 设置中文字体为黑体
 plt.plot(gen_times, gen_values, marker='o', label='最低成本')

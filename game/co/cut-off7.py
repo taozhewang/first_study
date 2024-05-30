@@ -92,6 +92,30 @@ def find_longest_matching_segment(list1, list2, need, keys):
             return i, -1
     return -1, -1
 
+# 比较两个group，返回接头数量选择较小的group
+def get_best_solution_group(group1, group2, l, l_min):
+    joint1 = joint2 = 0
+
+    _l = l
+    for length in group1:
+        while _l < length:
+            _l += l
+            joint1 += 1
+        _l -= length
+        if _l < l_min:
+            _l = l
+
+    _l = l
+    for length in group2:
+        while _l < length:
+            _l += l
+            joint2 += 1
+        _l -= length
+        if _l < l_min:
+            _l = l
+
+    return group1 if joint1 < joint2 else group2
+
 # 初始化种群 
 # dna 保存各个钢筋的长度
 _population = []
@@ -149,7 +173,8 @@ for gen in range(gen_max):
     for i in range(len(parents)):
         first_pos, end_pos = group_firstpos[argsort_cost[i]], group_endpos[argsort_cost[i]]
         if end_pos < dna_length-1:   
-            parents[i] = np.concatenate((parents[i][first_pos:end_pos], np.random.permutation(parents[i][:first_pos]), np.random.permutation(parents[i][end_pos:])))
+            first_group = get_best_solution_group(parents[i][:first_pos], np.random.permutation(parents[i][:first_pos]), l, l_min)
+            parents[i] = np.concatenate((parents[i][first_pos:end_pos], first_group, np.random.permutation(parents[i][end_pos:])))
         else:
             parents[i] = np.concatenate((parents[i][first_pos:], np.random.permutation(parents[i][:first_pos])))
 
@@ -167,8 +192,7 @@ for gen in range(gen_max):
                     offspring.append(np.concatenate((parent1[:crossover_point], parent2[:crossover_point])))
                     offspring.append(np.concatenate((parent2[crossover_point:], parent1[crossover_point:])))
                 break
-            
-  
+              
     # 替换为新种群
     population = np.array(offspring)
 
@@ -186,6 +210,7 @@ print(need, Counter(best_individual))
 print(f"总损失: {best_loss}")
 print(f"总接头: {best_joint}")
 print(f"总成本: {best_fitnesses}")
+print(f"用时: {time.time() - start_time} 秒")
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 设置中文字体为黑体
 plt.plot(gen_times, gen_values, marker='o', label='最低成本')
