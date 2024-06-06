@@ -1,171 +1,435 @@
-#%%
 import numpy as np
-from core import pattern_oringin, get_min_cost_combination, calc_loss_joint
 import copy
+# 不适合L中带有特别大的Li的情况（Li几乎等于原料）
 
-'''
-用相似度去扣减钢筋，使得总长度接近目标长度
+def decomposition2(l, L, n, length, cut, paste, accumulator, path_accumulator, path_left, pointer, stage):
+    L_length = list(L.values())
+    if pointer == len(L_length) - 1: # 如果当前pointer已经指向了最后一种L，那么不再移动pointer
+        if stage == n:               # 如果pattern总长度已经超过了n（也就是radius）倍的原长，则停止计算
+            if len(path_accumulator):   
 
-100 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
-50 * ['L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L3']
-1 * ['L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3', 'L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
+                print(path_accumulator)           # 在这里统计同一个路径上产生的大pattern的种类
 
-废料长度: 11100
-接头数量: 456
-总成本: 144821.376
-'''
+                for pattern in path_accumulator:    # path_accumulator里的第一个元素有可能是小pattern
+                    if pattern not in patterns_path:    # 对于是大pattern的情况，会有另外的path_accumulator统计到
+                        patterns_path.append(pattern)
+            return
+        Re_accumulator = copy.deepcopy(accumulator)    
+        Re_path_accumulator = copy.deepcopy(path_accumulator)
+        Re_path_left = copy.deepcopy(path_left)
 
-# 原始钢筋长度
-l = 12000
-# 钢筋的规格
-l_size = 32
-# 钢筋最小尺寸
-l_min = 200
-# 目标钢筋长度
-L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
-# 目标钢筋的数量
-need = np.array([552, 658, 462])
-# 最大的组合数
-radius = 14
+        length += L_length[pointer]
+        Re_accumulator[pointer] += 1
+        if length > l:          # 采用的是首尾相接的办法
+            length = length - l # 将length限制在0<=length<l间
+            stage += 1          # 用stage表示已经用完的l数目
+            cut += 1            # 只有在length正好到0的时候才不会让cut增加
+            paste += 1          # paste同上
+            decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, Re_path_left, pointer, stage)
+        elif length == l:
+            length = 0
+            patterns_left.append(Re_accumulator)
+            patterns_right.append([0, stage + 1, cut, paste])
+            if 0 in Re_path_left:
+                Re_path_accumulator.append(Re_accumulator)
+            Re_path_left.append(0)
+            stage += 1
+            pointer = 0 # 在left为0的情况下将pointer重置到0是为了在原有pattern上产生新的pattern
+                        # 在后面需要排除可以被两个独立pattern组成的大pattern的情况
+                        # 为了做到这一点需要统计可以被拆成两个独立pattern的大pattern
+                        # 所以统计在每一个pattern产生过程中是否有小pattern产生
+                        # 如果不重置pointer，大的pattern的产生路径中可能不会产生小pattern
+                        # 因为排序的不同会影响大pattern能否被拆出小pattern
+            decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, Re_path_left, pointer, stage)
+        else:
+            # 只有在pattern总长正好抵达l的整数倍时，才能节省一次断料cut
+            cut += 1
+            left = l - length
+            if left <= losses1:
+                # 在当前合成长度与原料截断处的距离left小于losses1时，
+                # 记录下当前的pattern组成、原料个数stage、断料次数cut、接头用量paste
+                patterns_left.append(Re_accumulator)
+                patterns_right.append([left, stage + 1, cut, paste])
+                Re_path_left.append(left)
+                Re_path_accumulator.append(Re_accumulator)
+                
+
+                decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, Re_path_left, pointer, stage)
+            else:
+                decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, Re_path_left, pointer, stage)
+    else:
+        if stage == n:
+            if len(path_accumulator):
+
+                print(path_accumulator)
+
+                for pattern in path_accumulator:
+                    if pattern not in patterns_path:
+                        patterns_path.append(pattern)
+            return
+        Re_accumulator = copy.deepcopy(accumulator)
+        Re_path_accumulator = copy.deepcopy(path_accumulator)
+        Re_path_left = copy.deepcopy(path_left)
+        decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, Re_path_left, pointer + 1, stage)
+
+        length += L_length[pointer]
+        Re_accumulator[pointer] += 1
+        if length > l:
+            length = length - l
+            stage += 1
+            cut += 1
+            paste += 1
+            decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, Re_path_left, pointer, stage)
+        elif length == l:
+            length = 0
+            patterns_left.append(Re_accumulator)
+            patterns_right.append([0, stage + 1, cut, paste])
+            if 0 in Re_path_left:
+                Re_path_accumulator.append(Re_accumulator)
+            Re_path_left.append(0)
+            stage += 1
+            pointer = 0
+            decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, Re_path_left, pointer, stage)
+        else:
+            cut += 1
+            left = l - length
+            if left <= losses1:
+                patterns_left.append(Re_accumulator)
+                patterns_right.append([left, stage + 1, cut, paste])
+                Re_path_left.append(left)
+                Re_path_accumulator.append(Re_accumulator)
+                
+
+                decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, Re_path_left, pointer, stage)
+            else:
+                decomposition2(l, L, n, length, cut, paste, Re_accumulator, Re_path_accumulator, Re_path_left, pointer, stage)
 
 
-'''
-按最小余料，找出最长 radius 的组合，并计算其余料
-返回值：
-idx: 组合的id: [pattern: {} 组合的种类:数量, loss: 组合的余料, joint: 接头的数量, cost: 成本, eer: 能效比=cost/nums]
-patterns:{idx: [pattern, loss, joint, cost, eer]} 
-'''
-def decom(l, L):
+        
+def patterns_simplify(patterns_left, patterns_right):
+    # 用来缩减重复pattern的数量，同时去除同样的pattern但cut，paste更多的pattern
+    # 同时将产生的排序不同但组成相同的pattern简化到一种作为代表
+    patterns_left_plus, patterns_right_plus = [], []
+    k = len(patterns_left)
+    for i in range(k):
+        patl = patterns_left[i]
+        if patl not in patterns_left_plus:
+            patterns_left_plus.append(patl)
+            patterns_right_plus.append(patterns_right[i])
+        else:
+            origin_index = patterns_left_plus.index(patl)
+            cut = patterns_right_plus[origin_index][2]
+
+            if patterns_right[i][2] < cut:  # 通过cut多少筛选pattern
+                patterns_left_plus.pop(origin_index)
+                patterns_right_plus.pop(origin_index)
+                patterns_left_plus.append(patl)
+                patterns_right_plus.append(patterns_right[i])
+    patterns = list(zip(patterns_left_plus, patterns_right_plus))
+    patterns_main, patterns_property = {}, {}
+    for i in range(len(patterns_left_plus)):
+        # patterns_main[i] = [patterns_left_plus[i], patterns_right_plus[i][0]]
+        patterns_main[i] = patterns_left_plus[i]
+        patterns_property[i] = patterns_right_plus[i]
+    return patterns, patterns_main, patterns_property
+
+def patterns_repeated(patterns, patterns_path):
+    p = []
+    for i in patterns:
+        p.append(i[0])
+    for paths in patterns_path:
+        loc = p.index(paths)
+        patterns.pop(loc)
+        p.pop(loc)
+    return patterns
+
+def patterns_decomposition(pattern, l, L, joint, length, count, pointer, stage):
+# 通过遍历寻找pattern的不同组成方法
+# 加入了joint来约束余料长度，顺便剪枝
+
+        p_length = len(pattern)
+        L_length = list(L.values())
+        Re_pattern = copy.deepcopy(pattern)
+        Re_count = copy.deepcopy(count)
+
+        # if len(accumulator) > max_way:
+        #     return
+
+        if Re_pattern[pointer] == 0:
+            pointer = (pointer + 1) % p_length
+        else:
+            length += L_length[pointer]
+            
+
+            if length > l:
+                length -= l
+                a = Re_count[stage]
+
+                left = L_length[pointer] - length
+                if left < joint or length < joint:
+                    return
+                
+                a.append(left)
+                Re_count[stage] = a
+                stage += 1
+                Re_count[stage] = [length]
+                Re_pattern[pointer] = Re_pattern[pointer] - 1
+
+                if not any(Re_pattern):
+                    if l == length:
+                        Re_count.pop(stage)
+                        accumulator.append(Re_count)
+                        return
+                    else:
+                        left = l - length
+                        a = Re_count[stage]
+                        a.append(left)
+                        Re_count[stage] = a
+                        accumulator.append(Re_count)
+
+                        # print(Re_count)
+
+                        return
+
+                                     
+                else:
+                    for step in range(p_length):
+                        Re_pointer = step
+                        if Re_pattern[Re_pointer] != 0:
+                            patterns_decomposition(Re_pattern, l, L, joint, length, Re_count, Re_pointer, stage)
+
+            elif length == l:
+                length = 0
+                a = Re_count[stage]
+                a.append(L_length[pointer])
+                Re_count[stage] = a
+                stage += 1
+                Re_count[stage] = []
+                Re_pattern[pointer] = Re_pattern[pointer] - 1
+
+                if not any(Re_pattern):
+                    Re_count.pop(stage)
+                    accumulator.append(Re_count)
+
+                    # print(Re_count)
+
+                    return
+                    
+                else:
+                    for step in range(p_length):
+                        Re_pointer = step
+                        if Re_pattern[Re_pointer] != 0:
+                            patterns_decomposition(Re_pattern, l, L, joint, length, Re_count, Re_pointer, stage)
+
+            else:
+                a = Re_count[stage]
+                a.append(L_length[pointer])
+                Re_count[stage] = a
+                Re_pattern[pointer] = Re_pattern[pointer] - 1
+
+                if not any(Re_pattern):
+                    left = l - length
+                    a = Re_count[stage]
+                    a.append(left)
+                    Re_count[stage] = a
+                    accumulator.append(Re_count)
+
+                    # print(Re_count)
+
+                    return
+            
+                else:
+                    for step in range(p_length):
+                        Re_pointer = step
+                        if Re_pattern[Re_pointer] != 0:
+                            patterns_decomposition(Re_pattern, l, L, joint, length, Re_count, Re_pointer, stage)
+                            
+def patterns_decomposition_summon(pattern, l, L, joint):
+    p_length = len(pattern)
+    for i in range(p_length):
+        if pattern[i] != 0:
+            patterns_decomposition(pattern, l, L, joint, 0, {0: []}, i, 0)
+    return
+
+print("Enter the parameters below, press Enter to use the default value.")
+l = int(input('raw material length [12000]: ') or 12000)
+n = int(input('the number of objects [3]: ') or 3)
+L = {}
+L_D = [4100, 4350, 4700]
+for i in range(n):
+    if i<3:
+        L[f"L{i+1}"] = int(input(f'object L{i + 1} [{L_D[i]}]: ') or L_D[i])    
+    else:
+        L[f"L{i+1}"] = int(input(f'object L{i + 1} []: '))
+radius = int(input('radius of the number of raw materials [10]: ') or 10)
+losses1 = int(input('max left of patterns [0]: ') or 0)
+
+patterns_left = []
+patterns_right = []
+patterns_path = []
+
+cut = 0 
+paste = 0
+accumulator = [0 for _ in L.keys()]
+pointer = 0
+stage = 0
+length = 0
+path_accumulator = []
+path_left= []
+
+# 获得所有符合条件的组合
+decomposition2(l, L, radius, length, cut, paste, accumulator, path_accumulator, path_left, pointer, stage)
+#print(patterns_path)
+
+# 精简组合，取得同组合最低的成本
+patterns, patterns_main, patterns_property = patterns_simplify(patterns_left, patterns_right)
+
+# 删除掉子组合
+patterns = patterns_repeated(patterns, patterns_path)
+# 会出现pattern1+pattern2=pattern3的情况，虽然说在后续合成过程中不会影响结果，但是会使运算上升一个维度
+# 但目前没有很好的处理这样的pattern3的方法
+# 已处理：方法如decompostion2()显示
+print("所有可用组合如下：")
+print("序号 [组合]    [余料长度，消耗原料根数，切割次数，接头个数]")
+
+for i, pattern in enumerate(patterns):
+    print(i, pattern)
+
+patterns = list(patterns_main.values())
+# print(patterns)
+
+while True:
     
-    # 求各种组合的列表
-    print(f"create patterns (size: {radius})...")
-    patterns = pattern_oringin(l, L, radius)
-    '''patterns: { 0: [[0,1,0], 0, 0, 0, 0,  ["L2"]],
-                   1: [[1,0,1], 50,3,400,100,["L1","L3"]]} '''
-    patterns_length = len(patterns)
-
-    print(f"patterns[0]:", patterns[0])
-    print(f"patterns[{patterns_length-1}]:", patterns[patterns_length-1])
-    print(f"patterns length: {patterns_length}")
-
-    # 求组合的的使用情况
-    def accum2(patterns):
-        # for calculating how many patterns are used
-        op = []
-        # fake_op用于统计在逼近need时所用的pattern的种类及个数
-        fake_op = np.zeros(len(patterns), dtype=np.int16)
-               
-        # op id 转换为 pattern id
-        op_2_pattern = []
-        # 计算 0.01% 分位数
-        eer_percentile  = np.percentile([patterns[key][3] for key in patterns], 0.01)
-        for key in patterns:
-            counter, loss, joint, cost, eer, combin = patterns[key]   
-
-            # 这里按照小于等于能效比来选择pattern：
-            if eer <= eer_percentile:
-                op.append(counter)
-                op_2_pattern.append(key)
-        '''
-            fake_op: [0,1,0,2,......] 
-            op: [array([5, 2, 4]), array([5, 8, 1])]
-            convert: {0: 1, 1: 4, 2: 5, 3: 8}
-        '''
-        assert len(op) > 0, "no pattern can be used"
-        print("op length:", len(op))
-        
-        # for i in range(40):
-        #     print(f'op{i}', op[i])
+    k = input('accumulate patterns[Y]?: press Enter to accumulate. Ctrl+C to exit.') or 'Y'
+    if k.upper() != 'Y':
+        break
+    n = len(patterns[0])
+    need_num = n
+    need = np.zeros(n)
+    d_v = [552, 658, 462]
+    for i in range(n):
+        if i<3:
+            need[i] = int(input(f'how many do you want for the L{i + 1} [{d_v[i]}]:') or d_v[i])
+        else:
+            need[i] = int(input(f'how many do you want for the L{i + 1}:'))
             
-        # 方法：比例 + 随机， 目的是用尾料最少的pattern组装或逼近所需的目标数目
-        def ratio(op, need):
-            #  目标占比
-            ratio_need = need / np.sum(need)
-            
-            # 所有组合和目标比例的欧式距离
-            # possibility_list: [0.12809917 0.09141508 0.36264978]
-            possibility_list = np.zeros(len(op), dtype=np.float32)
-            for i, counter in enumerate(op):
-                # 提高各组分比例离目标比例最近的pattern被选中的概率
-                # pattern的比例
-                ratio_type = counter / np.sum(counter)
-                
-                # pattern比例和目标need比例的欧式距离
-                ratio_distance = np.sum((ratio_type - ratio_need) ** 2)
-                
-                if ratio_distance==0:
-                    possibility_list[i] = 1e-6
-                else:     
-                    possibility_list[i] = ratio_distance
-                
-            # 相似度为距离的反比，取4次方只是因为逼近效果好一点
-            po1 = 1 / possibility_list ** 4
-            # 将相似度归一化为概率
-            po2 = po1 / np.sum(po1)
-            '''po2: [1.31134366e-01 1.09466700e-01 1.11207025e-03 1.31846626e-02
-                    6.22324483e-03 6.02589438e-01 1.45555565e-05 1.50820746e-04
-                    1.31134366e-01 4.11999268e-03 8.69783355e-04]'''
-            return po2
+    depth = int(input('how deep do you want to dig? [100]:') or 100)
+    # 增加一个 [0,0,0] ?
+    propatterns = [[0 for _ in range(len(patterns[0]))]] + patterns
+    
+    # 计算耗用
+    def calcu(accumulate):
+        lvalues = L.values()
+        count = np.zeros(len(lvalues))
+        for i, num in enumerate(accumulate):
+            count += np.array(propatterns[i]) * num
+        return count
+
+    def calc1(depth):
         
-        curr_need = copy.deepcopy(need) # 需要的目标数目
-        op_idxs = list(range(len(op)))  # 所有op的id   
+        accumulate = np.zeros(len(patterns) + 1) # the first space is used for doing nothing
+        backward_forbid = []
+        forward_forbid = []
+        forbid_length = 10
+        maxleft = np.sum(need ** 2) + 1
+        minleft = maxleft
+        
+        # decrease then increase
         while True:
-            # 按 组合比例 和 剩余目标比例 的相似度 求 采样概率
-            r = ratio(op, curr_need)
-            
-            # 按概率选择一个pattern进行叠加
-            choose = np.random.choice(op_idxs, p = r)
-            
-            # 对当前的need进行削减
-            temp_curr_need = curr_need - op[choose]
-            
-            # 截止条件：当前的剩余need出现有小于0的项时，返回 当前剩余need、所用的pattern的种类及个数
-            if any(temp_curr_need < 0):                
-                return curr_need, fake_op
-            
-            # 如果没有到截止条件，则计入选中的pattern
-            curr_need = temp_curr_need
-            fake_op[op_2_pattern[choose]] += 1
-     
-    # 剩余匹配量，当前patterns的使用量            
-    left, acc = accum2(patterns)
-    
-    '''left: [2 0 1], 
-    acc: [0,1,3,0,....]'''
+            print('////////////////////////////////')
+            cross = np.ones((len(propatterns), len(propatterns))) * maxleft # collect all potential left
+            for i in range(len(propatterns)):
+                accumulate[0] = 50
+                if accumulate[i] > 0:
+                    Re_accumulate = copy.deepcopy(accumulate)
+                    Re_accumulate[i] -= 1
+                    for j in range(len(propatterns)):
+                        Re_Re_accumulate = copy.deepcopy(Re_accumulate)
+                        Re_Re_accumulate[j] += 1
+                        left_list = need - calcu(Re_Re_accumulate)
+                        left = np.sum(left_list ** 2)
 
-    print("第一次匹配：")
-    loss  = np.sum([num*patterns[i][1] for i,num in enumerate(acc)])
-    joint = np.sum([num*patterns[i][2] for i,num in enumerate(acc)])
-    cost  = np.sum([num*patterns[i][3] for i,num in enumerate(acc)])
-    print(f"废料：{loss} 接头: {joint} 成本: {cost}")
-    print(f"剩余：{left}")
-    
- 
-    print("第二次匹配：")
-    left_combination = []
-    for i,key in enumerate(L):
-        if left[i]>0:
-            left_combination += [L[key]] * left[i]
-    cost2, combination2 = get_min_cost_combination(left_combination, l, l_min, l_size)
-    loss2, joint2 = calc_loss_joint(combination2, l, l_min)
-    print(f"废料：{loss2} 接头: {joint2} 成本: {cost2}")
-    
-    print()
-    print("合并数据，依次按如下组合和数量截取：")
-    print()   
-    # 将最佳方案的组合输出
-    # 第一阶段
-    for i, num in enumerate(acc):
-        if num > 0:
-            print(num, '*', patterns[i][-1])
+                        # print('current issue:', (i, j), left)
+                        if all(left_list >= 0):
+                            if left < minleft:
+                                cross[i, j] = left
+                            # elif i not in forward_forbid or j not in backward_forbid:
+                            elif (i, j) not in list(zip(forward_forbid, backward_forbid)):
+                                cross[i, j] = left
+                            else:
+                                cross[i, j] = maxleft
+                        else:
+                            cross[i, j] = maxleft
+            for i in range(len(propatterns)):
+                cross[i, i] = maxleft
+            # print(cross)
+
+            currmin = np.min(cross)
+            loc_list = list(np.where(cross == currmin))
+            loc = list(zip(loc_list[0], loc_list[1]))
+            x, y = loc[0]
+            accumulate[x] -= 1
+            accumulate[y] += 1
             
-    # 第二阶段
-    L_keys = list(L.keys())
-    L_Values = list(L.values())
-    print(1,'*', [L_keys[L_Values.index(num)] for num in combination2])     
-    print()   
-    print(f"废料长度: {loss+loss2}")
-    print(f"接头数量: {joint+joint2}")
-    print(f"总成本: {cost+cost2}")
-        
-decom(l, L)
+            forward_forbid.append(x)
+            backward_forbid.append(y)
+            if len(forward_forbid) > forbid_length:
+                forward_forbid.pop(0)
+            if len(backward_forbid) > forbid_length:
+                backward_forbid.pop(0)
+
+            if currmin < minleft:
+                minleft = currmin
+                minaccum = copy.deepcopy(accumulate)
+
+            depth -= 1
+            if depth == 0:
+                return minaccum
+            print('depth:', depth)
+            print('curr_stage:', accumulate, currmin)
+
+    
+        # 计算成本
+    def calccost(accumulate, need):
+        print(f"calc cost:")
+        left_sum = 0
+        paste_sum = 0
+        lost = copy.deepcopy(need)
+        for i, num in enumerate(accumulate):
+            if i==0: continue
+            print(i, num, propatterns[i], patterns_property[i-1])
+            lost -= np.array(propatterns[i]) * num
+            left_sum += np.sum(patterns_property[i-1][0]) * num
+            paste_sum += np.sum(patterns_property[i-1][3]) * num
+        _l=l 
+        L_Values= list(L.values())
+        print(f"left: {left_sum} paste: {paste_sum}")        
+        print(f"continue calc lost cost: {lost}")
+        for i, num in enumerate(lost):            
+            while num > 0:
+                while _l<L_Values[i]:
+                    _l+=l
+                    paste_sum+=1
+                _l -= L_Values[i]
+                num -= 1
+                if _l<200:
+                    left_sum+=_l
+                    _l=l        
+                    
+        left_sum+=_l%l
+        print(f"totel left: {left_sum} totel paste: {paste_sum}")
+        cost_left_param = 0.00617 * 2000 * (32 ** 2) / 1000
+        cost = left_sum * cost_left_param + paste_sum * 10
+        return cost
+                
+
+    result = calc1(depth)
+
+    print(result)
+    ac = calcu(result)
+    print(ac)
+    print(need - ac)
+    # 计算余料和接头
+    cost = calccost(result, need)
+    print(f"总成本为: {cost}")
+    

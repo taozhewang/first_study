@@ -1,9 +1,5 @@
 import numpy as np
-from collections import Counter, deque
 import itertools
-import random
-import pickle,os
-import copy
 
 # 计算成本
 def calc_cost(loss, joint, l_size):
@@ -127,7 +123,7 @@ def get_min_cost_combination(combination, l, l_min=200, l_size=32, max_iteration
 
 # 产生组合：l 原料长度 L 目标类型 radius 最大耗用原料数 l_min 最大可以拼接长度 l_size 原料直径
 # patterns: 所有组合的辞典，key为索引 每个元素为 [counter, loss, joint, cost, stage, combin]
-def pattern_oringin(l, L, radius, l_min=200, l_size=32, only_loss_zero=True):
+def pattern_oringin(l, L, radius, l_min=200, l_size=32, only_loss_zero=False):
     L_keys = list(L.keys())
     L_values = list(L.values())
     L_length = len(L)
