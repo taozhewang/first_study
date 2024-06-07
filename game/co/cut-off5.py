@@ -28,9 +28,11 @@ L_values = np.array(list(L.values()))
 need = np.array([552, 658, 462], dtype=int)
 
 # 最大的组合长度
-radius = 14
+pattern_radius = 10
+# 最大的损失长度
+pattern_limit_loss = 500
 # 最大停滞次数
-max_stagnation = 20
+max_stagnation = 100
 
 # 蚁群算法参数
 # 最大循环次数
@@ -42,7 +44,7 @@ rho = 0.5
 # 信息素重要程度因子
 alpha = 1 
 # 启发式因子 
-beta = 2  
+beta = 1  
 
 # 评估函数
 def evaluate(solution, need, patterns):
@@ -102,7 +104,7 @@ class Ant:
         self.cost = evaluate(solution, self.need, self.patterns)
 
 # 求各种组合的列表
-patterns = pattern_oringin(l, L, radius)
+patterns = pattern_oringin(l, L, pattern_radius, l_min=l_min, l_limit=pattern_limit_loss, only_loss_zero=False)
 patterns_length = len(patterns)
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
 print(f"patterns length: {patterns_length}")

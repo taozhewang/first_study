@@ -7,9 +7,28 @@ from core import pattern_oringin, calc_cost_by_unmatched, calc_completion_lenght
 '''
 用模拟退火算法求解钢筋切割问题
 
-目标: [552 658 462] 已完成: [548 654 454] 还差: [4 4 8]
-已有成本: 137179.68 已有损失: 10500 已有接头: 450
-还需成本: 7621.696 还需损失: 600 还需接头: 4
+最佳方案为：
+51 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
+5 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L3']
+2 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2']
+23 * ['L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
+4 * ['L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L3']
+8 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3']
+7 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2']
+1 * ['L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3']
+4 * ['L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2']
+1 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3']
+27 * ['L2', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3']
+7 * ['L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2']
+4 * ['L1', 'L1', 'L1', 'L3', 'L3', 'L3', 'L3', 'L3']
+3 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L3', 'L3', 'L3', 'L3']
+1 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L3', 'L3', 'L3']
+1 * ['L1', 'L1', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
+2 * ['L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L3']
+1 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L3', 'L3', 'L3']
+目标: [552 658 462] 已完成: [540 634 459] 还差: [12 24  3]
+已有成本: 140900.528 已有损失: 10800 已有接头: 443
+还需成本: 3900.848 还需损失: 300 还需接头: 11
 总损失: 11100
 总接头: 454
 总成本: 144801.376
@@ -28,7 +47,9 @@ L_values = np.array(list(L.values()))
 need = np.array([552, 658, 462],dtype=int)
 
 # 最大的组合长度
-radius = 14
+pattern_radius = 10
+# 最大的损失长度
+pattern_limit_loss = 500
 # 最小变异个数
 variation_count = 2
 
@@ -40,7 +61,7 @@ max_temperature = 100
 # 退火速率
 cooling_rate = 0.99
 # 最大停滞次数
-max_stagnation = 10000
+max_stagnation = 100000
 
 # 初始化解
 # patterns_length 组合的长度
@@ -63,7 +84,7 @@ def evaluate(solution, need, patterns):
     return cost
 
 # 求各种组合的列表
-patterns = pattern_oringin(l, L, radius)
+patterns = pattern_oringin(l, L, pattern_radius, l_min=l_min, l_limit=pattern_limit_loss, only_loss_zero=False)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])

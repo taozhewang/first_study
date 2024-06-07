@@ -123,7 +123,7 @@ def get_min_cost_combination(combination, l, l_min=200, l_size=32, max_iteration
 
 # 产生组合：l 原料长度 L 目标类型 radius 最大耗用原料数 l_min 最大可以拼接长度 l_size 原料直径
 # patterns: 所有组合的辞典，key为索引 每个元素为 [counter, loss, joint, cost, stage, combin]
-def pattern_oringin(l, L, radius, l_min=200, l_size=32, only_loss_zero=False):
+def pattern_oringin(l, L, radius, l_min=200, l_limit=200, l_size=32, only_loss_zero=False):
     L_keys = list(L.keys())
     L_values = list(L.values())
     L_length = len(L)
@@ -134,7 +134,7 @@ def pattern_oringin(l, L, radius, l_min=200, l_size=32, only_loss_zero=False):
     # accumulator 计数, patterns_path 组合顺序,  pointer 当前类型, length 余料, paste 接头, stage 耗用
     def _recurse(perm, accumulator, patterns_path, pointer, length, paste, stage):
         if stage > radius: return                
-        if length < l_min:      # 达到最小组合方案，返回
+        if length < l_min or length < l_limit:      # 达到最小组合方案，返回
             cost = calc_cost(length, paste, l_size)
 
             # 检查重复取最小成本
@@ -146,7 +146,8 @@ def pattern_oringin(l, L, radius, l_min=200, l_size=32, only_loss_zero=False):
             filter_duplicates[counter_str]=(cost, len(patterns_list))
 
             patterns_list.append([np.array(accumulator,dtype=int), length, paste, cost, stage, patterns_path[:]]) 
-            return
+            if length < l_min:
+                return
             
         for i in range(pointer, L_length):
             p = perm[i]
@@ -177,7 +178,7 @@ if __name__ == "__main__":
     l = 12000       # 原始钢筋长度
     l_size = 32     # 钢筋的规格
     l_limit_len = 200   # 钢筋的最小可利用长度
-    radius = 200   # 最大组合数
+    radius = 8   # 最大组合数
     L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}     # 目标钢筋长度
     need = np.array([552, 658, 462])    # 目标钢筋的数量
     
@@ -187,8 +188,7 @@ if __name__ == "__main__":
     print(f"共找到{len(loss_zero_patterns)}种零余料方案")
 
     for i in patterns:
-        if i<20:
-            print(f"{i}: {patterns[i][0]} 余料: {patterns[i][1]} 接头: {patterns[i][2]} 成本: {patterns[i][3]} 原料: {patterns[i][4]} 路径: {patterns[i][5]}")
+        print(f"{i}: {patterns[i][0]} 余料: {patterns[i][1]} 接头: {patterns[i][2]} 成本: {patterns[i][3]} 原料: {patterns[i][4]} 路径: {patterns[i][5]}")
 
     # combination = []
     # for i,key in enumerate(L):

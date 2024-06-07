@@ -7,9 +7,28 @@ from core import pattern_oringin, calc_cost_by_unmatched, calc_completion_lenght
 '''
 用禁忌搜索算法求解钢筋切割问题
 
-目标: [552 658 462] 已完成: [552 402 460] 还差: [  0 256   2]
-已有成本: 80920.576 已有损失: 6100 已有接头: 384
-还需成本: 63880.8 还需损失: 5000 还需接头: 70
+最佳方案为：
+87 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3'] 0 3
+1 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L3'] 0 4
+5 * ['L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3'] 50 2
+1 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3'] 50 4
+3 * ['L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3'] 100 3
+1 * ['L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2'] 100 4
+7 * ['L2', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3'] 150 2
+1 * ['L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2'] 150 3
+1 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3'] 150 4
+4 * ['L1', 'L1', 'L1', 'L3', 'L3', 'L3', 'L3', 'L3'] 200 2
+2 * ['L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3'] 200 3
+2 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L3', 'L3', 'L3', 'L3'] 200 4
+1 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L3'] 200 5
+2 * ['L1', 'L1', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3'] 300 2
+1 * ['L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L3'] 300 3
+1 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3'] 350 3
+1 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L3', 'L3'] 350 5
+1 * ['L1', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3'] 400 2
+目标: [552 658 462] 已完成: [548 313 454] 还差: [  4 345   8]
+已有成本: 77491.536 已有损失: 5850 已有接头: 357
+还需成本: 67309.84 还需损失: 5250 还需接头: 97
 总损失: 11100
 总接头: 454
 总成本: 144801.376
@@ -28,17 +47,19 @@ L_values = np.array(list(L.values()))
 need = np.array([552, 658, 462],dtype=int)
 
 # 最大的组合长度
-radius = 500
+pattern_radius = 10
+# 最大的损失长度
+pattern_limit_loss = 500
 
 # 禁忌搜索参数
 # 最大循环次数
 max_iterations = 1000000
 # 禁忌表大小
-tabu_tenure = 1000
+tabu_tenure = 500
 # 变异个数
-variation_count = 2
+variation_count = 3
 # 最大停滞次数
-max_stagnation = 500
+max_stagnation = 1000
 
 # 初始化解
 # patterns_length 组合的长度
@@ -58,7 +79,7 @@ def evaluate(solutions, need, patterns_lengths, patterns_costs):
     return cost
 
 # 求各种组合的列表
-patterns = pattern_oringin(l, L, radius)
+patterns = pattern_oringin(l, L, pattern_radius, l_min=l_min, l_limit=pattern_limit_loss, only_loss_zero=False)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
@@ -70,13 +91,15 @@ patterns_p = 1/patterns_costs
 patterns_p = patterns_p/np.sum(patterns_p)
 
 # 邻域操作
-def get_neighbor(solution, patterns_length, variation_count, patterns_p):
+def get_neighbor(solution, patterns_length, variation_count, patterns_p):    
     neighbor = np.copy(solution)
-    # ids = np.random.choice(patterns_length, variation_count, replace=False, p=patterns_p)
-    ids = np.random.choice(patterns_length, variation_count, replace=False)
+
+    ids = np.random.choice(patterns_length, variation_count, replace=False, p=patterns_p)
     for idx in ids:
-        neighbor[idx] += 1 if random.random()<0.5 else -1
+        v = 1 if random.random()<0.5 else -1
+        neighbor[idx] += v
     neighbor[neighbor<0] = 0
+
     return neighbor
 
 # 禁忌搜索,检查邻域解是否在禁忌表中
@@ -121,7 +144,7 @@ def tabu_search(max_iterations, tabu_tenure, patterns_length, variation_count, p
         update_count = 0
         avg_waste = sum(tabu_waste_list)/len(tabu_waste_list)
         for idx, waste in enumerate(neighbors_waste):
-            if waste < avg_waste and not check_tabu(tabu_list, neighbors[idx]):
+            if waste <= avg_waste and not check_tabu(tabu_list, neighbors[idx]):
             # if waste < tabu_waste_list[idx] and not check_tabu(tabu_list, neighbors[idx]):
                 # 记录最佳解
                 update_count += 1

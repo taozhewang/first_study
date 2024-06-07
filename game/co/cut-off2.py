@@ -8,16 +8,19 @@ from core_bak import pattern_oringin4
 用遗传算法求解钢筋切割问题
 
 最佳方案为：
-100 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
-7 * ['L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
-6 * ['L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3']
-5 * ['L2', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3']
-目标: [552 658 462] 已完成: [531 270 461] 还差: [ 21 388   1]
-已有成本: 24901.471999999998 已有损失: 1700 已有接头: 342
-还需成本: 119909.904 还需损失: 9400 还需接头: 113
+98 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
+4 * ['L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
+1 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3']
+1 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2']
+2 * ['L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3']
+4 * ['L1', 'L1', 'L1', 'L3', 'L3', 'L3', 'L3', 'L3']
+5 * ['L1', 'L1', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
+目标: [552 658 462] 已完成: [540 238 457] 还差: [ 12 420   5]
+已有成本: 38731.248 已有损失: 2800 已有接头: 335
+还需成本: 106070.128 还需损失: 8300 还需接头: 119
 总损失: 11100
-总接头: 455
-总成本: 144811.376
+总接头: 454
+总成本: 144801.376
 '''
 
 # 原始钢筋长度
@@ -33,12 +36,14 @@ L_values = np.array(list(L.values()))
 need = np.array([552, 658, 462],dtype=int)
 
 # 最大的组合长度
-radius = 20
+pattern_radius = 10
+# 最大的损失长度
+pattern_limit_loss = 500
 # 变异个数为1
 variation_count = 2
 
 # 遗传算法参数
-pop_size = 1000  # 种群大小
+pop_size = 200  # 种群大小
 gen_max = 1000  # 进化次数
 mut_rate = 1  # 变异率
 
@@ -65,7 +70,7 @@ def fitness(population, patterns_costs, patterns_lengths):
     return cost
 
 # 求各种组合的列表
-patterns = pattern_oringin(l, L, radius, only_loss_zero=False)
+patterns = pattern_oringin(l, L, pattern_radius, l_min=l_min, l_limit=pattern_limit_loss, only_loss_zero=False)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
@@ -92,7 +97,7 @@ best_fitnesses=np.inf
 best_used = None
 
 # 最大停滞次数
-max_stagnation = 1000
+max_stagnation = 200
 # 进化停顿次数
 nochange_count = 0
 
