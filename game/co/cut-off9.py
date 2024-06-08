@@ -4,11 +4,22 @@ import time
 
 '''
 用人工蜂群算法(ABC)求解钢筋切割问题
-最佳方案为:
-[4350 4100 4350 ... 4700 4700 4700]
+
+最佳方案为：
+39 * [4, 4, 3] loss: 100 : [4100, 4350, 4350, 4700, 4100, 4700, 4700, 4100, 4350, 4350, 4100]
+36 * [1, 3, 4] loss: 50 : [4350, 4350, 4700, 4100, 4350, 4700, 4700, 4700]
+25 * [5, 8, 1] loss: 0 : [4350, 4100, 4350, 4350, 4350, 4100, 4100, 4350, 4350, 4700, 4100, 4350, 4350, 4100]
+29 * [5, 2, 4] loss: 0 : [4350, 4700, 4350, 4100, 4100, 4700, 4700, 4100, 4700, 4100, 4100]
+9 * [0, 5, 3] loss: 150 : [4350, 4350, 4700, 4350, 4350, 4350, 4700, 4700]
+6 * [7, 5, 2] loss: 150 : [4100, 4100, 4100, 4350, 4350, 4350, 4100, 4350, 4100, 4700, 4100, 4350, 4700, 4100]
+4 * [1, 9, 1] loss: 50 : [4350, 4350, 4350, 4350, 4350, 4700, 4350, 4350, 4350, 4350, 4100]
+5 * [8, 3, 3] loss: 50 : [4700, 4700, 4100, 4350, 4100, 4350, 4100, 4100, 4100, 4700, 4100, 4100, 4350, 4100]
+1 * [4, 10, 0] loss: 100 : [4350, 4100, 4350, 4100, 4350, 4350, 4350, 4350, 4350, 4100, 4350, 4350, 4350, 4100]
+1 * [0, 0, 2] loss: 2600 : [4700, 4700]
 废料长度: 11100
 接头数量: 454
 总成本: 144801.376
+用时: 167.68541479110718 秒
 '''
 
 # 原始钢筋长度
@@ -233,9 +244,48 @@ for num in best_solution:
     out[L_values.index(num)] += 1
 print("验算结果:", out, "实际需求:", need)
 
+# 将排序转为group key:[]
+counters=[]
+groups=[]
+nums=[]
+loss=[]
+_group=[]
+_l=l
+names=list(L.keys())
+for p in best_solution:
+    _group.append(p)
+    while _l<p:
+        _l+=l
+    _l -= p
+
+    if _l<l_min:
+        _counter=[0 for _ in range(len(L))]
+        for x in _group:
+            _counter[L_values.index(x)]+=1
+        if _counter in counters:
+            nums[counters.index(_counter)]+=1
+        else:    
+            counters.append(_counter)
+            groups.append(_group.copy())
+            nums.append(1)
+            loss.append(_l)
+        _group=[]
+        _l=l
+   
+if len(_group)>0:
+    _counter=[0 for _ in range(len(L))]
+    for x in _group:
+        _counter[L_values.index(x)]+=1
+    counters.append(_counter)
+    groups.append(_group.copy())
+    nums.append(1)
+    loss.append(_l)
+    
+print("最佳方案为：")
+for i in range(len(nums)):
+    print(nums[i],'*',counters[i],"loss:",loss[i],":",groups[i])
+
 best_loss, best_joints, best_cost, _, _, _ = evaluate(best_solution, l, l_min, l_size)
-print("最佳方案为:")
-print(best_solution)
 print("废料长度:", best_loss)
 print("接头数量:", best_joints)
 print("总成本:", best_cost)

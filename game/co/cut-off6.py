@@ -7,12 +7,19 @@ from core import pattern_oringin, calc_cost_by_unmatched, calc_completion_lenght
 '''
 用粒子群算法求解钢筋切割问题
 
-目标: [552 658 462] 已完成: [365 655 457] 还差: [187   3   5]
-已有成本: 134714.256 已有损失: 10350 已有接头: 393
-还需成本: 10107.119999999999 还需损失: 750 还需接头: 63
+最佳方案为：
+52 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
+28 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L3']
+26 * ['L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
+4 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3']
+20 * ['L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3']
+14 * ['L1', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3']
+目标: [552 658 462] 已完成: [552 554 454] 还差: [  0 104   8]
+已有成本: 119229.056 已有损失: 9100 已有接头: 424
+还需成本: 25572.32 还需损失: 2000 还需接头: 30
 总损失: 11100
-总接头: 456
-总成本: 144821.376
+总接头: 454
+总成本: 144801.376
 '''
 
 # 原始钢筋长度
@@ -28,7 +35,9 @@ L_values = np.array(list(L.values()))
 need = np.array([552, 658, 462], dtype=int)
 
 # 最大的组合长度
-radius = 14
+pattern_radius = 10
+# 最大的损失长度
+pattern_limit_loss = 500
 # 最大停滞次数
 max_stagnation = 100
 
@@ -54,7 +63,7 @@ def fitness(solution, patterns):
     return cost
 
 # 求各种组合的列表
-patterns = pattern_oringin(l, L, radius)
+patterns = pattern_oringin(l, L, pattern_radius, l_min=l_min, l_limit=pattern_limit_loss, only_loss_zero=False)
 patterns_length = len(patterns)
 print(f"patterns[0]:", patterns[0])
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])

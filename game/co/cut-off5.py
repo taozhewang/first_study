@@ -7,12 +7,21 @@ from core import pattern_oringin, calc_cost_by_unmatched, calc_completion_lenght
 '''
 用蚁群算法求解钢筋切割问题
 
-目标: [552 658 462] 已完成: [552 306 460] 还差: [  0 352   2]
-已有成本: 50333.792 已有损失: 3700 已有接头: 358
-还需成本: 94467.584 还需损失: 7400 还需接头: 96
+最佳方案为：
+110 * ['L1', 'L1', 'L1', 'L1', 'L1', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
+1 * ['L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3']
+1 * ['L2', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3']
+37 * ['L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2']
+1 * ['L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3', 'L3', 'L3', 'L3']
+1 * ['L1', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3', 'L3']
+1 * ['L2', 'L2', 'L2', 'L2', 'L2', 'L2', 'L3', 'L3']
+1 * ['L2', 'L3', 'L3', 'L3', 'L3']
+目标: [552 658 462] 已完成: [552 656 462] 还差: [0 2 0]
+已有成本: 103112.04800000001 已有损失: 7800 已有接头: 455
+还需成本: 41699.328 还需损失: 3300 还需接头: 0
 总损失: 11100
-总接头: 454
-总成本: 144801.376
+总接头: 455
+总成本: 144811.37600000002
 '''
 
 # 原始钢筋长度
@@ -30,21 +39,19 @@ need = np.array([552, 658, 462], dtype=int)
 # 最大的组合长度
 pattern_radius = 10
 # 最大的损失长度
-pattern_limit_loss = 500
+pattern_limit_loss = 1000
 # 最大停滞次数
-max_stagnation = 100
+max_stagnation = 50
 
 # 蚁群算法参数
 # 最大循环次数
 max_iterations = 1000000
 # 蚂蚁数量
-ant_count = 500  
+ant_count = 100  
 # 信息素持久因子
 rho = 0.5  
 # 信息素重要程度因子
 alpha = 1 
-# 启发式因子 
-beta = 1  
 
 # 评估函数
 def evaluate(solution, need, patterns):
@@ -70,10 +77,10 @@ class Ant:
         self.need = need
         self.max_pattern_length = max_pattern_length
 
-    # 计算剩余长度的路径ID, 这里将超过pattern长度的部分都归为一个路径
+    # 计算剩余长度的路径ID, 这里将超过max_pattern_length长度的部分都归为一个路径
     def cut_off_to_rod_length(self, has_cut_off):
-        return np.sum([(has_cut_off[i]%max_pattern_length) * (10**i) for i in range(len(has_cut_off))])
-
+        return np.sum([(has_cut_off[i]+1 if has_cut_off[i] < max_pattern_length[i] else 0) * (10**i) for i in range(len(has_cut_off))])
+    
     # 构建解决方案
     def construct_solution(self, pheromone, heuristic):
         solution = np.zeros(self.patterns_length, dtype=int)
@@ -87,8 +94,9 @@ class Ant:
                 choice = random.choice(patterns_idxs)
             else:
                 # 计算路径的启发式信息
-                probabilities = pheromone[loa_lengths]**alpha * heuristic
+                probabilities = pheromone[loa_lengths]**alpha * heuristic+1e-10
                 probabilities = probabilities/np.sum(probabilities)
+           
                 # 选择路径
                 choice = np.random.choice(patterns_idxs, p=probabilities)
 
@@ -109,16 +117,18 @@ patterns_length = len(patterns)
 print(f"patterns[{patterns_length}]:", patterns[patterns_length-1])
 print(f"patterns length: {patterns_length}")
 patterns_lengths = np.array([patterns[i][0] for i in range(patterns_length)])
-max_pattern_length = np.max(patterns_lengths)
+max_pattern_length = np.max(patterns_lengths,axis=0)
+print(f"max_pattern_length: {max_pattern_length}")
 patterns_costs = np.array([patterns[i][3] for i in range(patterns_length)])
 # 按成本的倒数计算组合的概率
 patterns_p = 1/patterns_costs
 patterns_p = patterns_p/np.sum(patterns_p)
 
 # 路径的长度，也就是状态的数量，这里不允许超量切割，所以是钢筋的剩余状态hash数量 
-rod_length = np.sum([max_pattern_length * (10**i) for i in range(len(need))])
+rod_length = np.sum([(max_pattern_length[i]+1) * (10**i) for i in range(len(need))])
+# rod_length = np.sum([need[i] * (10**i) for i in range(len(need))])
 # 初始化信息素矩阵 从一个状态到另外一个状态的概率
-pheromone = np.ones((rod_length+1, patterns_length))
+pheromone = np.ones((rod_length, patterns_length))
 
 # 初始化启发式信息，这个是个常数，不用更新，表示的是从一个状态到另一个状态的概率
 heuristic = patterns_p 
