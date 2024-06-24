@@ -156,7 +156,7 @@ def gradient(W, x_train, y_train):
     return w_gradient / len(y_train)
 def gradient_descent(w0, x_train, y_train, learning_rate, momentum):
     max_iter = 100
-    treshold = 1e-02
+    treshold = 1e-03
     i = 0
     dw = np.zeros((len(w0), max_iter))
     w = np.zeros((len(w0), max_iter))
@@ -187,7 +187,7 @@ def accuracy(W, x_test, y_test):
 
 w0 = np.ones(np.size(x_train, axis = 1) + 1) * 0
 learning_rate = 3e-04
-momentum = 1e-01
+momentum = 2e-01
 w, obj = gradient_descent(w0, x_train, y_train, learning_rate, momentum)
 obj = obj[obj != 0]
 w = w[:, : len(obj)]
@@ -197,3 +197,4 @@ p_train = accuracy(w[:, len(obj) - 1], x_train, y_train)
 p_test = accuracy(w[:, len(obj) - 1], x_test, y_test)
 print(f'accuracy of training set: {p_train}')
 print(f'accuracy of test set: {p_test}')
+

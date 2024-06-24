@@ -259,3 +259,27 @@
 # psolution, dsolution = forbidsol(p0)
 # print()
 # print('solution:', psolution, dsolution)
+
+# 24 points
+import numpy as np
+import copy
+def f(X, p):
+    if len(X) >= 2:
+        for i in range(len(X)):
+            for j in range(i + 1, len(X)):
+                Y = copy.deepcopy(X)
+                Y = np.delete(Y, [i, j])
+                f(np.append(Y, X[i] + X[j]), p + [f'{X[i]} + {X[j]}'])
+                f(np.append(Y, X[i] * X[j]), p + [f'{X[i]} * {X[j]}'])
+                f(np.append(Y, X[i] - X[j]), p + [f'{X[i]} - {X[j]}'])
+                f(np.append(Y, X[j] - X[i]), p + [f'{X[j]} - {X[i]}'])
+                if X[i]
+                f(np.append(Y, X[i] / X[j]), p + [f'{X[i]} / {X[j]}'])
+                f(np.append(Y, X[j] / X[i]), p + [f'{X[j]} / {X[i]}'])
+    else:
+        if X[0] == 24:
+            print(p)
+        return
+X = [7, 9, 7, 9]
+p = []
+f(X, p)

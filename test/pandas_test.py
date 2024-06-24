@@ -114,14 +114,14 @@ rnk = pd.DataFrame(columns = ['ranking'], data = data4)
 
 te = pd.concat([sub, stu, mrk, rnk], axis = 1)
 print(te)
-# print(te['marking'].dtype)
+print(te['marking'].dtype)
 
-# tsub = te.groupby('subject')['marking'].mean()
-# print(tsub)
-# tstu = te.groupby('student')['marking'].mean()
-# print(tstu)
-# tss = te.groupby(['subject', 'student'])['marking'].mean()
-# print(tss)
+tsub = te.groupby('subject')['marking'].mean()
+print(tsub)
+tstu = te.groupby('student')['marking'].mean()
+print(tstu)
+tss = te.groupby(['subject', 'student'])['marking'].mean()
+print(tss)
 
 # def adjust(X):
     # return np.max(X)
