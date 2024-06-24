@@ -9,11 +9,24 @@ import time
 '''
 用遗传算法求解钢筋切割问题
 
-[4700 4100 4350 ... 4100 4350 4350]
-[552 658 462] Counter({4350: 658, 4100: 552, 4700: 462})
-总损失: 11100
+最佳方案为：
+40 * [1, 3, 4] loss: 50 : [4700, 4350, 4350, 4700, 4350, 4700, 4700, 4100]
+25 * [5, 2, 4] loss: 0 : [4100, 4700, 4100, 4700, 4350, 4350, 4100, 4700, 4700, 4100, 4100]
+19 * [5, 8, 1] loss: 0 : [4100, 4350, 4350, 4100, 4350, 4100, 4700, 4350, 4100, 4350, 4350, 4350, 4100, 4350]
+33 * [4, 4, 3] loss: 100 : [4100, 4100, 4350, 4100, 4350, 4700, 4350, 4100, 4700, 4700, 4350]
+4 * [1, 9, 1] loss: 50 : [4350, 4100, 4350, 4350, 4350, 4350, 4350, 4350, 4700, 4350, 4350]
+14 * [0, 5, 3] loss: 150 : [4350, 4350, 4350, 4700, 4700, 4700, 4350, 4350]
+11 * [7, 5, 2] loss: 150 : [4700, 4100, 4100, 4700, 4100, 4350, 4350, 4100, 4100, 4350, 4350, 4350, 4100, 4100]
+3 * [8, 3, 3] loss: 50 : [4100, 4700, 4350, 4100, 4100, 4700, 4700, 4350, 4100, 4100, 4100, 4100, 4100, 4350]
+1 * [12, 2, 3] loss: 0 : [4100, 4100, 4100, 4100, 4700, 4100, 4100, 4100, 4100, 4100, 4700, 4100, 4350, 4100, 4350, 4100, 4700]
+1 * [8, 9, 0] loss: 50 : [4100, 4350, 4100, 4350, 4350, 4350, 4350, 4350, 4100, 4100, 4350, 4100, 4350, 4350, 4100, 4100, 4100]
+1 * [11, 4, 2] loss: 100 : [4350, 4350, 4100, 4100, 4100, 4100, 4700, 4700, 4350, 4100, 4100, 4100, 4350, 4100, 4100, 4100, 4100]
+2 * [12, 8, 0] loss: 0 : [4350, 4350, 4100, 4350, 4100, 4100, 4350, 4100, 4350, 4350, 4100, 4100, 4100, 4350, 4100, 4100, 4350, 4100, 4100, 4100]
+1 * [0, 3, 2] loss: 1550 : [4350, 4700, 4350, 4700, 4350]
+总损失: 11100.0
 总接头: 454
 总成本: 144801.376
+用时: 104.87966299057007 秒
 '''
 
 # 原始钢筋长度
@@ -24,7 +37,7 @@ l_min = 200
 l_size = 32
 # 目标钢筋长度
 L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
-L_values = np.array(list(L.values()))
+L_values = list(L.values())
 # 目标钢筋的数量
 need = np.array([552, 658, 462],dtype=int)
 
@@ -204,9 +217,48 @@ for gen in range(gen_max):
         break
 
 # 打印最佳解决方案
-print(best_individual)
+# 将排序转为group key:[]
+counters=[]
+groups=[]
+nums=[]
+loss=[]
+_group=[]
+_l=l
+names=list(L.keys())
+for p in best_individual:
+    _group.append(p)
+    while _l<p:
+        _l+=l
+    _l -= p
+
+    if _l<l_min:
+        _counter=[0 for _ in range(len(L))]
+        for x in _group:
+            _counter[L_values.index(x)]+=1
+        if _counter in counters:
+            nums[counters.index(_counter)]+=1
+        else:    
+            counters.append(_counter)
+            groups.append(_group.copy())
+            nums.append(1)
+            loss.append(_l)
+        _group=[]
+        _l=l
+   
+if len(_group)>0:
+    _counter=[0 for _ in range(len(L))]
+    for x in _group:
+        _counter[L_values.index(x)]+=1
+    counters.append(_counter)
+    groups.append(_group.copy())
+    nums.append(1)
+    loss.append(_l)
+    
+print("最佳方案为：")
+for i in range(len(nums)):
+    print(nums[i],'*',counters[i],"loss:",loss[i],":",groups[i])
            
-print(need, Counter(best_individual))
+# print(need, Counter(best_individual))
 print(f"总损失: {best_loss}")
 print(f"总接头: {best_joint}")
 print(f"总成本: {best_fitnesses}")
