@@ -120,7 +120,8 @@ def patterns_simplify(patterns_left, patterns_right):
             origin_index = patterns_left_plus.index(patl)
             cut = patterns_right_plus[origin_index][2]
 
-            if patterns_right[i][2] < cut:  # 通过cut多少筛选pattern
+            if patterns_right[i][2] < cut:  
+                # 通过cut多少筛选pattern
                 patterns_left_plus.pop(origin_index)
                 patterns_right_plus.pop(origin_index)
                 patterns_left_plus.append(patl)
@@ -128,7 +129,6 @@ def patterns_simplify(patterns_left, patterns_right):
     patterns = list(zip(patterns_left_plus, patterns_right_plus))
     patterns_main, patterns_property = {}, {}
     for i in range(len(patterns_left_plus)):
-        # patterns_main[i] = [patterns_left_plus[i], patterns_right_plus[i][0]]
         patterns_main[i] = patterns_left_plus[i]
         patterns_property[i] = patterns_right_plus[i]
     return patterns, patterns_main, patterns_property
@@ -151,9 +151,6 @@ def patterns_decomposition(pattern, l, L, joint, length, count, pointer, stage):
         L_length = list(L.values())
         Re_pattern = copy.deepcopy(pattern)
         Re_count = copy.deepcopy(count)
-
-        # if len(accumulator) > max_way:
-        #     return
 
         if Re_pattern[pointer] == 0:
             pointer = (pointer + 1) % p_length
@@ -186,9 +183,6 @@ def patterns_decomposition(pattern, l, L, joint, length, count, pointer, stage):
                         a.append(left)
                         Re_count[stage] = a
                         accumulator.append(Re_count)
-
-                        # print(Re_count)
-
                         return
 
                                      
@@ -210,9 +204,6 @@ def patterns_decomposition(pattern, l, L, joint, length, count, pointer, stage):
                 if not any(Re_pattern):
                     Re_count.pop(stage)
                     accumulator.append(Re_count)
-
-                    # print(Re_count)
-
                     return
                     
                 else:
@@ -233,9 +224,6 @@ def patterns_decomposition(pattern, l, L, joint, length, count, pointer, stage):
                     a.append(left)
                     Re_count[stage] = a
                     accumulator.append(Re_count)
-
-                    # print(Re_count)
-
                     return
             
                 else:
@@ -250,15 +238,100 @@ def patterns_decomposition_summon(pattern, l, L, joint):
             patterns_decomposition(pattern, l, L, joint, 0, {0: []}, i, 0)
     return
 
-fill = input('fill in data or by default: press 0 or 1: ')
+terms1 = []
+terms2 = []
+terms4 = []
+# 用于组装剩余的几根材料
+def calc_left(left, use, paste, accumulate_length, length, stage, joint): 
+    # 变量解释：
+    # left: 剩余的目标材料
+    # use: 已经切下来的目标材料，且是完整的
+    # paste: 已经切下来的目标原料，但需要拼接
+    # accumulate_length: 已经使用的材料长度（）
+    # length: 材料长度分布
+    # stage: 已经使用的原材根数
+    # joint: 接头长度限制
+
+    # 终止条件：剩余的材料都用完就停下
+    if not any(left):
+        # 将剩余的原料计入到最终结果中
+        clength = copy.deepcopy(length)
+        clength[stage].append(l - accumulate_length)
+        # terms1用于每根原料中截下的完整的目标材料
+        # terms2用于两根原料间拼接的目标材料
+        # terms4用于每根原料的截断长度
+        terms1.append(use)
+        terms2.append(paste)
+        terms4.append(clength)
+        return 
+    # 对每一个目标材料进行遍历
+    for i in range(len(left)):
+        # 只有在目标材料还有剩余时才进行计算
+        if left[i] > 0:
+            # 使用copy函数是为了防止改一个全改了的错误
+            cleft = copy.deepcopy(left)
+            cuse = copy.deepcopy(use)
+            cpaste = copy.deepcopy(paste)
+            # 当前材料长度caccumulate_length用于记录当前已经使用的材料长度 模 原料l的结果
+            # 其大小在 0 到 原料长度l 之间
+            caccumulate_length = accumulate_length + L[i]
+            # cstage用于记录当前用到的原材根数
+            cstage = stage
+            # clength用于记录当前原材料中截断长度的分布
+            clength = copy.deepcopy(length)
+            # 下面分四种情况讨论：
+            # 1、当前材料长度大于l+joint
+            #       需要将当前目标材料L[i]分成两部分，一部分在上一根原料中，另一部分在下一根原料中
+            # 2、当前材料长度大于l，小于等于l+joint
+            #       需要先补一份因为joint限制的长度，再将当前目标材料L[i]分成两部分，一部分在上一根原料中，另一部分在下一根原料中
+            # 3、当前材料长度大于等于l-joint，小于l
+            #       需要将当前目标材料L[i]留在上一根原料中，并补一份因为joint限制的长度余料
+            # 4、当前材料长度小于l-joint
+            #       直接累加即可
+            if caccumulate_length > l + joint:
+                caccumulate_length -= l
+                cleft[i] -= 1
+                cpaste.append(i)
+                clength[cstage].append(L[i] - caccumulate_length)
+                cstage += 1
+                clength.append([caccumulate_length])
+                cuse.append([])
+                calc_left(cleft, cuse, cpaste, caccumulate_length, clength, cstage, joint)
+            elif caccumulate_length > l and caccumulate_length <= l + joint:
+                caccumulate_length -= l
+                cleft[i] -= 1
+                cpaste.append(i)
+                clength[cstage].append(joint - caccumulate_length)
+                clength[cstage].append(L[i] - joint)
+                cstage += 1
+                clength.append([joint])
+                cuse.append([])
+                calc_left(cleft, cuse, cpaste, joint, clength, cstage, joint)
+            elif caccumulate_length < l and caccumulate_length > l - joint:
+                cleft[i] -= 1
+                cuse[cstage].append(i)
+                clength[cstage].append(L[i])
+                clength[cstage].append( - caccumulate_length + l)
+                cstage += 1
+                clength.append([])
+                cuse.append([])
+                cpaste.append(-1)
+                calc_left(cleft, cuse, cpaste, 0, clength, cstage, joint)
+            else:
+                cleft[i] -= 1
+                clength[cstage].append(L[i])
+                cuse[cstage].append(i)
+                calc_left(cleft, cuse, cpaste, caccumulate_length, clength, cstage, joint)
+
+fill = input('主动填入数据请按0, 否则按照默认随便按')
 if fill == '0':
-    l = int(input('raw material length: '))
-    n = int(input('the number of objects: '))
+    l = int(input('原料长度 raw material length: '))
+    n = int(input('目标材料种类数 the number of objects: '))
     L = {}
     for i in range(n):
-        L[i] = int(input(f'object L{i + 1}: '))
-    radius = int(input('radius of the number of raw materials: '))
-    losses1 = int(input('max left of patterns: '))
+        L[i] = int(input(f'第{i + 1}种目标材料 object L{i + 1}: '))
+    radius = int(input('形成组合最多允许多少根原材料 radius of the number of raw materials: '))
+    losses1 = int(input('形成组合最多允许多长的余料 max left of patterns: '))
 else:
     l = 12000
     L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
@@ -268,12 +341,6 @@ else:
 patterns_left = []
 patterns_right = []
 patterns_path = []
-# cut = 0
-# paste = 0
-# count = 0
-# accumulator = [0 for _ in L.keys()]
-# pointer = 0
-# decomposition1(l, L, radius, count, cut, paste, accumulator, pointer)
 cut = 0
 paste = 0
 accumulator = [0 for _ in L.keys()]
@@ -297,15 +364,15 @@ patterns = list(patterns_main.values())
 print(patterns)
 while True:
     
-    k = input('accumulate patterns?: press something to continue or enter to exit').strip()
-    if not len(k) > 0:
+    k = input('是否使用组合积累到目标? 按回车继续; 按其他键进行下一步 (需要先有积累历史!) accumulate patterns?: press enter to continue or something to exit: ').strip()
+    if len(k) > 0:
         break
     n = len(patterns[0])
     need_num = n
     need = np.zeros(n)
     for i in range(n):
-        need[i] = int(input(f'how many do you want for the L{i + 1}:'))
-    depth = int(input('how deep do you want to dig?:'))
+        need[i] = int(input(f'第{i + 1}种目标材料需要的数量 how many do you want for the L{i + 1}:'))
+    # depth = int(input('how deep do you want to dig?:'))
     propatterns = [[0 for _ in range(len(patterns[0]))]] + patterns
     def calcu(accumulate):
         lvalues = L.values()
@@ -370,19 +437,36 @@ while True:
             if currmin < minleft:
                 minleft = currmin
                 minaccum = copy.deepcopy(accumulate)
+            elif currmin == minleft:
+                return minaccum, depth
 
-            depth -= 1
-            if depth == 0:
-                return minaccum
-            print('depth:', depth)
+            # depth -= 1
+            depth += 1
+            # if depth == 0:
+            #     return minaccum
+            # print('depth:', depth)
             print('curr_stage:', accumulate, currmin)
 
                 
 
-    result = calc1(depth)
+    # result = calc1(depth)
+    result, result_depth = calc1(0)
 
-    print(result)
+    print(result[1 :])
+    for i in range(1, len(result)):
+        print(f'组合 pattern{i - 1}: ', propatterns[i][1 :])
+        print('用量 use: ', int(result[i]))
+    print('迭代次数 depth: ', result_depth)
     ac = calcu(result)
-    print(ac)
-    print(need - ac)
+    # print(ac)
+    print('剩余 left: ', need - ac)
 
+last = need - ac
+joint = int(input('接头的最小长度 the min length of the joint: '))
+L = list(L.values())
+
+calc_left(last, [[]], [], 0, [[]], 0, joint)
+
+print('每根原料中截下的完整的目标材料：', terms1[0])
+print('两根原料间拼接的目标材料：', terms2[0])
+print('每根原料的截断长度：', terms4[0])

@@ -682,3 +682,12 @@ while True:
     # if len(accumulator) >= max_way:
     #     print('too many ways!')
     print(len(accumulator))
+
+# 6 -> 3?
+# more exampels?
+# many kinds of objects?
+# intellectual process?
+# find a solution not a best solution?
+# 1. concatenate different works, modules
+# 2. the problem of left?
+# 
