@@ -65,6 +65,13 @@ def evaluate(combinations, l, l_min, l_size):
             joint[idxs] += 1
         _l -= combinations[:,i]
 
+        # 是否存在左边接头长度不够的情况
+        min_idx = np.where((l-_l)<l_min)[0]
+        if len(min_idx)>0:
+            add_len = l_min - (l-_l)
+            loss[min_idx] += add_len[min_idx]
+            _l[min_idx] -= add_len[min_idx]
+
         # 确定第一个小组的最后一个位置,如果第一个位置为0且有废料，则将其作为第一个位置
         fidx = np.where((group_firstpos==0) & (_l<l_min))[0]
         if len(fidx)>0:
@@ -94,6 +101,7 @@ def get_best_solution_group(group1, group2, l, l_min):
             _l += l
             joint1 += 1
         _l -= length
+        if l-_l<l_min: _l -= l_min-(l-_l)
         if _l < l_min:
             _l = l
 
@@ -103,6 +111,7 @@ def get_best_solution_group(group1, group2, l, l_min):
             _l += l
             joint2 += 1
         _l -= length
+        if l-_l<l_min: _l -= l_min-(l-_l)
         if _l < l_min:
             _l = l
 

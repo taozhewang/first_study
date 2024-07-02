@@ -79,7 +79,11 @@ class Ant:
 
     # 计算剩余长度的路径ID, 这里将超过max_pattern_length长度的部分都归为一个路径
     def cut_off_to_rod_length(self, has_cut_off):
-        return np.sum([(has_cut_off[i]+1 if has_cut_off[i] < max_pattern_length[i] else 0) * (10**i) for i in range(len(has_cut_off))])
+        
+        return np.sum([(
+            
+            [i]+1 if has_cut_off[i] < max_pattern_length[i] else 0) * (10**i) for i in range(len(has_cut_off))])
+        # return np.sum([has_cut_off[i] * (10**i) for i in range(len(has_cut_off))])
     
     # 构建解决方案
     def construct_solution(self, pheromone, heuristic):

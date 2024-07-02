@@ -64,6 +64,10 @@ def evaluate(solution, l, l_min, l_size):
             joint += 1
         
         _l -= num
+        if l-_l<l_min: 
+            add_loss = l_min-(l-_l)
+            _l -= add_loss
+            loss += add_loss
 
         if _l < l_min:
             loss += _l
@@ -86,6 +90,8 @@ def get_new_solution(solution, l, l_min):
         while _l < length:
             _l += l
         _l -= length
+        if l-_l<l_min: _l -= l_min-(l-_l)
+
         if _l < l_min:
             if start ==  0:
                 start = i+1                
@@ -106,6 +112,8 @@ def get_best_solution_group(group1, group2, l, l_min):
             _l += l
             joint1 += 1
         _l -= length
+        if l-_l<l_min: _l -= l_min-(l-_l)
+
         if _l < l_min:
             _l = l
 
@@ -115,6 +123,8 @@ def get_best_solution_group(group1, group2, l, l_min):
             _l += l
             joint2 += 1
         _l -= length
+        if l-_l<l_min: _l -= l_min-(l-_l)
+
         if _l < l_min:
             _l = l
 
@@ -129,6 +139,7 @@ def permutative_solution(solution, l, l_min):
         while _l < length:
             _l += l
         _l -= length
+        if l-_l<l_min: _l -= l_min-(l-_l)
         if _l < l_min:
             new_solution.append(get_best_solution_group(solution[start:i+1], np.random.permutation(solution[start:i+1]), l, l_min))
             start = i+1                

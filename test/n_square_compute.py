@@ -191,60 +191,89 @@
 # #     t4 = t4[len(m1) :]
 # # fig.show()
 
-# land mine
-# land with mine is 1
-# land is checked is 2
+# # land mine
+# # land with mine is 1
+# # land is checked is 2
+# import numpy as np
+# def map_origin(row, col, n, cor):
+#     assert row > 0 and col > 0
+#     M = np.zeros((row, col))
+#     l = np.max([cor[1] - 1, 0])
+#     r = np.min([cor[1] + 1, col - 1])
+#     u = np.max([cor[0] - 1, 0])
+#     d = np.min([cor[0] + 1, row - 1])
+#     M[u : d + 1, l : r + 1] = 10
+#     x, y = np.where(M == 0)
+#     fill = np.random.choice(len(x), n, replace = False)
+
+#     M[x[fill], y[fill]] = 1
+#     M[u : d + 1, l : r + 1] = 0
+#     return M
+
+# # m = map_origin(10, 10, 30, [4, 5])
+# # print(m)
+
+# def map_show(M):
+#     col = np.size(M, 1)
+#     row = np.size(M, 0)
+#     S = np.ones((row, col)) * 10
+#     x, y = np.where(M == 2)
+#     for i in range(len(x)):
+#         l = np.max([y[i] - 1, 0])
+#         r = np.min([y[i] + 1, col - 1])
+#         u = np.max([x[i] - 1, 0])
+#         d = np.min([x[i] + 1, row - 1])
+#         t = np.where(M[u : d + 1, l : r + 1] == 1)
+#         S[x[i], y[i]] = len(t[0])
+#     for i in range(row):
+#         for j in range(col):
+#             if S[i, j] == 10:
+#                 print('▢ ', end = '')
+#             elif S[i, j] == 0:
+#                 print('  ', end = '')
+#             else:
+#                 print(f'{int(S[i, j])} ', end = '')
+#         print()
+#     return
+
+
+# m = np.array([[1, 0, 1, 1, 2, 2, 2, 1, 0, 0],
+#                 [0, 0, 0, 1, 2, 2, 2, 0, 0, 0],
+#                 [0, 0, 2, 0, 2, 2, 2, 1, 0, 1],
+#                 [0, 1, 2, 1, 2, 2, 2, 1, 0, 0],
+#                 [1, 1, 1, 1, 2, 2, 2, 0, 0, 1],
+#                 [0, 1, 2, 2, 2, 2, 2, 1, 0, 0],
+#                 [1, 2, 2, 2, 1, 1, 0, 1, 0, 1],
+#                 [0, 2, 2, 2, 0, 0, 0, 0, 1, 0],
+#                 [0, 2, 2, 2, 0, 0, 1, 1, 1, 1],
+#                 [0, 0, 1, 1, 1, 0, 0, 0, 0, 0]])
+# map_show(m)
+
 import numpy as np
-def map_origin(row, col, n, cor):
-    assert row > 0 and col > 0
-    M = np.zeros((row, col))
-    l = np.max([cor[1] - 1, 0])
-    r = np.min([cor[1] + 1, col - 1])
-    u = np.max([cor[0] - 1, 0])
-    d = np.min([cor[0] + 1, row - 1])
-    M[u : d + 1, l : r + 1] = 10
-    x, y = np.where(M == 0)
-    fill = np.random.choice(len(x), n, replace = False)
+# def idxyz(x, y, z):
+#     a = x + y + z
+#     b = x + y
+#     c = x
+#     return a * (a + 1) * (a + 2) / 6 + b * (b + 1) / 2 + c
+# for i in range(4):
+#     for j in range(4):
+#         for k in range(4):
+#             print(i, j, k, idxyz(i, j, k))
 
-    M[x[fill], y[fill]] = 1
-    M[u : d + 1, l : r + 1] = 0
-    return M
+def idxn(X):
+    n = len(X)
+    N = np.zeros(n)
+    Y = np.ones(n)
+    for i in range(n):
+        N[i] = sum(X[ : i + 1])
+        for j in range(i + 1):
+            Y[i] *= (N[i] + j) / (j + 1)
+    print(N, Y)
+    return sum(Y)
 
-# m = map_origin(10, 10, 30, [4, 5])
-# print(m)
+for i in range(4):
+    for j in range(4):
+        for k in range(4):
+            for l in range(4):
+                print(i, j, k, l, idxn([i, j, k, l]))
 
-def map_show(M):
-    col = np.size(M, 1)
-    row = np.size(M, 0)
-    S = np.ones((row, col)) * 10
-    x, y = np.where(M == 2)
-    for i in range(len(x)):
-        l = np.max([y[i] - 1, 0])
-        r = np.min([y[i] + 1, col - 1])
-        u = np.max([x[i] - 1, 0])
-        d = np.min([x[i] + 1, row - 1])
-        t = np.where(M[u : d + 1, l : r + 1] == 1)
-        S[x[i], y[i]] = len(t[0])
-    for i in range(row):
-        for j in range(col):
-            if S[i, j] == 10:
-                print('▢ ', end = '')
-            elif S[i, j] == 0:
-                print('  ', end = '')
-            else:
-                print(f'{int(S[i, j])} ', end = '')
-        print()
-    return
-
-
-m = np.array([[1, 0, 1, 1, 2, 2, 2, 1, 0, 0],
-                [0, 0, 0, 1, 2, 2, 2, 0, 0, 0],
-                [0, 0, 2, 0, 2, 2, 2, 1, 0, 1],
-                [0, 1, 2, 1, 2, 2, 2, 1, 0, 0],
-                [1, 1, 1, 1, 2, 2, 2, 0, 0, 1],
-                [0, 1, 2, 2, 2, 2, 2, 1, 0, 0],
-                [1, 2, 2, 2, 1, 1, 0, 1, 0, 1],
-                [0, 2, 2, 2, 0, 0, 0, 0, 1, 0],
-                [0, 2, 2, 2, 0, 0, 1, 1, 1, 1],
-                [0, 0, 1, 1, 1, 0, 0, 0, 0, 0]])
-map_show(m)

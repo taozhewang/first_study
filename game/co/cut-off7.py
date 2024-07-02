@@ -11,7 +11,9 @@ import time
 
 最佳方案为：
 40 * [1, 3, 4] loss: 50 : [4700, 4350, 4350, 4700, 4350, 4700, 4700, 4100]
-25 * [5, 2, 4] loss: 0 : [4100, 4700, 4100, 4700, 4350, 4350, 4100, 4700, 4700, 4100, 4100]
+25 * [5, 2, 4] loss: 0 : [4100,
+
+ 4700, 4100, 4700, 4350, 4350, 4100, 4700, 4700, 4100, 4100]
 19 * [5, 8, 1] loss: 0 : [4100, 4350, 4350, 4100, 4350, 4100, 4700, 4350, 4100, 4350, 4350, 4350, 4100, 4350]
 33 * [4, 4, 3] loss: 100 : [4100, 4100, 4350, 4100, 4350, 4700, 4350, 4100, 4700, 4700, 4350]
 4 * [1, 9, 1] loss: 50 : [4350, 4100, 4350, 4350, 4350, 4350, 4350, 4350, 4700, 4350, 4350]
@@ -22,7 +24,7 @@ import time
 1 * [8, 9, 0] loss: 50 : [4100, 4350, 4100, 4350, 4350, 4350, 4350, 4350, 4100, 4100, 4350, 4100, 4350, 4350, 4100, 4100, 4100]
 1 * [11, 4, 2] loss: 100 : [4350, 4350, 4100, 4100, 4100, 4100, 4700, 4700, 4350, 4100, 4100, 4100, 4350, 4100, 4100, 4100, 4100]
 2 * [12, 8, 0] loss: 0 : [4350, 4350, 4100, 4350, 4100, 4100, 4350, 4100, 4350, 4350, 4100, 4100, 4100, 4350, 4100, 4100, 4350, 4100, 4100, 4100]
-1 * [0, 3, 2] loss: 1550 : [4350, 4700, 4350, 4700, 4350]
+1 * [0, 3, 2] loss: 1550 : [4350, 4700, 4350, 4700, 4350]e
 总损失: 11100.0
 总接头: 454
 总成本: 144801.376
@@ -49,7 +51,7 @@ dna_length = np.sum(need)   # 基因长度
 
 # 计算适应度
 def fitness(population, l, l_min, l_size):
-    combinations_size = len(population)                           # 禁忌表大小
+    combinations_size = len(population)                             # 种群大小
     _l = np.ones(combinations_size)*l                               # 剩余长度
     group_count = np.zeros(combinations_size,dtype=int)             # 小组个数
     group_firstpos = np.zeros(combinations_size,dtype=int)          # 第一个小组的位置
@@ -64,7 +66,15 @@ def fitness(population, l, l_min, l_size):
             if len(idxs)==0: break
             _l[idxs] += l
             joint[idxs] += 1
+
         _l -= population[:,i]
+        
+        # 是否存在左边接头长度不够的情况
+        min_idx = np.where((l-_l)<l_min)[0]
+        if len(min_idx)>0:
+            add_len = l_min - (l-_l)
+            loss[min_idx] += add_len[min_idx]
+            _l[min_idx] -= add_len[min_idx]
 
         # 确定第一个小组的最后一个位置,如果第一个位置为0且有废料，则将其作为第一个位置
         fidx = np.where((group_firstpos==0) & (_l<l_min))[0]
@@ -114,9 +124,11 @@ def get_best_solution_group(group1, group2, l, l_min):
         while _l < length:
             _l += l
             joint1 += 1
+
         _l -= length
-        if _l < l_min:
-            _l = l
+
+        if l-_l<l_min: _l -= l_min-(l-_l)
+        if _l < l_min: _l = l
 
     _l = l
     for length in group2:
@@ -124,8 +136,8 @@ def get_best_solution_group(group1, group2, l, l_min):
             _l += l
             joint2 += 1
         _l -= length
-        if _l < l_min:
-            _l = l
+        if l-_l<l_min:  _l -= l_min-(l-_l)        
+        if _l < l_min:  _l = l
 
     return group1 if joint1 < joint2 else group2
 
@@ -147,7 +159,7 @@ best_loss=0
 best_joint=0
 
 # 最大停滞次数
-max_stagnation = 200
+max_stagnation = 500
 # 进化停顿次数
 nochange_count = 0
 
@@ -171,7 +183,6 @@ for gen in range(gen_max):
         nochange_count = 0
         best_loss = loss[best_idx]
         best_joint = joint[best_idx]
-        nochange_count = 0
             
     gen_values.append(best_fitnesses)
     gen_times.append(time.time()-start_time)
