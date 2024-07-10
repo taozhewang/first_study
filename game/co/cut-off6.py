@@ -44,8 +44,8 @@ max_stagnation = 100
 # 粒子群算法参数
 population_size = 500  # 粒子数量
 max_iter = 10000  # 最大迭代次数
-c1 = 2  # 个体学习因子
-c2 = 2  # 社会学习因子
+c1 = 1  # 个体学习因子
+c2 = 1  # 社会学习因子
 
 # 计算适应度函数
 def fitness(solution, patterns):

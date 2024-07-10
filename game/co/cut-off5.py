@@ -41,7 +41,9 @@ pattern_radius = 10
 # 最大的损失长度
 pattern_limit_loss = 1000
 # 最大停滞次数
-max_stagnation = 50
+max_stagnation = 100
+# 路径系数
+path_coef = 2
 
 # 蚁群算法参数
 # 最大循环次数
@@ -49,7 +51,7 @@ max_iterations = 1000000
 # 蚂蚁数量
 ant_count = 100  
 # 信息素持久因子
-rho = 0.5  
+rho = 0.2  
 # 信息素重要程度因子
 alpha = 1 
 
@@ -77,14 +79,38 @@ class Ant:
         self.need = need
         self.max_pattern_length = max_pattern_length
 
-    # 计算剩余长度的路径ID, 这里将超过max_pattern_length长度的部分都归为一个路径
-    def cut_off_to_rod_length(self, has_cut_off):
-        
-        return np.sum([(
+    # # 计算剩余长度的路径ID, 这里将超过max_pattern_length长度的部分都归为一个路径
+    # def cut_off_to_rod_length(self, has_cut_off):
+
+    #     return np.sum([(
             
-            [i]+1 if has_cut_off[i] < max_pattern_length[i] else 0) * (10**i) for i in range(len(has_cut_off))])
-        # return np.sum([has_cut_off[i] * (10**i) for i in range(len(has_cut_off))])
+    #         [i]+1 if has_cut_off[i] < max_pattern_length[i] else 0) * (10**i) for i in range(len(has_cut_off))])
+    #     # return np.sum([has_cut_off[i] * (10**i) for i in range(len(has_cut_off))])
     
+    def cut_off_to_rod_length(self, has_cut_off):
+        k  =1
+        id =0
+        for i in range(len(has_cut_off)):
+            if i>0: k*=max_pattern_length[i-1]
+            if has_cut_off[i] < max_pattern_length[i]*path_coef:
+                id+=(has_cut_off[i]+1)*k
+        return id           
+  
+        # def idxn(X):
+        #     n = len(X)
+        #     N = np.zeros(n)
+        #     Y = np.ones(n)
+        #     for i in range(n):
+        #         N[i] = np.sum(X[ : i + 1])
+        #         for j in range(i + 1):
+        #             Y[i] *= (N[i] + j) / (j + 1)
+        #     # print(N, Y)
+        #     return np.sum(Y)
+        # return int(idxn(has_cut_off))
+        # return np.sum([(
+            
+        #     [i]+1 if has_cut_off[i] < max_pattern_length[i] else 0) * (10**i) for i in range(len(has_cut_off))])
+
     # 构建解决方案
     def construct_solution(self, pheromone, heuristic):
         solution = np.zeros(self.patterns_length, dtype=int)
@@ -98,7 +124,8 @@ class Ant:
                 choice = random.choice(patterns_idxs)
             else:
                 # 计算路径的启发式信息
-                probabilities = pheromone[loa_lengths]**alpha * heuristic+1e-10
+                probabilities = pheromone[loa_lengths]**alpha*heuristic + 1e-10
+                # probabilities[probabilities==1e-10]=0
                 probabilities = probabilities/np.sum(probabilities)
            
                 # 选择路径
@@ -125,11 +152,13 @@ max_pattern_length = np.max(patterns_lengths,axis=0)
 print(f"max_pattern_length: {max_pattern_length}")
 patterns_costs = np.array([patterns[i][3] for i in range(patterns_length)])
 # 按成本的倒数计算组合的概率
-patterns_p = 1/patterns_costs
-patterns_p = patterns_p/np.sum(patterns_p)
+patterns_c = 1/patterns_costs
+patterns_p = patterns_c/np.sum(patterns_c)
 
 # 路径的长度，也就是状态的数量，这里不允许超量切割，所以是钢筋的剩余状态hash数量 
-rod_length = np.sum([(max_pattern_length[i]+1) * (10**i) for i in range(len(need))])
+rod_length = np.prod(max_pattern_length*path_coef+1)
+# rod_length = np.max(need) ** 3
+# rod_length = np.sum([(max_pattern_length[i]+1) * (10**i) for i in range(len(need))])
 # rod_length = np.sum([need[i] * (10**i) for i in range(len(need))])
 # 初始化信息素矩阵 从一个状态到另外一个状态的概率
 pheromone = np.ones((rod_length, patterns_length))
@@ -155,8 +184,7 @@ for iteration in range(10000):
     curr_min_idx = np.argmin(costs)
     curr_best_cost = costs[curr_min_idx]
     curr_avg_cost = np.mean(costs)
-    # 更新平均成本
-    avg_cost = avg_cost*0.9 + curr_avg_cost*0.1
+
     nochange_count +=1
 
     # 更新最优解
@@ -173,7 +201,9 @@ for iteration in range(10000):
     # 更新信息素,用平均成本/蚂蚁的成本更新信息素
     for ant in ants:
         for rod_length, choice in ant.path:
-            pheromone[rod_length][choice] += avg_cost / ant.cost
+            # pheromone[rod_length][choice] += avg_cost / ant.cost
+            pheromone[rod_length][choice] += 1 / ant.cost
+            # pheromone[rod_length][choice] = pheromone[rod_length][choice]*rho + 1/ant.cost
     pheromone *= rho
 
     # 如果达到最大停滞次数没有改进，则退出循环
