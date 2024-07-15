@@ -302,11 +302,14 @@ else:
     radius = 5
     losses = 100
 
-    need = np.array([552, 658, 462], dtype = int)
+    need = np.array([852, 658, 162], dtype = int)
     joint = 200
     l_size = 32
-    waste_cost = 0.00617 * 2000 * (l_size ** 2) / 1000
-    paste_cost = 10
+    # waste_cost = 0.00617 * 2000 * (l_size ** 2) / 1000
+    # paste_cost = 10
+    waste_cost = 1
+    paste_cost = 1
+
 
 # for i in range(len(L)):
 starttime = time.time()
