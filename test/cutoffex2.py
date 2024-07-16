@@ -44,7 +44,7 @@ group = [] # 用于记录所有种类的组合，在成本一样的情况下不�
 pat = [] # 用于记录所有种类的组合的字符串形式
 
 # 下面很可能是产生组合的什么东西
-def patterns_generate(l, L, joint, radius, losses, length, accumulator, stage, waste, paste, pointer, waste_cost, paste_cost, order):
+def patterns_generate(l, L, joint, radius, losses, length, accumulator, stage, waste, paste, connect, pointer, waste_cost, paste_cost, connect_cost, order):
 
         if stage == radius: # 如果到达最大原料用量，那么前面需要停止
             return
