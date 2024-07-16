@@ -186,8 +186,17 @@ def population_inheritance(population, population_size, C, patterns_p, need):
         # print(pair)
         parent1, parent2 = parents[pair[0]], parents[pair[1]]
         gene1 = np.random.choice(len(patterns), len(patterns) // 2, replace = False, p = patterns_p)
-        gene2 = np.arange(len(patterns))
-        gene2 = gene2[gene2 not in gene1]
+        # gene2 = np.arange(len(patterns))
+        # gene2 = gene2[gene2 not in gene1]
+
+        
+        gene2 = np.arange(len(patterns) - len(gene1))
+        k = 0
+        for i in range(len(patterns)):
+            if i not in gene1:
+                gene2[k] = i
+                k += 1
+    
         descendent = np.zeros(len(patterns), dtype = int)
         descendent[gene1] = parent1[gene1]
         descendent[gene2] = parent2[gene2]
@@ -236,7 +245,7 @@ def population_selection(population_size, patterns_p, need, patterns, patterns_p
         else:
             depth += 1
 
-        if depth > 20:
+        if depth > 100:
             break
     
     return best_population, min_cost
@@ -264,11 +273,13 @@ else:
     radius = 5
     losses = 100
 
-    need = np.array([552, 658, 462], dtype = int)
+    need = np.array([852, 658, 162], dtype = int)
     joint = 200
     l_size = 32
-    waste_cost = 0.00617 * 2000 * (l_size ** 2) / 1000
-    paste_cost = 10
+    # waste_cost = 0.00617 * 2000 * (l_size ** 2) / 1000
+    # paste_cost = 10
+    waste_cost = 1
+    paste_cost = 1
 
 variation_rate = 3
 starttime = time.time()
