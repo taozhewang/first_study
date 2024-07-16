@@ -41,7 +41,7 @@ l_size = 32
 L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
 L_values = list(L.values())
 # 目标钢筋的数量
-need = np.array([552, 658, 462],dtype=int)
+need = np.array([852, 658, 162],dtype=int)
 
 
 # 遗传算法参数
