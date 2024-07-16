@@ -7,7 +7,7 @@ patterns_property = [] # 用于记录所有组合的成本、尾料、粘合次�
 patterns_order = [] # 用于记录所有组合的物料顺序
 group = [] # 用于记录所有种类的组合，在成本一样的情况下不考虑其排序
 pat = [] # 用于记录所有种类的组合的字符串形式
-
+#
 # 下面很可能是产生组合的什么东西
 # def patterns_generate(l, L, joint, radius, losses, length, accumulator, stage, waste, paste, pointer, waste_cost, paste_cost, order):
 
