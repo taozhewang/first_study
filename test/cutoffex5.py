@@ -3,26 +3,26 @@ import copy
 import time
 from collections import Counter
 
-def solution_initialize(solution_size, need):
-    one_solution = np.zeros(np.sum(need), dtype = int)
+def population_initialize(population_size, need):
+    one_population = np.zeros(np.sum(need), dtype = int)
     start = 0
     for idx, num in enumerate(need):    
-        one_solution[start : start + num] = idx
+        one_population[start : start + num] = idx
         start += num
-    solutions = np.zeros((solution_size, np.sum(need)), dtype = int)
-    for i in range(solution_size):
-        solution = np.random.permutation(one_solution)
-        solutions[i] = solution
-    return solutions
+    populations = np.zeros((population_size, np.sum(need)), dtype = int)
+    for i in range(population_size):
+        population = np.random.permutation(one_population)
+        populations[i] = population
+    return populations
 
-def solution_value(solution, l, L, joint, loss):
+def population_value(population, l, L, joint, loss):
     waste = 0
     paste = 0
     length = 0
     count = 0
     patterns_id = np.array([], dtype = int)
     left = []
-    for idx in solution:
+    for idx in population:
             # idx = int(idx)
             length += L[idx]
             count += 1
@@ -59,28 +59,28 @@ def solution_value(solution, l, L, joint, loss):
 
 # def piece_compare(piece, l, L, joint, loss):
 
-def solution_update(solution, l, L, joint, loss, waste_cost, paste_cost):
-    waste, paste, patterns_id, left = solution_value(solution, l, L, joint, loss)
+def population_update(population, l, L, joint, loss, waste_cost, paste_cost):
+    waste, paste, patterns_id, left = population_value(population, l, L, joint, loss)
     for _ in range(len(patterns_id)):
         first_id = patterns_id[0]
         last_id = patterns_id[len(patterns_id) - 1]
 
-        piece1 = solution[: first_id]
-        piece2 = solution[first_id : last_id]
-        piece3 = solution[last_id :]
+        piece1 = population[: first_id]
+        piece2 = population[first_id : last_id]
+        piece3 = population[last_id :]
         
         end_piece = np.append(piece1, piece3)
 
         new_end_piece = np.random.permutation(end_piece)
 
-        p_waste, p_paste, p_patterns_id, p_left = solution_value(end_piece, l, L, joint, loss)
-        p_new_waste, p_new_paste, p_new_patterns_id, p_new_left = solution_value(new_end_piece, l, L, joint, loss)
+        p_waste, p_paste, p_patterns_id, p_left = population_value(end_piece, l, L, joint, loss)
+        p_new_waste, p_new_paste, p_new_patterns_id, p_new_left = population_value(new_end_piece, l, L, joint, loss)
         # p_new_patterns_id += last_id
 
         p_cost = waste_cost * p_waste + paste_cost * p_paste + 1 / (len(p_patterns_id) + 1) + cut * len(set(p_left))
         p_new_cost = waste_cost * p_new_waste + paste_cost * p_new_paste + 1 / (len(p_new_patterns_id) + 1) + cut * len(set(p_new_left))
         if p_new_cost < p_cost:
-            solution = copy.deepcopy(np.append(piece2, new_end_piece))
+            population = copy.deepcopy(np.append(piece2, new_end_piece))
             patterns_id = np.append(patterns_id[1:] - patterns_id[0], p_new_patterns_id + patterns_id[len(patterns_id) - 1] - patterns_id[0])
             waste = waste - p_waste + p_new_waste
             paste = paste - p_paste + p_new_paste
@@ -89,71 +89,86 @@ def solution_update(solution, l, L, joint, loss, waste_cost, paste_cost):
             left.extend(p_new_left)
             # return solution, waste, paste, patterns_id
         else:
-            solution = copy.deepcopy(np.append(piece2, end_piece))
+            population = copy.deepcopy(np.append(piece2, end_piece))
             patterns_id = np.append(patterns_id[1:] - patterns_id[0], patterns_id[len(patterns_id) - 1])
         # print(len(solution))
         # print(patterns_id)
-    return solution, waste, paste, patterns_id, left
+    return population, waste, paste, patterns_id, left
     
-def solution_optimize(solution_size, need, l, L, joint, loss, waste_cost, paste_cost, max_iter, shift_ratio):
-    solutions = solution_initialize(solution_size, need)
+def population_inharitance(populations, population_size, cost):
+    parents_index = np.argsort(cost)[: population_size // 2]
+    parents = populations[parents_index]
+    parents_cost = cost[parents_index]
+    offspring = np.zeros_like(populations)
+    offspring[: population_size // 2] = parents
+    for i in range(population_size // 2):
+        success = True
+        while success:
+            p_index = np.random.choice(parents_index, 2, replace = False, p = parents_cost / np.sum(parents_cost))
+            p1 = populations[p_index[0]]
+            p2 = populations[p_index[1]]
+            for location in range(population_size // 2, -1, -1):
+                if Counter(p1[: location + 1]) == Counter(p2[: location + 1]):
+                    decsendent = np.append(p1[: location + 1], p2[location + 1 :])
+                    offspring[population_size // 2 + i] = decsendent
+                    success = False
+                    break
+                # elif Counter(p1[: location + 1]) == Counter(p2[population_size - location - 1 :]):
+                #     decsendent = np.append(p1[: location + 1], p2[: population_size - location - 1])
+                #     offspring[population_size // 2 + i] = decsendent
+                #     success = False
+                #     break
+                else:
+                    continue 
+    return offspring
+        
+def population_optimize(population_size, need, l, L, joint, loss, waste_cost, paste_cost, max_iter, shift_ratio):
+    populations = population_initialize(population_size, need)
     
-    taboo_list = np.zeros_like(solutions)
-    taboo_cost = np.zeros(solution_size)
-    for i in range(solution_size):
-        taboo_list[i] = solutions[i]
-        waste, paste, patterns_id, left = solution_value(solutions[i], l, L, joint, loss)
-        taboo_cost[i] = waste_cost * waste + paste_cost * paste + 1 / (len(patterns_id) + 1) + cut * len(set(left))
-    min_cost = np.min(taboo_cost)
-    best_solution = solutions[np.argmin(taboo_cost)]
-    taboo_average_cost = np.mean(taboo_cost)
+
+    cost = np.zeros(population_size)
+    for i in range(population_size):
+        
+        waste, paste, patterns_id, left = population_value(populations[i], l, L, joint, loss)
+        cost[i] = waste_cost * waste + paste_cost * paste + 1 / (len(patterns_id) + 1) + cut * len(set(left))
+    min_cost = np.min(cost)
+    best_population = populations[np.argmin(cost)]
+    average_cost = np.mean(cost)
 
     depth = 0
     unchange = 0
     while True:
 
-        for i in range(solution_size):
-            new_solution, new_waste, new_paste, new_patterns_id, new_left = solution_update(solutions[i], l, L, joint, loss, waste_cost, paste_cost)
-            solutions[i] = new_solution
+        populations = population_inharitance(populations, population_size, cost)
+        for i in range(population_size):
+            new_population, new_waste, new_paste, new_patterns_id, new_left = population_update(populations[i], l, L, joint, loss, waste_cost, paste_cost)
+            populations[i] = new_population
             # new_waste, new_paste, new_patterns_id = solution_value(solutions[i], l, L, joint, loss)
             new_cost = new_waste * waste_cost + new_paste * paste_cost + 1 / (len(new_patterns_id) + 1) + cut * len(set(new_left))
-            if new_cost < taboo_average_cost:
-                replace = True
-                for taboo_solution in taboo_list:
-                    if np.array_equal(new_solution, taboo_solution):
-                        replace = False
-                        break
-                if replace:
-                    taboo_list[i] = solutions[i]
-                    taboo_cost[i] = new_cost
-            
-        new_taboo_average_cost = np.mean(taboo_cost)
-        if new_taboo_average_cost >= taboo_average_cost:
-                depth += 1
+            cost[i] = new_cost
+
+        new_average_cost = np.mean(cost)
+        if new_average_cost >= average_cost:
+            depth += 1
         else: 
             print(f'depth: {depth}')
-            print(f'current average cost: {new_taboo_average_cost}')
+            print(f'current average cost: {new_average_cost}')
             print(f'minimum cost: {min_cost}')
-            print(f'best solution: {best_solution}')
+            print(f'best population: {best_population}')
             depth = 0
-        taboo_average_cost = new_taboo_average_cost
-        curr_min_cost = np.min(taboo_cost)
+        average_cost = new_average_cost
+        curr_min_cost = np.min(cost)
             
         if curr_min_cost < min_cost:
-            best_solution = taboo_list[np.argmin(taboo_cost)]
+            best_population = populations[np.argmin(cost)]
             min_cost = curr_min_cost
             unchange = 0
         else:
             unchange += 1
 
         if depth >= max_iter or unchange >= max_unchange:
-            return best_solution, min_cost
+            return best_population, min_cost
         
-        # if depth >= max_iter // 10:
-        if depth >= 0:
-            taboo_shift_idx = np.argsort(taboo_cost)[ : solution_size // shift_ratio]
-            solutions_shift_idx = np.argsort(taboo_cost)[solution_size - solution_size // shift_ratio : ]
-            solutions[solutions_shift_idx] = taboo_list[taboo_shift_idx]
 
 fill = input('主动填入数据请按0, 否则按照默认随便按')
 if fill == '0':
@@ -161,8 +176,8 @@ if fill == '0':
     n = int(input('目标材料种类数 the number of objects: '))
     losses = int(input('形成组合最多允许多长的余料 max left of patterns: '))
 
-    L = np.zeros(n, dtype = int)
-    need = np.zeros(n, dtype = int)
+    L = np.zeros(n)
+    need = np.zeros(n)
     for i in range(n):
         L[i] = int(input(f'第{i + 1}种目标材料 object L{i + 1}: '))
         need[i] = int(input(f'第{i + 1}种目标材料需要数量 object L{i + 1} need: '))
@@ -185,16 +200,16 @@ else:
     # paste_cost = 1
 
 starttime = time.time()
-solution_size = 100
+population_size = 100
 max_iter = 50
-max_unchange = 100
+max_unchange = 30
 shift_ratio = 2
 cut = 1e-2
 
-best_solution, min_cost = solution_optimize(solution_size, need, l, L, joint, losses, waste_cost, paste_cost, max_iter, shift_ratio)
+best_population, min_cost = population_optimize(population_size, need, l, L, joint, losses, waste_cost, paste_cost, max_iter, shift_ratio)
 
-print(f'最优解: {best_solution}')
-waste, paste, patterns_id, left = solution_value(best_solution, l, L, joint, losses)
+print(f'最优解: {best_population}')
+waste, paste, patterns_id, left = population_value(best_population, l, L, joint, losses)
 print(f'waste: {waste}')
 print(f'paste: {paste}')
 print(f'patterns_id: {patterns_id}')
@@ -207,12 +222,12 @@ order = []
 repeat = []
 if 0 not in patterns_id:
     patterns_id = np.append(0, patterns_id)
-if len(best_solution) not in patterns_id:
-    patterns_id = np.append(patterns_id, len(best_solution))
+if len(best_population) not in patterns_id:
+    patterns_id = np.append(patterns_id, len(best_population))
 
 for i in range(len(patterns_id) - 1):
     pattern = np.zeros(len(L))
-    one_pattern = best_solution[patterns_id[i] : patterns_id[i + 1]]
+    one_pattern = best_population[patterns_id[i] : patterns_id[i + 1]]
     for idx in one_pattern:
         pattern[idx] += 1
     one_pat = '_'.join(str(x) for x in pattern)
@@ -227,19 +242,21 @@ for i in range(len(patterns_id) - 1):
 for i in range(len(group)):
     print(f'repeated: {repeat[i]}')
     print(f'pattern: {group[i]}')
-    print(f'order: {order[i]}')
+    print(f'order: {L[order[i]]}')
+    print()
 for _ in range(repeat[0]):
-    final_solution = np.array([order[0]])
+    final_population = np.array([order[0]])
 for i in range(1, len(order)):
     for _ in range(repeat[i]):
-        final_solution = np.append(final_solution, order[i])
+        final_population = np.append(final_population, order[i])
 
-waste, paste, patterns_id, left = solution_value(best_solution, l, L, joint, losses)
+waste, paste, patterns_id, left = population_value(best_population, l, L, joint, losses)
 print(Counter(left))
 for i in left:
     print(i, end = ' ')
 print()
-# print(f'left: {np.sort(left)}')
+# print(f'left: {np.sort
+# (left)}')
 
 
 

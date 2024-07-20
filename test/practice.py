@@ -260,26 +260,89 @@
 # print()
 # print('solution:', psolution, dsolution)
 
-# 24 points
+# # transformation on C
+# import numpy as np
+# import plotly.graph_objects as go
+# def print_Im(f, leftbound, rightbound, lowerbound, upperbound, step = 0.5):
+#     fig = go.Figure()
+#     Dfx = []
+#     Dfy = []
+#     Imx = []
+#     Imy = []
+#     for i in np.arange(int(leftbound), int(rightbound) + 1, step):
+#         # print(i)
+#         for j in np.arange(int(lowerbound), int(upperbound) + 1, step):
+#             # print(i)
+#             Dfx.append(i)
+#             Dfy.append(j)
+#             x, y = f(i, j)
+#             Imx.append(x)
+#             Imy.append(y)
+
+#     fig.add_scatter(x = Dfx, y = Dfy, mode = 'lines+markers', name = 'Definitive Field')
+#     fig.add_scatter(x = Imx, y = Imy, mode = 'lines+markers', name = 'Image Field')
+#         # print(Dfx)
+#         # Dfx = []
+#         # Dfy = []
+#         # Imx = []
+#         # Imy = []
+#     fig.show()
+    
+# # f = z    
+# def z1(x, y):
+#     return x, y
+
+# # f = z ^ 2
+# def z2(x, y):
+#     return x ** 2 - y ** 2, 2 * x * y
+
+# # f = exp(z)
+# def z3(x, y):
+#     return np.exp(x) * np.cos(y), np.exp(x) * np.sin(y)
+
+# leftbound, rightbound, lowerbound, upperbound = -5, 5, -5, 5
+# print_Im(z1, leftbound, rightbound, lowerbound, upperbound)
+# print_Im(z2, leftbound, rightbound, lowerbound, upperbound)
+# print_Im(z3, leftbound, rightbound, lowerbound, upperbound)
+
+
+# cup~
 import numpy as np
-import copy
-def f(X, p):
-    if len(X) >= 2:
-        for i in range(len(X)):
-            for j in range(i + 1, len(X)):
-                Y = copy.deepcopy(X)
-                Y = np.delete(Y, [i, j])
-                f(np.append(Y, X[i] + X[j]), p + [f'{X[i]} + {X[j]}'])
-                f(np.append(Y, X[i] * X[j]), p + [f'{X[i]} * {X[j]}'])
-                f(np.append(Y, X[i] - X[j]), p + [f'{X[i]} - {X[j]}'])
-                f(np.append(Y, X[j] - X[i]), p + [f'{X[j]} - {X[i]}'])
-                if X[i]
-                f(np.append(Y, X[i] / X[j]), p + [f'{X[i]} / {X[j]}'])
-                f(np.append(Y, X[j] / X[i]), p + [f'{X[j]} / {X[i]}'])
+def find_ab(x, y, z):
+    m = np.max([x, y])
+    n = np.min([x, y])
+    A = np.array([[m, 1, 0],
+                  [n, 0, 1]])
+    Continue = True
+    up = 0
+    down = 1
+    while Continue:
+        q = A[up, 0] // A[down, 0]
+        A[up, :] = A[up, :] - q * A[down, :]
+        if A[up, 0] == 0 or A[up, 0] == 0:
+            Continue = False
+        up, down = down, up
+    row = np.where(A[:, 0] != 0)[0]
+    x_y = A[row]
+    print(x_y)
+    factor = x_y[0][0]
+    m_factor = x_y[0][1]
+    n_factor = x_y[0][2]
+    p = z // factor
+    r = z % factor
+    if r != 0:
+        # print('No solution')
+        assert r == 0, 'No solution'
+        return None
     else:
-        if X[0] == 24:
-            print(p)
-        return
-X = [7, 9, 7, 9]
-p = []
-f(X, p)
+        a = m_factor * p
+        b = n_factor * p
+        return a, b
+
+x = 3
+y = 8
+z = 4
+a, b = find_ab(x, y, z)
+print(f'{np.max([x, y])} : {a}')
+print(f'{np.min([x, y])} : {b}')
+

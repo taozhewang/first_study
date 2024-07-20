@@ -238,6 +238,52 @@ def patterns_decomposition_summon(pattern, l, L, joint):
             patterns_decomposition(pattern, l, L, joint, 0, {0: []}, i, 0)
     return
 
+def patterns_show(pattern, L, l, joint):
+    L = np.array(list(L.values()))
+    total_length = np.array(L) @ np.array(pattern)
+    l_num = total_length // l + bool(total_length % l)
+    solution = np.array([])
+    for i in range(len(pattern)):
+        solution = np.append(solution, np.ones(pattern[i]) * i)
+    while True:
+        lorder = [[]]
+        length = 0
+        stage = 0
+        order = np.random.permutation(solution)
+        
+        for idx in order:
+            idx = int(idx)
+            length += L[idx]
+
+            if length > l + joint:
+                lorder[stage].extend([l + L[idx] - length])
+                stage += 1
+                length -= l
+                lorder.extend([[length]])
+            elif length > l:
+                lorder[stage].extend([l + joint - length, L[idx] - joint])
+                stage += 1
+                length = joint
+                lorder.extend([[joint]])
+            elif length == l:
+                lorder[stage].extend([L[idx]])
+                stage += 1
+                length = 0
+                lorder.extend([[]])
+            elif length > l - joint:
+                lorder[stage].extend([l - length])
+                stage += 1
+                length = 0
+                lorder.extend([[]])
+            else:
+                lorder[stage].extend([L[idx]])
+        if lorder[ - 1] == []:
+            lorder.pop()
+        if len(lorder) == l_num:
+            break
+    return lorder
+    
+
 terms1 = []
 terms2 = []
 terms4 = []
@@ -447,19 +493,27 @@ while True:
             # print('depth:', depth)
             print('curr_stage:', accumulate, currmin)
 
-                
+
 
     # result = calc1(depth)
     result, result_depth = calc1(0)
 
     print(result[1 :])
     for i in range(1, len(result)):
-        print(f'组合 pattern{i - 1}: ', propatterns[i][1 :])
+        if result[i] == 0:
+            continue
+        print(f'组合 pattern{i - 1}: ', propatterns[i])
         print('用量 use: ', int(result[i]))
+        lorder = patterns_show(propatterns[i], L, l, 200)
+        for i, j in enumerate(lorder):
+            print(f'l ID : {i}; order: {j}')
+
     print('迭代次数 depth: ', result_depth)
     ac = calcu(result)
     # print(ac)
     print('剩余 left: ', need - ac)
+
+
 
 last = need - ac
 joint = int(input('接头的最小长度 the min length of the joint: '))
@@ -470,3 +524,6 @@ calc_left(last, [[]], [], 0, [[]], 0, joint)
 print('每根原料中截下的完整的目标材料：', terms1[0])
 print('两根原料间拼接的目标材料：', terms2[0])
 print('每根原料的截断长度：', terms4[0])
+
+
+    
