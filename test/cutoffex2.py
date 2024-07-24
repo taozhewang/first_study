@@ -405,11 +405,16 @@ t = 0
 for i, j in enumerate(solution):
     if j != 0:
         t += 1
-        print(j, patterns[i], patterns_order[i])
+        # print(j, patterns[i], patterns_order[i])
         ac += patterns[i] * j
 
         print(f'patternsID: {t}')
+        print(f'pattern: {patterns[i]}')
         print(f'repeated: {j}')
+        print(f'cost: {patterns_property[i][0]}')
+        print(f'left: {patterns_property[i][1]}')
+        print(f'paste: {patterns_property[i][2]}')
+        
         for m, n in enumerate(patterns_order[i]):
             if n != []:
                 print(f'{m} : {n}')

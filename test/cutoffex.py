@@ -249,6 +249,7 @@ def patterns_show(pattern, L, l, joint):
         lorder = [[]]
         length = 0
         stage = 0
+        waste = 0
         order = np.random.permutation(solution)
         
         for idx in order:
@@ -262,6 +263,7 @@ def patterns_show(pattern, L, l, joint):
                 lorder.extend([[length]])
             elif length > l:
                 lorder[stage].extend([l + joint - length, L[idx] - joint])
+                waste += l + joint - length
                 stage += 1
                 length = joint
                 lorder.extend([[joint]])
@@ -272,6 +274,7 @@ def patterns_show(pattern, L, l, joint):
                 lorder.extend([[]])
             elif length > l - joint:
                 lorder[stage].extend([l - length])
+                waste += l - length
                 stage += 1
                 length = 0
                 lorder.extend([[]])
@@ -281,7 +284,7 @@ def patterns_show(pattern, L, l, joint):
             lorder.pop()
         if len(lorder) == l_num:
             break
-    return lorder
+    return lorder, waste
     
 
 terms1 = []
@@ -504,7 +507,8 @@ while True:
             continue
         print(f'组合 pattern{i - 1}: ', propatterns[i])
         print('用量 use: ', int(result[i]))
-        lorder = patterns_show(propatterns[i], L, l, 200)
+        lorder, lwaste = patterns_show(propatterns[i], L, l, 200)
+        print(f'left: {lwaste}')
         for i, j in enumerate(lorder):
             print(f'l ID : {i}; order: {j}')
 

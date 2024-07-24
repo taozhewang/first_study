@@ -95,81 +95,81 @@ def solution_update(solution, l, L, joint, loss, waste_cost, paste_cost):
         # print(patterns_id)
     return solution, waste, paste, patterns_id, left
 
-def solution_order_initialize(group):
-    solution_order = []
-    for p in group:
-        ids = np.random.choice(p, len(p), replace = True)
-        solution_order.append(ids)
-    return solution_order
+# def solution_order_initialize(group):
+#     solution_order = []
+#     for p in group:
+#         ids = np.random.choice(p, len(p), replace = True)
+#         solution_order.append(ids)
+#     return solution_order
 
-# def pattern_order_evaluate(one_pattern, l, L, joint, losses):
-#     # print(one_pattern)
-#     waste, paste, patterns_id, left = solution_value(one_pattern, l, L, joint, losses)
+# # def pattern_order_evaluate(one_pattern, l, L, joint, losses):
+# #     # print(one_pattern)
+# #     waste, paste, patterns_id, left = solution_value(one_pattern, l, L, joint, losses)
+# #     return left
+# def pattern_order_info(order, l, L, joint, losses):
+#     pattern_info = []
+#     for one_pattern in order:
+#         waste, paste, patterns_id, pattern_left = solution_value(one_pattern, l, L, joint, losses)
+#         # pattern_left = pattern_order_evaluate(one_pattern, l, L, joint, losses)
+#         pattern_info.append(pattern_left)
+#     return pattern_info
+# def solution_order_evaluate(solution_order, pattern_info):
+#     left = []
+#     for i in solution_order:
+#         for j in i:
+#             left.extend(pattern_info[j])
 #     return left
-def pattern_order_info(order, l, L, joint, losses):
-    pattern_info = []
-    for one_pattern in order:
-        waste, paste, patterns_id, pattern_left = solution_value(one_pattern, l, L, joint, losses)
-        # pattern_left = pattern_order_evaluate(one_pattern, l, L, joint, losses)
-        pattern_info.append(pattern_left)
-    return pattern_info
-def solution_order_evaluate(solution_order, pattern_info):
-    left = []
-    for i in solution_order:
-        for j in i:
-            left.extend(pattern_info[j])
-    return left
-def solution_order_optimize(group, order, solution_size, l, L, joint, loss, max_iter):
-    pattern_info = pattern_order_info(order, l, L, joint, loss)
+# def solution_order_optimize(group, order, solution_size, l, L, joint, loss, max_iter):
+#     pattern_info = pattern_order_info(order, l, L, joint, loss)
 
-    min_cost = np.inf
-    depth = 0
-    while True:
-        solutions = [solution_order_initialize(group) for _ in range(solution_size)]
-        # print(solutions)
-        cost = np.zeros(solution_size)
-        for i, solution in enumerate(solutions):
-            solution_left = solution_order_evaluate(solution, pattern_info)
-            cost[i] = len(Counter(solution_left))
-        curr_min_cost = np.min(cost)
-        if curr_min_cost < min_cost:
-            min_cost = curr_min_cost
-            print(f'joint optimize depth : {depth}')
-            print(f'minimum joint: {min_cost}')
-            depth = 0
-            best_solution = solutions[np.argmin(cost)]
-        else:
-            depth += 1
+#     min_cost = np.inf
+#     depth = 0
+#     while True:
+#         solutions = [solution_order_initialize(group) for _ in range(solution_size)]
+#         # print(solutions)
+#         cost = np.zeros(solution_size)
+#         for i, solution in enumerate(solutions):
+#             solution_left = solution_order_evaluate(solution, pattern_info)
+#             cost[i] = len(Counter(solution_left))
+#         curr_min_cost = np.min(cost)
+#         if curr_min_cost < min_cost:
+#             min_cost = curr_min_cost
+#             print(f'joint optimize depth : {depth}')
+#             print(f'minimum joint: {min_cost}')
+#             depth = 0
+#             best_solution = solutions[np.argmin(cost)]
+#         else:
+#             depth += 1
 
-        if depth >= max_iter//2:
-            solution_order = []
-            for i in best_solution:
-                for j in i:
-                    # print(order[j])
-                    solution_order.extend(order[j])
-            return solution_order, min_cost 
+#         if depth >= max_iter // 2:
+#             solution_order = []
+#             for i in best_solution:
+#                 for j in i:
+#                     # print(order[j])
+#                     solution_order.extend(order[j])
+#             return solution_order, min_cost 
 
-def pre_solution_order_optimize(patterns_id, best_solution, solution_size, l, L, joint, losses, max_iter):
-    group = []
-    pat = []
-    order = []
-    if 0 not in patterns_id:
-        patterns_id = np.append(0, patterns_id)
-    if len(best_solution) not in patterns_id:
-        patterns_id = np.append(patterns_id, len(best_solution))
+# def pre_solution_order_optimize(patterns_id, best_solution, solution_size, l, L, joint, losses, max_iter):
+#     group = []
+#     pat = []
+#     order = []
+#     if 0 not in patterns_id:
+#         patterns_id = np.append(0, patterns_id)
+#     if len(best_solution) not in patterns_id:
+#         patterns_id = np.append(patterns_id, len(best_solution))
 
-    for i in range(len(patterns_id) - 1):
-        pattern = np.zeros(len(L))
-        one_pattern = best_solution[patterns_id[i] : patterns_id[i + 1]]
-        order.append(one_pattern)
-        pattern_compose = Counter(one_pattern)
-        if pattern_compose not in pat:
-            pat.append(pattern_compose)
-            group.append([i])
-        else:
-            group[pat.index(pattern_compose)].append(i)
-    best_solution_order, min_joint = solution_order_optimize(group, order, solution_size, l, L, joint, losses, max_iter)
-    return best_solution_order, min_joint
+#     for i in range(len(patterns_id) - 1):
+#         pattern = np.zeros(len(L))
+#         one_pattern = best_solution[patterns_id[i] : patterns_id[i + 1]]
+#         order.append(one_pattern)
+#         pattern_compose = Counter(one_pattern)
+#         if pattern_compose not in pat:
+#             pat.append(pattern_compose)
+#             group.append([i])
+#         else:
+#             group[pat.index(pattern_compose)].append(i)
+#     best_solution_order, min_joint = solution_order_optimize(group, order, solution_size, l, L, joint, losses, max_iter)
+#     return best_solution_order, min_joint
 
 def solution_optimize(solution_size, need, l, L, joint, loss, waste_cost, paste_cost, max_iter, shift_ratio):
     solutions = solution_initialize(solution_size, need)
@@ -221,33 +221,22 @@ def solution_optimize(solution_size, need, l, L, joint, loss, waste_cost, paste_
         curr_best_solution = taboo_list[curr_min_idx]
             
         if curr_min_cost < min_cost:
-            # if min_cost - curr_min_cost >= cut * 2:
-                best_solution = curr_best_solution
-                min_cost = curr_min_cost
-                unchange = 0
-        elif curr_min_cost == min_cost:
-            patterns_id = Patterns_id[curr_min_idx]
-            curr_best_solution, curr_min_joint = pre_solution_order_optimize(patterns_id, best_solution, solution_size, l, L, joint, losses, max_iter)
-            if curr_min_joint < joint_num:
-                best_solution = copy.deepcopy(curr_best_solution)
-                joint_num = curr_min_joint
-                min_joint_solution = copy.deepcopy(curr_best_solution)
+            # best_solution = taboo_list[np.argmin(taboo_cost)]
+            best_solution = curr_best_solution
+            min_cost = curr_min_cost
             unchange = 0
+        # elif curr_min_cost == min_cost:
+        #     patterns_id = Patterns_id[curr_min_idx]
+        #     curr_best_solution, curr_min_joint = pre_solution_order_optimize(patterns_id, best_solution, solution_size, l, L, joint, losses, max_iter)
+        #     if curr_min_joint < joint_num:
+        #         best_solution = curr_best_solution
+        #         joint_num = curr_min_joint
+        #     unchange = 0
         else:
             unchange += 1
 
         if depth >= max_iter or unchange >= max_unchange:
-
-            new_waste, new_paste, new_patterns_id, new_left = solution_value(best_solution, l, L, joint, loss)
-            curr_best_solution, curr_min_joint = pre_solution_order_optimize(patterns_id, best_solution, solution_size, l, L, joint, losses, max_iter)
-            if curr_min_joint <= joint_num:
-                return curr_best_solution, min_cost
-            else:
-                _waste, _paste, _patterns_id, _left = solution_value(min_joint_solution, l, L, joint, loss)
-                if new_waste * waste_cost + new_paste * paste_cost < _waste * waste_cost + _paste * paste_cost:
-                    return best_solution, min_cost
-                else:
-                    return min_joint_solution, min_cost
+            return best_solution, min_cost
         
         # if depth >= max_iter // 10:
         if depth >= 0:
@@ -348,123 +337,114 @@ waste, paste, patterns_id, left = solution_value(best_solution, l, L, joint, los
 print(f'waste: {waste}')
 print(f'paste: {paste}')
 print(f'patterns_id: {patterns_id}')
-print(Counter(left))
-print(len(Counter(left)))
-print(f'left: {left}')
+# print(Counter(left))
+# print(f'left: {left}')
 
-best_solution_order, min_joint = pre_solution_order_optimize(patterns_id, best_solution, solution_size, l, L, joint, losses, max_iter)
-print(f'最优解: {best_solution}')
-waste, paste, patterns_id, left = solution_value(best_solution, l, L, joint, losses)
-print(f'waste: {waste}')
-print(f'paste: {paste}')
-print(f'patterns_id: {patterns_id}')
-print(Counter(left))
-print(len(Counter(left)))
-print(f'left: {left}')
-# print(f'patterns: {best_solution[0 : patterns_id[0]]}')
-# def solution_order_initialize(group):
-#     solution_order = []
-#     for p in group:
-#         ids = np.random.choice(p, len(p), replace = True)
-#         solution_order.append(ids)
-#     return solution_order
+def solution_order_initialize(group):
+    solution_order = []
+    for p in group:
+        ids = np.random.choice(p, len(p), replace = True)
+        solution_order.append(ids)
+    return solution_order
 
-# # def pattern_order_evaluate(one_pattern, l, L, joint, losses):
-# #     # print(one_pattern)
-# #     waste, paste, patterns_id, left = solution_value(one_pattern, l, L, joint, losses)
-# #     return left
-# def pattern_order_info(order, l, L, joint, losses):
-#     pattern_info = []
-#     for one_pattern in order:
-#         waste, paste, patterns_id, pattern_left = solution_value(one_pattern, l, L, joint, losses)
-#         # pattern_left = pattern_order_evaluate(one_pattern, l, L, joint, losses)
-#         pattern_info.append(pattern_left)
-#     return pattern_info
-# def solution_order_evaluate(solution_order, pattern_info):
-#     left = []
-#     for i in solution_order:
-#         for j in i:
-#             left.extend(pattern_info[j])
+# def pattern_order_evaluate(one_pattern, l, L, joint, losses):
+#     # print(one_pattern)
+#     waste, paste, patterns_id, left = solution_value(one_pattern, l, L, joint, losses)
 #     return left
-# def solution_order_optimize(group, order, solution_size, l, L, joint, loss, max_iter):
-#     pattern_info = pattern_order_info(order, l, L, joint, loss)
+def pattern_order_info(order, l, L, joint, losses):
+    pattern_info = []
+    for one_pattern in order:
+        waste, paste, patterns_id, pattern_left = solution_value(one_pattern, l, L, joint, losses)
+        # pattern_left = pattern_order_evaluate(one_pattern, l, L, joint, losses)
+        pattern_info.append(pattern_left)
+    return pattern_info
+def solution_order_evaluate(solution_order, pattern_info):
+    left = []
+    for i in solution_order:
+        for j in i:
+            left.extend(pattern_info[j])
+    return left
+def solution_order_optimize(group, order, solution_size, l, L, joint, loss, max_iter):
+    pattern_info = pattern_order_info(order, l, L, joint, loss)
 
-#     min_cost = np.inf
-#     depth = 0
-#     while True:
-#         solutions = [solution_order_initialize(group) for _ in range(solution_size)]
-#         # print(solutions)
-#         cost = np.zeros(solution_size)
-#         for i, solution in enumerate(solutions):
-#             solution_left = solution_order_evaluate(solution, pattern_info)
-#             cost[i] = len(Counter(solution_left))
-#         curr_min_cost = np.min(cost)
-#         if curr_min_cost < min_cost:
-#             min_cost = curr_min_cost
-#             # print(f'depth : {depth}')
-#             # print(f'minimum cost: {min_cost}')
-#             depth = 0
-#             best_solution = solutions[np.argmin(cost)]
-#         else:
-#             depth += 1
+    min_cost = np.inf
+    depth = 0
+    while True:
+        solutions = [solution_order_initialize(group) for _ in range(solution_size)]
+        # print(solutions)
+        cost = np.zeros(solution_size)
+        for i, solution in enumerate(solutions):
+            solution_left = solution_order_evaluate(solution, pattern_info)
+            cost[i] = len(Counter(solution_left))
+        curr_min_cost = np.min(cost)
+        if curr_min_cost < min_cost:
+            min_cost = curr_min_cost
+            print(f'depth : {depth}')
+            print(f'minimum cost: {min_cost}')
+            depth = 0
+            best_solution = solutions[np.argmin(cost)]
+        else:
+            depth += 1
 
-#         if depth >= max_iter:
-#             solution_order = []
-#             for i in best_solution:
-#                 for j in i:
-#                     print(order[j])
-#                     solution_order.extend(order[j])
-#             return solution_order, min_cost 
+        if depth >= max_iter:
+            solution_order = []
+            for i in best_solution:
+                for j in i:
+                    # print(order[j])
+                    solution_order.extend(order[j])
+            return solution_order, min_cost 
 
-# def pre_solution_order_optimize(patterns_id, best_solution, solution_size, l, L, joint, losses, max_iter):
-#     group = []
-#     pat = []
-#     order = []
-#     if 0 not in patterns_id:
-#         patterns_id = np.append(0, patterns_id)
-#     if len(best_solution) not in patterns_id:
-#         patterns_id = np.append(patterns_id, len(best_solution))
+def pre_solution_order_optimize(patterns_id, best_solution, solution_size, l, L, joint, losses, max_iter):
+    group = []
+    pat = []
+    order = []
+    if 0 not in patterns_id:
+        patterns_id = np.append(0, patterns_id)
+    if len(best_solution) not in patterns_id:
+        patterns_id = np.append(patterns_id, len(best_solution))
 
-#     for i in range(len(patterns_id) - 1):
-#         pattern = np.zeros(len(L))
-#         one_pattern = best_solution[patterns_id[i] : patterns_id[i + 1]]
-#         order.append(one_pattern)
-#         pattern_compose = Counter(one_pattern)
-#         if pattern_compose not in pat:
-#             pat.append(pattern_compose)
-#             group.append([i])
-#         else:
-#             group[pat.index(pattern_compose)].append(i)
-#     best_solution_order, min_joint = solution_order_optimize(group, order, solution_size, l, L, joint, losses, max_iter)
-#     return best_solution_order, min_joint
+    for i in range(len(patterns_id) - 1):
+        pattern = np.zeros(len(L))
+        one_pattern = best_solution[patterns_id[i] : patterns_id[i + 1]]
+        order.append(one_pattern)
+        pattern_compose = Counter(one_pattern)
+        if pattern_compose not in pat:
+            pat.append(pattern_compose)
+            group.append([i])
+        else:
+            group[pat.index(pattern_compose)].append(i)
+    best_solution_order, min_joint = solution_order_optimize(group, order, solution_size, l, L, joint, losses, max_iter)
+    return best_solution_order, min_joint
 
-# # print(group)
-# # print(order)
-# # best_solution_order, min_joint = solution_order_optimize(group, solution_size, l, L, joint, losses, max_iter)
+# print(group)
+# print(order)
+best_solution_order, min_joint = pre_solution_order_optimize(patterns_id, best_solution, solution_size, l, L, joint, losses, max_iter)
 # solution_order = []
 # for i in best_solution_order:
 #     for j in i:
 #         print(order[j])
 #         solution_order.extend(order[j])
-# waste, paste, patterns_id, left = solution_value(solution_order, l, L, joint, losses)
-# print(left)
-# print(Counter(left))
-#         # print()
-# # for i in range(len(group)):
-# #     print(f'repeated: {repeat[i]}')
-# #     print(f'pattern: {group[i]}')
-# #     print(f'order: {order[i]}')
-# # for _ in range(repeat[0]):
-# #     final_solution = np.array([order[0]])
-# # for i in range(1, len(order)):
-# #     for _ in range(repeat[i]):
-# #         final_solution = np.append(final_solution, order[i])
+print(best_solution_order)
+waste, paste, patterns_id, left = solution_value(best_solution_order, l, L, joint, losses)
+print(left)
+print(Counter(left))
+print(len(Counter(left)))
+        # print()
+# for i in range(len(group)):
+#     print(f'repeated: {repeat[i]}')
+#     print(f'pattern: {group[i]}')
+#     print(f'order: {order[i]}')
+# for _ in range(repeat[0]):
+#     final_solution = np.array([order[0]])
+# for i in range(1, len(order)):
+#     for _ in range(repeat[i]):
+#         final_solution = np.append(final_solution, order[i])
 
-# # waste, paste, patterns_id, left = solution_value(best_solution, l, L, joint, losses)
-# # print(Counter(left))
-# # for i in left:
-# #     print(i, end = ' ')
-# # print()
+# waste, paste, patterns_id, left = solution_value(best_solution, l, L, joint, losses)
+# print(Counter(left))
+# for i in left:
+#     print(i, end = ' ')
+# print()
 
 endtime = time.time()
 print(f'time: {endtime - starttime} s')
