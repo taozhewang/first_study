@@ -13,9 +13,10 @@ def patterns_generate(l, L, joint, radius, losses, length, accumulator, stage, w
     stack = [(length, accumulator, stage, waste, paste, pointer, order) for pointer in range(len(L))]
 
     while stack:
+        # print(len(stack))
         # length, accumulator, stage, waste, paste, pointer, order = stack.pop(0) # 优先广度搜索
-        length, accumulator, stage, waste, paste, pointer, order = stack.pop(-1) # 优先深度搜索
-
+        length, accumulator, stage, waste, paste, pointer, order = stack.pop() # 优先深度搜索
+        
         if stage == radius: # 如果到达最大原料用量，那么前面需要停止
             continue
 
@@ -125,10 +126,10 @@ def patterns_generate(l, L, joint, radius, losses, length, accumulator, stage, w
     return patterns, patterns_property, patterns_order
 
 l = 12000
-L = np.array([4100, 4350, 4700, 2100, 3350, 3700])
+L = np.array([4100, 4350, 4700])
 joint = 200
-radius = 3
-losses = 0
+radius = 10
+losses = 100
 length = 0
 accumulator = np.zeros(len(L))
 stage = 0
