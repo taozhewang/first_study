@@ -306,43 +306,43 @@
 # print_Im(z3, leftbound, rightbound, lowerbound, upperbound)
 
 
-# cup~
-import numpy as np
-def find_ab(x, y, z):
-    m = np.max([x, y])
-    n = np.min([x, y])
-    A = np.array([[m, 1, 0],
-                  [n, 0, 1]])
-    Continue = True
-    up = 0
-    down = 1
-    while Continue:
-        q = A[up, 0] // A[down, 0]
-        A[up, :] = A[up, :] - q * A[down, :]
-        if A[up, 0] == 0 or A[up, 0] == 0:
-            Continue = False
-        up, down = down, up
-    row = np.where(A[:, 0] != 0)[0]
-    x_y = A[row]
-    print(x_y)
-    factor = x_y[0][0]
-    m_factor = x_y[0][1]
-    n_factor = x_y[0][2]
-    p = z // factor
-    r = z % factor
-    if r != 0:
-        # print('No solution')
-        assert r == 0, 'No solution'
-        return None
-    else:
-        a = m_factor * p
-        b = n_factor * p
-        return a, b
+# # cup~
+# import numpy as np
+# def find_ab(x, y, z):
+#     m = np.max([x, y])
+#     n = np.min([x, y])
+#     A = np.array([[m, 1, 0],
+#                   [n, 0, 1]])
+#     Continue = True
+#     up = 0
+#     down = 1
+#     while Continue:
+#         q = A[up, 0] // A[down, 0]
+#         A[up, :] = A[up, :] - q * A[down, :]
+#         if A[up, 0] == 0 or A[up, 0] == 0:
+#             Continue = False
+#         up, down = down, up
+#     row = np.where(A[:, 0] != 0)[0]
+#     x_y = A[row]
+#     print(x_y)
+#     factor = x_y[0][0]
+#     m_factor = x_y[0][1]
+#     n_factor = x_y[0][2]
+#     p = z // factor
+#     r = z % factor
+#     if r != 0:
+#         # print('No solution')
+#         assert r == 0, 'No solution'
+#         return None
+#     else:
+#         a = m_factor * p
+#         b = n_factor * p
+#         return a, b
 
-x = 3
-y = 8
-z = 4
-a, b = find_ab(x, y, z)
-print(f'{np.max([x, y])} : {a}')
-print(f'{np.min([x, y])} : {b}')
+# x = 3
+# y = 8
+# z = 4
+# a, b = find_ab(x, y, z)
+# print(f'{np.max([x, y])} : {a}')
+# print(f'{np.min([x, y])} : {b}')
 

@@ -249,31 +249,31 @@
 #                 [0, 0, 1, 1, 1, 0, 0, 0, 0, 0]])
 # map_show(m)
 
-import numpy as np
-# def idxyz(x, y, z):
-#     a = x + y + z
-#     b = x + y
-#     c = x
-#     return a * (a + 1) * (a + 2) / 6 + b * (b + 1) / 2 + c
+# import numpy as np
+# # def idxyz(x, y, z):
+# #     a = x + y + z
+# #     b = x + y
+# #     c = x
+# #     return a * (a + 1) * (a + 2) / 6 + b * (b + 1) / 2 + c
+# # for i in range(4):
+# #     for j in range(4):
+# #         for k in range(4):
+# #             print(i, j, k, idxyz(i, j, k))
+
+# def idxn(X):
+#     n = len(X)
+#     N = np.zeros(n)
+#     Y = np.ones(n)
+#     for i in range(n):
+#         N[i] = sum(X[ : i + 1])
+#         for j in range(i + 1):
+#             Y[i] *= (N[i] + j) / (j + 1)
+#     print(N, Y)
+#     return sum(Y)
+
 # for i in range(4):
 #     for j in range(4):
 #         for k in range(4):
-#             print(i, j, k, idxyz(i, j, k))
-
-def idxn(X):
-    n = len(X)
-    N = np.zeros(n)
-    Y = np.ones(n)
-    for i in range(n):
-        N[i] = sum(X[ : i + 1])
-        for j in range(i + 1):
-            Y[i] *= (N[i] + j) / (j + 1)
-    print(N, Y)
-    return sum(Y)
-
-for i in range(4):
-    for j in range(4):
-        for k in range(4):
-            for l in range(4):
-                print(i, j, k, l, idxn([i, j, k, l]))
+#             for l in range(4):
+#                 print(i, j, k, l, idxn([i, j, k, l]))
 
