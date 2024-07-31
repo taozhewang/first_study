@@ -1,5 +1,22 @@
 import numpy as np
 import pandas as pd
+'''
+for board:
+0 is for ground
+1 is for sea
+2 is for mountains
+
+for source:
+0 is for air
+1 is for wood
+2 is for stone
+3 is for iron
+4 is for water
+
+for being:
+0 is for nobody
+
+'''
 def plain(r, q = 0):
     plains = np.zeros((r, r))
     return plains
@@ -131,6 +148,56 @@ def source_origin(board):
     source = forest(board, source)
     return source
 
+def player_move(board: np.ndarray, source: np.ndarray, player: int, players_location: dict):
+    player_idx, player_idy = players_location[player]
+    left_bound = np.max(0, player_idx - 1)
+    right_bound = np.min(np.size(board, 0), player_idx + 1)
+    up_bound = np.max(0, player_idy - 1)
+    low_bound = np.min(np.size(board, 0), player_idy + 1)
+    board_movable_places = np.where(board[up_bound : low_bound, left_bound : right_bound] == 0)
+    board_movable_places = list(zip(board_movable_places[0], board_movable_places[1]))
+    source_movable_places = np.where(source[up_bound : low_bound, left_bound : right_bound] <= 1)
+    source_movable_places = list(zip(source_movable_places[0], source_movable_places[1]))
+    movable_places = np.intersect1d(board_movable_places, source_movable_places)
+    movable_places = '-'.join('x_y' for x, y in movable_places)
+    available_chances = 10
+    while True:
+        print(f'chances: {available_chances}')
+        forward = input('choose one forward to move: w/a/s/d').strip().lower()
+        if forward == 'w':
+            if '0_1' in movable_places:
+                players_location[player] = (player_idx - 1, player_idy)
+                return players_location
+            else:
+                available_chances -= 1
+                print('not available space')
+        elif forward == 's':
+            if '2_1' in movable_places:
+                players_location[player] = (player_idx + 1, player_idy)
+                return players_location
+            else:
+                available_chances -= 1
+                print('not available space') 
+        elif forward == 'a':
+            if '1_0' in movable_places:
+                players_location[player] = (player_idx, player_idy - 1)
+                return players_location
+            else:
+                available_chances -= 1
+                print('not available space') 
+        elif forward == 'd':
+            if '1_2' in movable_places:
+                players_location[player] = (player_idx, player_idy + 1)
+            else:
+                available_chances -= 1
+                print('not available space') 
+        elif available_chances > 0:
+            available_chances -= 1
+            print('not proper forward')
+        else:
+            print('too many fails')
+            return players_location
+# def player_attack()
 board = tarrain_origin(7, 3, 8)
 source = source_origin(board)
 for i in range(np.size(board, 0)):
