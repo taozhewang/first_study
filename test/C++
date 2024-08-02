@@ -1,0 +1,68 @@
+源代码->编译器（翻译成机器语言）->目标代码（语言）->连接程序（<-启动代码、<-库代码）->可执行代码
+
+例1
+# include <iostream>
+int main(void)
+{
+    using namespace std;
+    //using std::cin;
+    //using std::cout;
+    //using std::cndl;
+
+    int carrots:
+
+    cout << 'how many carrots do yoou have?' << endl;
+    cin >> carrots;
+    cout << 'here are two more';
+    carrots = carrots + 2;
+    cout << 'now you have' << carrots << 'carrots' << endl;
+
+    return 0;
+}
+
+分号代表语句的结束
+int 函数返回的类型
+main 是入口函数名称
+void 不传入任何参数
+return 函数返回 0
+carrots 变量名
+int carrots 定义声明，开辟内存空间
+所有变量都需要先声明
+'***' 字符串
+<< 插入符
+cout 显示
+<< endl 回车换行
+using namespace std 声明std的命名空间,其中包含cout、cin、endl
+# 是预处理
+# <iostream> 将iostream文件加入到当前文件中，std包含在iostream中
+using namespace std 将std内所有文件都加入
+std::cout、std::cin、std::endl也可以
+iostream 输入输出流
+类：抽象种类，重点在于类的性质而不是类包含了什么元素
+类的属性称为类的成员
+类的成员方法称为函数
+<<、>> 流向
+void main(void) 代表不传入不传出
+
+x = sqrt(6.25)
+sqrt(6.25) 称为函数调用
+包含函数调用的函数称为调用函数
+sqrt()的函数原型： double sqrt(double);
+sqrt()包含在cmath头文件里
+#include <cmath>
+声明、调用、定义
+例2
+#include <iostream>
+#include <cmath>
+int main()
+{
+    using namesapce std;
+    double area; 
+    cout << 'enter' << endl; // 注释符
+    cin >> area;
+    double side; //初始化
+    side = sqrt(area);
+    cout << 'mean length:' << side << endl;
+    
+    return 0;
+}
