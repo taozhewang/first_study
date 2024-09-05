@@ -30,7 +30,7 @@ l_min = 200
 # 钢筋的规格
 l_size = 32
 # 目标钢筋长度
-L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
+L = {'L1' : 3110, 'L2' : 4340, 'L3' : 5310}
 # 目标钢筋的数量
 need = np.array([852, 658, 162],dtype=int)
 
@@ -87,8 +87,8 @@ def evaluate(combinations, l, l_min, l_size):
 
     loss += _l
 
-    cost_param = 0.00617*2000*(l_size**2)/1000
-    cost = loss*cost_param + joint*10
+    cost_param = 0.01254#0.00617*2000*(l_size**2)/1000
+    cost = loss*cost_param + joint*9#10
     return loss, joint, cost, group_count, group_firstpos, group_endpos
 
 # 比较两个group，返回接头数量选择较小的group

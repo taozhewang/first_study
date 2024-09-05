@@ -66,3 +66,184 @@ int main()
     
     return 0;
 }
+
+C++ 类型分两种：基本类型和复合类型
+基本：整数、浮点数
+复合：数组、字符串、指针、结构
+
+信息存储在哪里
+存储什么值
+存储什么类型的信息
+
+知道什么类型，就知道开辟多大的空间
+int poodle // valid
+int Poodle // valid
+int POODLE // valid
+Int terrier // invalid
+int my_charm // valid
+int _mystart // valid, reversed
+int 4ever // invalid
+int double // invalid
+int begin // invalid
+int __fools // valid, reversed
+int a_b_c_d_e_f_g_h_i_j_k_l_ // valid
+int ice-cream // invalid
+
+char, short, int, long, long long
+      >=16  >=16   >=32  >= 64
+sizeof(char)
+char int 这样的基本量名需要带括号
+非平凡的变量名可以不加括号
+初始化： 将定义声明和赋值放在一起
+int five = 5;
+int not_six = five;
+也可以
+int five(5)
+int five{5}
+unsigned 无符号类型，数值不为负数
+unsigned short group
+short: 32767 + 1 -> -32767、 65535 + 1 -> 0、 0 - 1 -> 65535
+unsigned short: 32767 + 1 -> 32768、 0 - 1 -> -1
+#define ZERO 0
+也是预处理
+
+C++支持10进制、8进制、16进制
+以一个0开头的数是8进制
+以0x开头的数是16进制
+042 ---> 34
+0x45 ---> 165
+例3
+#include <iostream>
+int main(void)
+{
+    using namespace std;
+    int chest = 42;
+    int waist = ox42;
+    int inseam = 042;
+
+    cout << '---part 1---\n';
+    cout << 'chest : ' << chest << endl;
+    cout << 'waist : ' << waist << endl;
+    cout << 'inseam : ' << inseam << endl;
+
+    cout << '---part 2---\n';
+    cout << 'chest : ' << chest << endl;
+    cout << hex;
+    cout << 'waist : ' << waist << endl;
+    cout << oct;
+    cout << 'inseam : ' << inseam << endl;
+    
+    cout << '---part 3---\n';
+    cout << 'chest : ' << chest << endl;
+    cout << hex;
+    cout << 'chest : ' << chest << endl;
+    cout << oct;
+    cout << 'chest : ' << chest << endl;
+    
+    return 0;
+}
+1453   ----> int
+1453L  ----> long
+1453u  ----> unsigned int
+1453uL ----> unsigned long
+1453ll ----> long long
+char: 字符
+字符的1和数字的1是不同的
+有专门对应的ASCII码
+用一个字节byte表示不超过128个字符
+
+例4
+#include <iostream>
+int main(void)
+{
+    using namespace std;
+    char ch;
+    cout << 'enter a character' << endl;
+    cin >> ch;
+    cout << 'your character: ' << ch << endl;
+    return 0;
+}
+
+例5
+#include <iostream>
+int main(void)
+{
+    using namespace std;
+    char ch = 'M';
+    int I = ch;
+    cout << 'The ASCII code for M: ' << I << endl;
+    ch = ch + 1;
+    I = ch;
+    cout << 'The next character of M is: ' << ch << endl;
+    cout << 'The next ASCII code is: ' << I << endl;
+    cout.put(ch);
+    cout.put('!');
+    cout << endl << 'Over'<< endl;
+
+    return 0;
+}
+值的类型会引导cout选择如何显示
+cout.put()是一个成员函数
+类定义了如何表示和控制数据
+成员函数归类所有
+cout.put()意思是通过类对象cout来使用函数put()
+istream 和 ostream都是类
+在早期版本和C中，
+cout << '$' 
+和 
+cout.put('$') 
+的输出结果是不同的
+前者是数值，后者是字符
+const int Month = 12;
+const 用于固定常量，赋值后不可修改
+浮点数的实现原理：一个数用于储存该数的数字排序，另一个数储存缩放因子来调整小数点位置
+3.4E2 = 340 = 3.4e+2
+浮点有三种类型：float, double, long double
+10.25:
+10 = 2 * 5 + 0
+5 = 2 * 2 + 1
+2 = 2 * 1 + 0
+1 = 2 * 0 + 1
+10 --> 1010
+0.375 * 2 = 0.75 + 0
+0.75 * 2 = 0.5 + 1
+0.5 * 2 = 0.0 + 1
+0.75 --> 011
+10.75 --> 1010.011 --> 1.010011 * 2^3
+float 有效位32位
+1bit -> 正负
+8bit -> 指数位 例: 3 -> 127 + 3 = 130 -> 10000010
+23bit -> 尾数 例: 1.010011 -> 010011/0...0(最前面的1省略)
+double 有效位64位
+1 bit -> 正负
+11 bit -> 指数位
+52 bit -> 尾数
+
+例6
+#include <iostream>
+int main()
+{
+    using namespace std;
+    cout self(ios_base::fixed, ios_base::floatfield);
+    float tub = 10.0 / 3.0;
+    const float million = 1.0e6;
+    cout << 'tub = ' << tub << '\n';
+    cout << 'million tub = ' << million * tub << '\n';
+     
+    double mint = 10.0 / 3.0;
+    cout << 'mint = ' << mint << '\n';
+    cout << 'million mint = ' << million * mint << '\n';
+
+
+    return 0;
+}
+输出:
+tub = 3.333333
+million tub = 3333333.250000
+mint = 3.333333
+million mint = 333333.333333
+
+cout 会默认删除结尾的零
+cout self(...)：小数以定点模式显示，小数点后的零不会被删除，小数点后显示6位数字
+解释：23 + 1 = 24， 24 / 4 = 6， float至少有6位有效数字，系统保证到7位
+52 + 1 = 53, 53 / 4 = 13 + 1, double至少有13位有效，系统保证到15位

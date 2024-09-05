@@ -29,7 +29,7 @@ l_min = 200
 # 钢筋的规格
 l_size = 32
 # 目标钢筋长度
-L = {'L1' : 4100, 'L2' : 4350, 'L3' : 4700}
+L = {'L1' : 3110, 'L2' : 4340, 'L3' : 5310}
 # 目标钢筋的数量
 need = np.array([552, 658, 462],dtype=int)
 
@@ -76,8 +76,8 @@ def evaluate(solution, l, l_min, l_size):
             _l = l 
 
     loss += _l
-    cost_param = 0.00617 * 2000 * (l_size ** 2) / 1000
-    cost = loss * cost_param + joint * 10
+    cost_param = 0.01254#0.00617 * 2000 * (l_size ** 2) / 1000
+    cost = loss * cost_param + joint * 9#10
     return loss, joint, cost, group_count, 0, group_endpos
 
 # 蜜蜂产生新解
